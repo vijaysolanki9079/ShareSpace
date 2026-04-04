@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  fullName  String
+  bio       String?
+  location  String?
+  image     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  donationsDonated Donation[] @relation("DonationDonor")
+  requestsMade     Request[]  @relation("RequestRequester")
+  messagesSent     Message[]  @relation("MessageSender")
+  messagesReceived Message[]  @relation("MessageReceiver")
+}
+
+model NGO {
+  id                    String     @id @default(cuid())
+  email                 String     @unique
+  password              String
+  organizationName      String
+  registrationNumber    String
+  website               String?
+  missionArea           String
+  verificationDocument  String?
+  isVerified            Boolean    @default(false)
+  bio                   String?
+  image                 String?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  donationsReceived Donation[]
+  eventDrives       EventDrive[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Donation {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String
+  image       String?
+  status      String   @default("pending") // pending, picked_up, delivered
+  donorId     String
+  donor       User     @relation(fields: [donorId], references: [id], name: "DonationDonor")
+  ngoId       String?
+  ngo         NGO?     @relation(fields: [ngoId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  requests    Request[]
+}
+
+// user or NGO requestes 
+model Request {
+  id        String   @id @default(cuid())
+  donationId String
+  donation   Donation @relation(fields: [donationId], references: [id])
+  requesterId String
+  requester   User     @relation(fields: [requesterId], references: [id], name: "RequestRequester")
+  status     String   @default("open") // open, accepted, rejected
+  createdAt  DateTime @default(now())
+}
+
+// chat models 
+model Message {
+  id        String   @id @default(cuid())
+  senderId   String
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+// NGOs events 
+model EventDrive {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  ngoId       String
+  ngo         NGO      @relation(fields: [ngoId], references: [id])
+  date        DateTime
+  location    String?
+  createdAt   DateTime @default(now())
+}
