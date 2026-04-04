@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider  = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
@@ -24,6 +22,8 @@ model User {
   requestsMade     Request[]  @relation("RequestRequester")
   messagesSent     Message[]  @relation("MessageSender")
   messagesReceived Message[]  @relation("MessageReceiver")
+
+  @@index([email])
 }
 
 model NGO {
@@ -43,6 +43,8 @@ model NGO {
 
   donationsReceived Donation[]
   eventDrives       EventDrive[]
+
+  @@index([email])
 }
 
 model Account {
@@ -60,6 +62,7 @@ model Account {
   session_state      String?
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -69,6 +72,8 @@ model Session {
   expires      DateTime
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -85,46 +90,59 @@ model Donation {
   description String?
   category    String
   image       String?
-  status      String   @default("pending") // pending, picked_up, delivered
+  status      String   @default("pending")
   donorId     String
-  donor       User     @relation(fields: [donorId], references: [id], name: "DonationDonor")
+  donor       User     @relation(fields: [donorId], references: [id], name: "DonationDonor", onDelete: Cascade)
   ngoId       String?
-  ngo         NGO?     @relation(fields: [ngoId], references: [id])
+  ngo         NGO?     @relation(fields: [ngoId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   requests    Request[]
+
+  @@index([donorId])
+  @@index([ngoId])
+  @@index([status])
+  @@index([category])
 }
 
-// user or NGO requestes 
 model Request {
-  id        String   @id @default(cuid())
-  donationId String
-  donation   Donation @relation(fields: [donationId], references: [id])
+  id          String   @id @default(cuid())
+  donationId  String
+  donation    Donation @relation(fields: [donationId], references: [id], onDelete: Cascade)
   requesterId String
-  requester   User     @relation(fields: [requesterId], references: [id], name: "RequestRequester")
-  status     String   @default("open") // open, accepted, rejected
-  createdAt  DateTime @default(now())
+  requester   User     @relation(fields: [requesterId], references: [id], name: "RequestRequester", onDelete: Cascade)
+  status      String   @default("open")
+  createdAt   DateTime @default(now())
+
+  @@index([donationId])
+  @@index([requesterId])
+  @@index([status])
 }
 
-// chat models 
 model Message {
-  id        String   @id @default(cuid())
+  id         String   @id @default(cuid())
   senderId   String
-  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   receiverId String
-  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
-  content   String
-  createdAt DateTime @default(now())
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
 }
 
-// NGOs events 
 model EventDrive {
   id          String   @id @default(cuid())
   title       String
   description String?
   ngoId       String
-  ngo         NGO      @relation(fields: [ngoId], references: [id])
+  ngo         NGO      @relation(fields: [ngoId], references: [id], onDelete: Cascade)
   date        DateTime
   location    String?
   createdAt   DateTime @default(now())
+
+  @@index([ngoId])
+  @@index([date])
 }

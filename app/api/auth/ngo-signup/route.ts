@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import type { Client } from "pg";
-import { createServerPgClient } from "@/lib/server-db";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
-  let client: Client | undefined;
   try {
     const formData = await request.formData();
 
@@ -31,19 +29,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create database connection from environment configuration
-    client = createServerPgClient();
-
-    await client.connect();
-
     // Check if NGO with email already exists
-    const existingResult = await client.query(
-      'SELECT id FROM "NGO" WHERE email = $1',
-      [email]
-    );
+    const existingNgo = await prisma.nGO.findUnique({
+      where: { email },
+    });
 
-    if (existingResult.rows.length > 0) {
-      await client.end();
+    if (existingNgo) {
       return NextResponse.json(
         { error: "NGO with this email already exists" },
         { status: 400 }
@@ -62,34 +53,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Create NGO record
-    const result = await client.query(
-      `INSERT INTO "NGO" (id, email, password, "organizationName", "registrationNumber", website, "missionArea", "verificationDocument", "isVerified", "createdAt", "updatedAt")
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, false, NOW(), NOW())
-       RETURNING id`,
-      [email, hashedPassword, organizationName, registrationNumber, website, missionArea, verificationDocumentPath]
-    );
-
-    const ngoId = result.rows[0].id;
-
-    await client.end();
+    const newNgo = await prisma.nGO.create({
+      data: {
+        email,
+        password: hashedPassword,
+        organizationName,
+        registrationNumber,
+        website,
+        missionArea,
+        verificationDocument: verificationDocumentPath,
+      },
+    });
 
     return NextResponse.json(
       {
         success: true,
         message: "NGO account created successfully. Awaiting verification.",
-        ngoId,
+        ngoId: newNgo.id,
       },
       { status: 201 }
     );
   } catch (error: unknown) {
     console.error("NGO signup error:", error);
-    if (client) {
-      try {
-        await client.end();
-      } catch (e) {
-        console.error("Error closing connection:", e);
-      }
-    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

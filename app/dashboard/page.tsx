@@ -1,12 +1,12 @@
 'use client';
 
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import DashboardClient from "@/components/dashboard/DashboardClient";
+import PremiumDashboard from '@/components/dashboard/PremiumDashboard';
 
 export default function DashboardPage() {
   return (
     <ProtectedRoute requiredType="user">
-      <DashboardClient />
+      <PremiumDashboard />
     </ProtectedRoute>
   );
 }

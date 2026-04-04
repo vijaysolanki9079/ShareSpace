@@ -1,5 +1,7 @@
 import type { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { prisma } from "./prisma";
+import bcrypt from "bcryptjs";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -17,17 +19,11 @@ export const authOptions: AuthOptions = {
 
         try {
           // Try to find user in User table
-          const userResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/validate-user`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
           });
 
-          if (userResponse.ok) {
-            const user = await userResponse.json();
+          if (user && (await bcrypt.compare(credentials.password, user.password))) {
             return {
               id: user.id,
               email: user.email,
@@ -37,17 +33,11 @@ export const authOptions: AuthOptions = {
           }
 
           // Try to find user in NGO table
-          const ngoResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/validate-ngo`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
+          const ngo = await prisma.nGO.findUnique({
+            where: { email: credentials.email },
           });
 
-          if (ngoResponse.ok) {
-            const ngo = await ngoResponse.json();
+          if (ngo && (await bcrypt.compare(credentials.password, ngo.password))) {
             return {
               id: ngo.id,
               email: ngo.email,
@@ -57,7 +47,8 @@ export const authOptions: AuthOptions = {
           }
 
           throw new Error("Invalid email or password");
-        } catch {
+        } catch (error) {
+          console.error("Authorization error:", error);
           throw new Error("Authentication failed");
         }
       },
