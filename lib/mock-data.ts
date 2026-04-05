@@ -5,6 +5,8 @@ export type NGO = {
   category: "Education" | "Health" | "Environment" | "Poverty" | "Food" | "Other";
   location: string;
   distanceKm: number;
+  lat: number;
+  lng: number;
   verified: boolean;
   image: string;
 };
@@ -38,6 +40,8 @@ export const MOCK_NGOS: NGO[] = [
     category: "Environment",
     location: "Downtown Community Center",
     distanceKm: 2.4,
+    lat: 28.6139,
+    lng: 77.2090,
     verified: true,
     image: "/assets/img/ngo-green.jpg",
   },
@@ -48,6 +52,8 @@ export const MOCK_NGOS: NGO[] = [
     category: "Education",
     location: "Westside Tech Hub",
     distanceKm: 5.1,
+    lat: 28.5355,
+    lng: 77.1522,
     verified: true,
     image: "/assets/img/ngo-tech.jpg",
   },
@@ -58,6 +64,8 @@ export const MOCK_NGOS: NGO[] = [
     category: "Food",
     location: "City Market District",
     distanceKm: 1.2,
+    lat: 28.6289,
+    lng: 77.2065,
     verified: false,
     image: "/assets/img/ngo-food.jpg",
   },

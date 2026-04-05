@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 function getNavbarConfigForPath(pathname: string | null) {
   const path = pathname ?? "/";
 
-  if (path === "/" || path === "/home") {
+  if (path === "/" || path === "/home" || path === "/about") {
     return {
       variant: "light" as const,
       background: "bg-transparent",
@@ -25,7 +25,7 @@ function getNavbarConfigForPath(pathname: string | null) {
 
   return {
     variant: "dark" as const,
-    background: "bg-white border-b border-gray-100 shadow-sm",
+    background: "bg-gray-50/90 backdrop-blur-md border-b border-gray-200/50 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)]",
     className: "sticky top-0 left-0 right-0 z-50",
   };
 }

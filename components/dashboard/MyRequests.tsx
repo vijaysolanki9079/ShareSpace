@@ -55,14 +55,14 @@ const MyRequests = () => {
 
   const filteredRequests = filter === 'all' ? requests : requests.filter((r) => r.status === filter);
 
-  const getStatusBadge = (status) => {
-    const badges = {
+  const getStatusBadge = (status: string) => {
+    const badges: Record<string, { text: string; bg: string; textColor: string; icon: any }> = {
       approved: { text: 'Approved', bg: 'bg-emerald-50', textColor: 'text-emerald-800', icon: CheckCircle2 },
       pending: { text: 'Pending', bg: 'bg-amber-50', textColor: 'text-amber-800', icon: Clock },
       completed: { text: 'Completed', bg: 'bg-slate-800', textColor: 'text-slate-200', icon: CheckCircle2 },
       rejected: { text: 'Rejected', bg: 'bg-red-50', textColor: 'text-red-700', icon: XCircle },
     };
-    return badges[status] || badges.pending;
+    return badges[status as keyof typeof badges] || badges.pending;
   };
 
   return (
@@ -74,7 +74,7 @@ const MyRequests = () => {
         </div>
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
+          className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
         >
           Browse items
         </button>
@@ -86,10 +86,10 @@ const MyRequests = () => {
             key={filterOption}
             type="button"
             onClick={() => setFilter(filterOption)}
-            className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
+            className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all ${
               filter === filterOption
-                ? 'bg-zinc-900 text-white shadow-sm'
-                : 'border border-zinc-200 bg-white text-zinc-600 hover:border-emerald-300 hover:text-emerald-800'
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'
             }`}
           >
             {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
@@ -131,21 +131,21 @@ const MyRequests = () => {
                 </div>
               </div>
 
-              <div className="p-5">
-                <h3 className="text-lg font-semibold text-slate-100 transition-colors group-hover:text-emerald-800">
+              <div className="p-4">
+                <h3 className="text-base font-semibold text-slate-100 transition-colors group-hover:text-emerald-400">
                   {request.title}
                 </h3>
-                <p className="mt-2 flex items-center gap-2 text-sm text-slate-400">
+                <p className="mt-1.5 flex items-center gap-2 text-[13px] text-slate-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   {request.condition}
                 </p>
 
-                <div className="mt-4 space-y-2 border-t border-zinc-100 pt-4">
-                  <div className="flex items-center gap-2 text-sm text-zinc-600">
-                    <User className="h-4 w-4 text-zinc-400" />
+                <div className="mt-3 space-y-1.5 border-t border-white/10 pt-3">
+                  <div className="flex items-center gap-2 text-[13px] text-zinc-400">
+                    <User className="h-3.5 w-3.5" />
                     <span className="font-medium text-slate-200">{request.donor}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
                     <Clock className="h-3.5 w-3.5" />
                     {new Date(request.date).toLocaleDateString('en-US', {
                       month: 'short',
@@ -159,13 +159,13 @@ const MyRequests = () => {
                   <div className="mt-4 flex gap-2">
                     <button
                       type="button"
-                      className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                      className="flex-1 rounded-lg bg-emerald-500/20 py-2 text-[13px] font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/30 ring-1 ring-emerald-500/30"
                     >
                       View details
                     </button>
                     <button
                       type="button"
-                      className="rounded-xl border border-zinc-200 px-3 py-2.5 text-zinc-600 transition-colors hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
+                      className="rounded-lg border border-white/10 px-3 py-2 text-zinc-400 transition-colors hover:border-emerald-400/50 hover:bg-emerald-500/10 hover:text-emerald-300"
                       aria-label="Message"
                     >
                       <MessageCircle className="h-4 w-4" />
@@ -175,7 +175,7 @@ const MyRequests = () => {
                 {request.status === 'approved' && (
                   <button
                     type="button"
-                    className="mt-4 w-full rounded-xl border-2 border-emerald-600 py-2.5 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-50"
+                    className="mt-4 w-full rounded-lg bg-emerald-600/20 py-2 text-[13px] font-semibold text-emerald-300 ring-1 ring-emerald-500/40 transition-colors hover:bg-emerald-500/30"
                   >
                     Arrange pickup
                   </button>

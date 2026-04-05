@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 const bannerImg = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1974&auto=format&fit=crop';
 const logoImg = 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?q=80&w=400&auto=format&fit=crop';
@@ -163,6 +164,8 @@ const Signup = () => {
 
                     {/* Social Login */}
                     <button
+                        type="button"
+                        onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
                         className="w-full h-11 bg-white border border-gray-200 text-gray-900 font-semibold text-sm rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 animate-slide-up disabled:opacity-50"
                         style={{ animationDelay: '0.2s' }}
                         disabled={loading}

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 @config "../tailwind.config.js";
 
 /* Ensure Tailwind scans all app and component templates (v4 automatic detection can miss some setups). */

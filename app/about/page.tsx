@@ -15,32 +15,58 @@ const About = () => {
         >
 
             {/* Hero Section with Background */}
-            <div className="relative bg-gray-900">
+            <div className="relative bg-gray-900 min-h-[100svh] border-b border-transparent flex flex-col justify-end">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0 overflow-hidden">
                     <img
                         src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?q=80&w=2074&auto=format&fit=crop"
                         alt="Background"
-                        className="w-full h-full object-cover opacity-50 blur-sm scale-110"
+                        className="w-full h-full object-cover opacity-60 blur-[2px] scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/90"></div>
                 </div>
 
-                <div className="relative z-10">
+                <div className="relative z-10 w-full mb-16 sm:mb-24">
                     {/* Hero Content */}
-                    <section className="px-6 pb-24 pt-28 text-center text-white">
+                    <section className="px-6 text-center text-white">
                         <div className="container mx-auto max-w-4xl">
-                            <span className="inline-block bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-white mb-6">
+                            <motion.span 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className="inline-block bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-emerald-400 mb-6 shadow-xl"
+                            >
                                 Our Mission
-                            </span>
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 text-white leading-tight drop-shadow-lg">
+                            </motion.span>
+                            
+                            <motion.h1 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="text-4xl md:text-5xl lg:text-7xl font-extrabold tracking-tight mb-8 text-white leading-[1.1] drop-shadow-2xl"
+                            >
                                 Building a World Where Giving is Second Nature
-                            </h1>
-                            <p className="text-lg md:text-xl text-gray-200 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
-                                ShareNest isn&apos;t just a platform; it&apos;s a movement to reduce waste and
-                                strengthen community bonds by ensuring usable items find a second
-                                home.
-                            </p>
+                            </motion.h1>
+                            
+                            <motion.p 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="text-lg md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed drop-shadow-md font-medium"
+                            >
+                                ShareNest isn&apos;t just a platform; it&apos;s a movement to reduce waste and strengthen community bonds by ensuring usable items find a second home.
+                            </motion.p>
+                            
+                            <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.8, duration: 1 }}
+                                className="mt-16 flex justify-center"
+                            >
+                                <div className="w-[30px] h-[50px] border-2 border-white/30 rounded-full flex justify-center p-1">
+                                    <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce mt-1"></div>
+                                </div>
+                            </motion.div>
                         </div>
                     </section>
                 </div>

@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { signOut, useSession } from 'next-auth/react';
 import {
   Home,
   Gift,
@@ -11,19 +13,19 @@ import {
   Calendar,
   Settings,
   LogOut,
-  Search,
   Bell,
   CheckCircle2,
   Users,
   Star,
   Leaf,
+  Globe,
 } from 'lucide-react';
 import MyDonations from './MyDonations';
 import MyRequests from './MyRequests';
 import MessagesInbox from './Messages';
 import NearbyNGOs from './NearbyNGOs';
 import EventsDrives from './EventsDrives';
-
+import SettingsView from './Settings';
 /** Dark canvas + black glass (blur) panels; emerald accents */
 const pageBg =
   'relative min-h-screen overflow-x-hidden bg-gradient-to-br from-zinc-950 via-neutral-950 to-black';
@@ -32,7 +34,7 @@ const glassDark =
 const easeOut = [0.22, 1, 0.36, 1] as const;
 const tPage = { duration: 0.3, ease: easeOut };
 
-type SectionId = 'dashboard' | 'donations' | 'requests' | 'messages' | 'ngos' | 'events';
+type SectionId = 'dashboard' | 'donations' | 'requests' | 'messages' | 'ngos' | 'events' | 'settings';
 
 function Blob({
   delay = 0,
@@ -91,17 +93,20 @@ function Sidebar({
             backgroundPosition: 'center',
           }}
         />
+        {/* Dark overlay to dull the image effect */}
+        <div className="absolute inset-0 bg-black/40" />
+        
         <div
           className="absolute inset-0 opacity-100"
           style={{
             background:
-              'linear-gradient(180deg, rgba(6, 78, 59, 0.15) 0%, rgba(0,0,0,0.1) 50%, rgba(6, 78, 59, 0.4) 100%)',
+              'linear-gradient(180deg, rgba(6, 78, 59, 0.2) 0%, rgba(0,0,0,0.3) 50%, rgba(6, 78, 59, 0.4) 100%)',
           }}
         />
       </div>
       {/* Frosted glass: blurs the glow behind for aurora / glassmorphism look */}
       <div className="relative z-10 flex h-full flex-col bg-black/10 p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] backdrop-blur-[0px] sm:p-7">
-        <div className="mb-9 flex items-center gap-3">
+        <Link href="/" className="mb-9 flex items-center gap-3 transition-opacity hover:opacity-80">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-900/40">
           <Leaf className="h-6 w-6" strokeWidth={2} aria-hidden />
         </div>
@@ -111,7 +116,7 @@ function Sidebar({
             Your dashboard
           </p>
         </div>
-        </div>
+        </Link>
 
         <nav className="flex flex-1 flex-col gap-1.5 mt-4">
         {navItems.map((item, i) => {
@@ -139,16 +144,22 @@ function Sidebar({
         })}
         </nav>
 
-        <div className="mt-auto space-y-1 border-t border-white/5 pt-5 pb-5">
+        <div className="mt-auto space-y-1 border-t border-white/20 pt-5 pb-5">
         <button
           type="button"
-          className="flex w-full items-center gap-3.5 rounded-xl px-4 py-3.5 text-[14px] font-medium tracking-[0.01em] text-zinc-400 transition-all duration-300 hover:bg-white/10 hover:text-white"
+          onClick={() => setActive('settings')}
+          className={`group flex w-full items-center gap-3.5 rounded-xl px-4 py-3.5 text-[14px] font-medium tracking-[0.01em] transition-all duration-300 ${
+            active === 'settings'
+              ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-500/5 text-emerald-300 ring-1 ring-emerald-500/30'
+              : 'text-zinc-400 hover:bg-white/10 hover:text-white'
+          }`}
         >
-          <Settings className="h-[22px] w-[22px] text-zinc-500 transition-colors group-hover:text-zinc-400" />
+          <Settings className={`h-[22px] w-[22px] transition-colors ${active === 'settings' ? 'text-emerald-400' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
           Settings
         </button>
         <button
           type="button"
+          onClick={() => signOut({ callbackUrl: '/' })}
           className="flex w-full items-center gap-3.5 rounded-xl px-4 py-3.5 text-[14px] font-medium tracking-[0.01em] text-red-500/80 transition-all duration-300 hover:bg-red-500/15 hover:text-red-400"
         >
           <LogOut className="h-[22px] w-[22px] opacity-75" />
@@ -161,6 +172,12 @@ function Sidebar({
 }
 
 function TopBar() {
+  const { data: session } = useSession();
+  const user = session?.user;
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
   return (
     <header className="fixed left-72 right-0 top-0 z-40 h-[6rem] overflow-hidden sm:left-80">
       {/* Synth grid + stars background */}
@@ -187,42 +204,115 @@ function TopBar() {
       <div className="relative z-10 flex h-full items-center justify-between gap-4 px-4 sm:px-8">
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-semibold tracking-tight text-white drop-shadow-[0_1px_12px_rgba(0,0,0,0.85)] sm:text-xl">
-            Welcome back
+            Welcome to ShareSpace
           </h2>
           <p className="mt-0.5 truncate text-sm text-emerald-100/70 drop-shadow-[0_1px_8px_rgba(0,0,0,0.8)]">
-            Giving, requests, and messages in one calm place.
+            Connect, give locally, and request what you need.
           </p>
         </div>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <div className="relative hidden md:block">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-400/70" />
-            <input
-              type="search"
-              placeholder="Search dashboard…"
-              className="h-10 w-[200px] rounded-full border border-emerald-500/25 bg-black/45 py-2 pl-10 pr-4 text-sm text-white shadow-inner shadow-black/40 outline-none backdrop-blur-md transition-all placeholder:text-white/60 focus:w-[240px] focus:border-emerald-400/55 focus:bg-black/55 focus:ring-2 focus:ring-emerald-400/25 lg:w-[220px] lg:focus:w-[280px]"
-              aria-label="Search dashboard"
-            />
+          
+          <Link
+            href="/"
+            className="hidden sm:flex items-center gap-2 rounded-full border border-emerald-500/20 bg-black/40 px-4 h-10 text-sm font-medium text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white sm:mr-1"
+          >
+            <Globe className="h-4 w-4" />
+            Back Home
+          </Link>
+          
+          <Link
+            href="/"
+            className="flex sm:hidden items-center justify-center h-10 w-10 rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white"
+            aria-label="Back Home"
+          >
+            <Globe className="h-[1.15rem] w-[1.15rem]" />
+          </Link>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                setShowProfileMenu(false);
+              }}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white"
+              aria-label="Notifications"
+            >
+              <Bell className="h-[1.15rem] w-[1.15rem]" strokeWidth={2} />
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] ring-2 ring-black/60" />
+            </button>
+
+            <AnimatePresence>
+              {showNotifications && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 top-12 mt-2 w-80 rounded-2xl border border-emerald-500/20 bg-black/90 p-4 shadow-2xl backdrop-blur-xl"
+                >
+                  <h3 className="mb-3 text-sm font-semibold text-white">Notifications</h3>
+                  <div className="flex flex-col gap-2 rounded-xl bg-white/5 p-4 text-center">
+                    <p className="text-sm text-zinc-300">You're all caught up!</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          <button
-            type="button"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white"
-            aria-label="Notifications"
-          >
-            <Bell className="h-[1.15rem] w-[1.15rem]" strokeWidth={2} />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] ring-2 ring-black/60" />
-          </button>
-          <button
-            type="button"
-            className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-emerald-500/25 bg-black/40 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/50 hover:shadow-[0_0_16px_rgba(52,211,153,0.25)]"
-            aria-label="Profile"
-          >
-            <img
-              src="https://storage.googleapis.com/banani-avatars/avatar%2Ffemale%2F25-35%2FSouth%20Asian%2F4"
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          </button>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowProfileMenu(!showProfileMenu);
+                setShowNotifications(false);
+              }}
+              className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-emerald-500/25 bg-black/40 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/50 hover:shadow-[0_0_16px_rgba(52,211,153,0.25)]"
+              aria-label="Profile"
+            >
+              <img
+                src={user?.image || "https://storage.googleapis.com/banani-avatars/avatar%2Ffemale%2F25-35%2FSouth%20Asian%2F4"}
+                alt="Profile picture"
+                className="h-full w-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            </button>
+
+            <AnimatePresence>
+              {showProfileMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 top-12 mt-2 w-56 overflow-hidden rounded-2xl border border-emerald-500/20 bg-black/90 shadow-2xl backdrop-blur-xl"
+                >
+                  <div className="border-b border-white/10 p-4">
+                    <p className="truncate text-sm font-medium text-white">{user?.name || 'ShareSpace User'}</p>
+                    <p className="truncate text-xs text-zinc-400">{user?.email || 'user@example.com'}</p>
+                  </div>
+                  <div className="p-2">
+                    <button
+                      type="button"
+                      onClick={() => alert('Profile editing coming soon!')}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Account Settings
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => signOut({ callbackUrl: '/' })}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-red-500/10"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign out
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
@@ -393,7 +483,7 @@ function SectionFrame({ children }: { children: React.ReactNode }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={tPage}
-      className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-300/10 to-blue-400/10 p-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-[24px] sm:p-6"
+      className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-300/10 to-blue-400/10 p-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-[24px] sm:p-6 mt-10"
     >
       {children}
     </motion.div>
@@ -438,6 +528,11 @@ export default function PremiumDashboard() {
           {active === 'events' && (
             <SectionFrame key="events">
               <EventsDrives />
+            </SectionFrame>
+          )}
+          {active === 'settings' && (
+            <SectionFrame key="settings">
+              <SettingsView />
             </SectionFrame>
           )}
         </AnimatePresence>

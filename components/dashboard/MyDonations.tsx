@@ -32,7 +32,7 @@ const MyDonations = () => {
         </div>
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-emerald-900/10 transition-colors hover:bg-emerald-700"
+          className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
         >
           + New donation
         </button>
@@ -55,14 +55,14 @@ const MyDonations = () => {
                 {item.category}
               </span>
             </div>
-            <div className="p-5 sm:p-6">
+            <div className="p-4">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-100">{item.title}</h3>
-                  <p className="mt-0.5 text-sm text-slate-400">{item.date}</p>
+                  <h3 className="text-base font-semibold text-slate-100">{item.title}</h3>
+                  <p className="mt-1 text-[13px] text-slate-400">{item.date}</p>
                 </div>
                 <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
                     item.status === 'completed'
                       ? 'bg-emerald-500/20 text-emerald-400'
                       : 'bg-amber-500/20 text-amber-400'
@@ -70,15 +70,15 @@ const MyDonations = () => {
                   title={item.status}
                 >
                   {item.status === 'completed' ? (
-                    <CheckCircle2 className="h-5 w-5" strokeWidth={2} />
+                    <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
                   ) : (
-                    <Clock className="h-5 w-5" strokeWidth={2} />
+                    <Clock className="h-4 w-4" strokeWidth={2} />
                   )}
                 </div>
               </div>
               <button
                 type="button"
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:text-emerald-300"
+                className="w-full rounded-lg bg-emerald-500/10 py-2 text-[13px] font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/20 ring-1 ring-emerald-500/20"
               >
                 View details
               </button>

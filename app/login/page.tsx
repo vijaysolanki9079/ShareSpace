@@ -161,6 +161,7 @@ function LoginForm() {
                     {/* Social Login */}
                     <button
                         type="button"
+                        onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
                         className="w-full h-11 bg-white border border-gray-200 text-gray-900 font-semibold text-sm rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 animate-slide-up disabled:opacity-50"
                         style={{ animationDelay: '0.2s' }}
                         disabled={loading}
