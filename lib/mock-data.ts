@@ -43,7 +43,7 @@ export const MOCK_NGOS: NGO[] = [
     lat: 28.6139,
     lng: 77.2090,
     verified: true,
-    image: "/assets/img/ngo-green.jpg",
+    image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=800",
   },
   {
     id: "ngo-2",
@@ -55,7 +55,7 @@ export const MOCK_NGOS: NGO[] = [
     lat: 28.5355,
     lng: 77.1522,
     verified: true,
-    image: "/assets/img/ngo-tech.jpg",
+    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800",
   },
   {
     id: "ngo-3",
@@ -67,7 +67,7 @@ export const MOCK_NGOS: NGO[] = [
     lat: 28.6289,
     lng: 77.2065,
     verified: false,
-    image: "/assets/img/ngo-food.jpg",
+    image: "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&q=80&w=800",
   },
 ];
 

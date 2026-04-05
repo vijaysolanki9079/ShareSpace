@@ -2,6 +2,7 @@ import React from 'react';
 import { Users, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 
 const Campaigns = () => {
   const campaigns = [
@@ -42,7 +43,7 @@ const Campaigns = () => {
 
   return (
     // ADJUSTED: pt-12 reduces the gap from the component above
-    <section className="pt-12 pb-24 scroll-mt-20 relative bg-[#F8FAFC] overflow-hidden" id="campaigns">
+    <section className="pt-12 pb-12 scroll-mt-20 relative bg-[#F8FAFC] overflow-hidden" id="campaigns">
       
       {/* Background Glows */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
@@ -53,24 +54,57 @@ const Campaigns = () => {
       <div className="container mx-auto px-6 relative z-10">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-          <div className="max-w-2xl">
-            <span className="text-emerald-600 font-bold tracking-[0.2em] uppercase text-xs mb-4 block">Take Action</span>
-            <h2 className="text-4xl md:text-6xl font-black text-slate-900 mb-4 tracking-tight">
-              Urgent <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-sky-600">Campaigns</span>
-            </h2>
-            <p className="text-lg text-slate-500 font-medium leading-relaxed">
-              Join forces with verified NGOs. These drives need immediate community support.
-            </p>
-          </div>
-          
-          <Link 
-            href="/explore"
-            className="group relative px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-3 overflow-hidden"
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "50px" }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="max-w-2xl"
           >
-            <span className="relative z-10">View all campaigns</span>
-            <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
-            <div className="absolute inset-0 bg-emerald-50 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-          </Link>
+            <motion.span 
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4 }}
+              className="text-emerald-600 font-bold tracking-[0.2em] uppercase text-xs mb-4 block"
+            >
+              Take Action
+            </motion.span>
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="text-4xl md:text-6xl font-black text-slate-900 mb-4 tracking-tight"
+            >
+              Urgent <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-sky-600">Campaigns</span>
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="text-lg text-slate-500 font-medium leading-relaxed"
+            >
+              Join forces with verified NGOs. These drives need immediate community support.
+            </motion.p>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "50px" }}
+            transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+          >
+            <Link 
+              href="/explore"
+              className="group relative px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-3 overflow-hidden"
+            >
+              <span className="relative z-10">View all campaigns</span>
+              <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+              <div className="absolute inset-0 bg-emerald-50 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            </Link>
+          </motion.div>
         </div>
 
         {/* Campaigns Grid */}

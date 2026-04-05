@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -12,7 +12,7 @@ import { MOCK_NGOS } from '@/lib/mock-data';
 
 const MapComponent = dynamic(() => import('@/components/MapComponent'), { 
     ssr: false, 
-    loading: () => <div className="w-full h-[400px] bg-emerald-50 rounded-3xl animate-pulse flex items-center justify-center text-emerald-600 font-medium tracking-wide">Loading Map Layer...</div> 
+    loading: () => <div className="w-full h-[450px] md:h-[600px] bg-emerald-50 rounded-3xl animate-pulse flex items-center justify-center text-emerald-600 font-medium tracking-wide">Loading Map Layer...</div> 
 });
 
 // Haversine distance logic
@@ -34,6 +34,9 @@ export default function ExploreClient() {
     const [locationQuery, setLocationQuery] = useState('');
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
     const [isLocating, setIsLocating] = useState(false);
+    const [sortBy, setSortBy] = useState('Recommended');
+    const [visibleCount, setVisibleCount] = useState(6);
+    const mapContainerRef = useRef<HTMLDivElement>(null);
 
     const categories = [
         { name: 'All Causes', icon: <LayoutGrid size={16} /> },
@@ -64,6 +67,43 @@ export default function ExploreClient() {
         );
     };
 
+    const handleSearchClick = async () => {
+        if (!locationQuery && !searchQuery) return;
+        
+        // If there is a location query, try to geocode it (uses Nominatim API)
+        if (locationQuery) {
+            setIsLocating(true);
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationQuery)}`);
+                const data = await res.json();
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    setUserLocation([lat, lon]);
+                } else if (filteredNgos.length > 0) {
+                    // Fallback to the first filtered NGO if geocoding fails to find the place
+                    setUserLocation([filteredNgos[0].lat, filteredNgos[0].lng]);
+                }
+            } catch (error) {
+                console.error("Geocoding failed", error);
+                if (filteredNgos.length > 0) {
+                    setUserLocation([filteredNgos[0].lat, filteredNgos[0].lng]);
+                }
+            } finally {
+                setIsLocating(false);
+            }
+        } 
+        // If there's no location query but we have a search name, jump to the first matching NGO
+        else if (filteredNgos.length > 0) {
+            setUserLocation([filteredNgos[0].lat, filteredNgos[0].lng]);
+        }
+
+        // Scroll down to the map
+        if (mapContainerRef.current) {
+            mapContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
     const ngos = useMemo(() => {
         return MOCK_NGOS.map(ngo => {
             const currentDistance = userLocation 
@@ -90,13 +130,18 @@ export default function ExploreClient() {
             return matchesCategory && matchesSearch && matchesLocation;
         });
         
-        // Sort by distance if user location is known
-        if (userLocation) {
+        // Apply Sorting
+        if (sortBy === 'Distance: Nearest First') {
+            filtered.sort((a, b) => a.sortableDistance - b.sortableDistance);
+        } else if (sortBy === 'Rating: Highest') {
+            filtered.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+        } else if (userLocation && sortBy === 'Recommended') {
+            // Default "Recommended" behavior when user location is known (sort by distance)
             filtered.sort((a, b) => a.sortableDistance - b.sortableDistance);
         }
         
         return filtered;
-    }, [ngos, activeCategory, searchQuery, locationQuery, userLocation]);
+    }, [ngos, activeCategory, searchQuery, locationQuery, userLocation, sortBy]);
 
     return (
         <motion.div
@@ -107,7 +152,7 @@ export default function ExploreClient() {
             className="min-h-screen bg-gray-50 font-sans text-gray-900"
         >
             {/* Search Hero */}
-            <section className="relative bg-emerald-900 px-6 pb-24 pt-24 text-center text-white">
+            <section className="relative bg-emerald-900 px-6 pb-40 md:pb-48 pt-24 text-center text-white">
                 <div className="container mx-auto max-w-5xl">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -130,6 +175,7 @@ export default function ExploreClient() {
                                     className="w-full text-gray-900 placeholder-gray-400 outline-none text-base"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
                                 />
                             </div>
                             <div className="flex-[0.6] flex items-center px-4 h-12 md:h-auto border-b md:border-b-0 md:border-r border-gray-100">
@@ -140,17 +186,22 @@ export default function ExploreClient() {
                                     className="w-full text-gray-900 placeholder-gray-400 outline-none text-base"
                                     value={locationQuery}
                                     onChange={(e) => setLocationQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
                                 />
                             </div>
                             <button 
                                 onClick={handleGetLocation} 
-                                className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold py-3 px-5 rounded-xl transition-colors h-12 md:h-auto w-full md:w-auto mt-2 md:mt-0 flex-shrink-0"
+                                className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold py-3 px-5 rounded-xl transition-colors h-12 md:h-auto w-full md:w-auto flex-shrink-0"
                             >
                                 <Navigation className={`w-4 h-4 ${isLocating ? 'animate-pulse' : ''}`} />
                                 {isLocating ? 'Locating...' : 'Near Me'}
                             </button>
-                            <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl transition-colors h-12 md:h-auto w-full md:w-auto mt-2 md:mt-0">
-                                Search
+                            <button 
+                                onClick={handleSearchClick}
+                                disabled={isLocating}
+                                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-75 disabled:hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded-xl transition-colors h-12 md:h-auto w-full md:w-auto"
+                            >
+                                {isLocating ? 'Searching...' : 'Search'}
                             </button>
                         </div>
 
@@ -168,13 +219,13 @@ export default function ExploreClient() {
             {/* Main Content */}
             <main className="container mx-auto px-6 py-12 pb-24">
                 {/* Map Implementation */}
-                <div className="mb-12 -mt-20 relative z-10 w-full max-w-5xl mx-auto shadow-2xl rounded-3xl bg-white p-2">
+                <div ref={mapContainerRef} className="scroll-mt-32 mb-12 -mt-20 relative z-10 w-full max-w-5xl mx-auto shadow-2xl rounded-3xl bg-white p-2">
                     <MapComponent ngos={filteredNgos} userLocation={userLocation} />
                 </div>
 
                 {/* Filters */}
                 <div className="mb-10 overflow-x-auto pb-4 scrollbar-hide">
-                    <div className="flex gap-3 min-w-max justify-center">
+                    <div className="flex gap-3 md:justify-center px-2">
                         {categories.map((cat) => (
                             <button
                                 key={cat.name}
@@ -201,9 +252,13 @@ export default function ExploreClient() {
                     </p>
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-500 hidden sm:inline">Sort by:</span>
-                        <select className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg p-2.5 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer hover:border-gray-300">
-                            {userLocation ? <option>Distance: Nearest First</option> : null}
+                        <select 
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg p-2.5 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer hover:border-gray-300"
+                        >
                             <option>Recommended</option>
+                            {(userLocation || locationQuery) ? <option>Distance: Nearest First</option> : null}
                             <option>Rating: Highest</option>
                         </select>
                     </div>
@@ -212,7 +267,7 @@ export default function ExploreClient() {
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
                     {filteredNgos.length > 0 ? (
-                        filteredNgos.map((ngo) => (
+                        filteredNgos.slice(0, visibleCount).map((ngo) => (
                             <div key={ngo.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
                                 {/* Card Image */}
                                 <div className="h-48 relative overflow-hidden bg-gray-100">
@@ -253,12 +308,12 @@ export default function ExploreClient() {
                                     </div>
 
                                     <div className="flex gap-3">
-                                        <button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors">
+                                        <Link href="/donate" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors text-center inline-block">
                                             Donate
-                                        </button>
-                                        <button className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold py-2.5 rounded-lg transition-colors">
+                                        </Link>
+                                        <Link href={`#ngo-${ngo.id}`} className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold py-2.5 rounded-lg transition-colors text-center inline-block">
                                             Details
-                                        </button>
+                                        </Link>
                                     </div>
                                 </div>
                             </div>
@@ -273,9 +328,12 @@ export default function ExploreClient() {
                 </div>
 
                 {/* Pagination */}
-                {filteredNgos.length > 0 && (
+                {filteredNgos.length > visibleCount && (
                     <div className="mt-16 text-center">
-                        <button className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-3 px-8 rounded-xl transition-all hover:px-10 shadow-sm">
+                        <button 
+                            onClick={() => setVisibleCount((prev) => prev + 6)}
+                            className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-3 px-8 rounded-xl transition-all hover:px-10 shadow-sm"
+                        >
                             Load More Organizations
                         </button>
                     </div>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { useImageSequence } from '@/hooks/useImageSequence';
 
 const Hero = () => {
@@ -37,15 +38,29 @@ const Hero = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-3xl mx-auto px-6 text-center pt-24 pb-12">
+      <motion.div 
+        suppressHydrationWarning
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="relative z-10 max-w-3xl mx-auto px-6 text-center pt-24 pb-12"
+      >
         {/* Eyebrow */}
-        <div className="uppercase tracking-[0.2em] text-xs font-semibold mb-6 opacity-80 drop-shadow-md">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 0.8, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="uppercase tracking-[0.2em] text-xs font-semibold mb-6 drop-shadow-md"
+        >
           Experience
-        </div>
+        </motion.div>
 
         {/* Main Headline */}
-        <h1
-          className="text-7xl md:text-8xl font-bold leading-tight mb-8 tracking-[0.15em]"
+        <motion.h1
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="text-6xl md:text-7xl font-bold leading-tight mb-6 tracking-[0.15em]"
           style={{
             textShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
             letterSpacing: '0.1em',
@@ -53,35 +68,103 @@ const Hero = () => {
           }}
         >
           COMMUNITY<br />GIVING
-        </h1>
+        </motion.h1>
 
-        {/* Description */}
-        <p
-          className="text-base md:text-lg leading-relaxed opacity-90 mb-10 max-w-xl mx-auto font-normal"
-          style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)', fontWeight: 400 }}
+        {/* Description Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 md:p-6 mb-8 max-w-xl mx-auto text-left shadow-2xl overflow-hidden"
         >
-          Turn everyday items into powerful acts of kindness. ShareNest connects your donations with nearby individuals and verified NGOs—always free, always impact-first.
-        </p>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+          
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 1 },
+              visible: {
+                opacity: 1,
+                transition: { staggerChildren: 0.04, delayChildren: 0.7 },
+              },
+            }}
+            className="relative z-10 text-sm md:text-base leading-relaxed mb-6 text-white font-normal"
+            style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
+          >
+            {'"Turn everyday items into powerful acts of kindness. ShareNest connects your donations with nearby individuals and verified NGOs—always free, always impact-first."'.split(" ").map((word, i) => (
+              <motion.span
+                key={i}
+                variants={{
+                  hidden: { opacity: 0, filter: "blur(10px)", y: 10 },
+                  visible: { opacity: 0.95, filter: "blur(0px)", y: 0 }
+                }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="inline-block mr-1.5"
+              >
+                {word}
+              </motion.span>
+            ))}
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.8, duration: 0.8 }}
+            className="relative z-10 flex gap-2 items-center"
+          >
+            <div className="h-1.5 w-6 bg-emerald-400 rounded-full"></div>
+            <div className="h-1.5 w-6 bg-white/30 rounded-full"></div>
+            <div className="h-1.5 w-6 bg-white/30 rounded-full"></div>
+          </motion.div>
+        </motion.div>
 
         {/* CTA Buttons */}
-        <div className="flex flex-wrap gap-4 justify-center items-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
+          className="flex flex-wrap gap-4 justify-center items-center"
+        >
           <Link
             href="/donate"
-            className="px-10 py-4 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-emerald-900/40 min-w-[220px]"
+            className="group relative px-8 py-3.5 font-semibold rounded-xl overflow-hidden min-w-[200px] transition-transform hover:scale-105 active:scale-95 shadow-xl shadow-emerald-900/40"
             style={{ fontWeight: 600 }}
           >
-            Start Donating
+            {/* Background */}
+            <div className="absolute inset-0 bg-emerald-600 transition-colors group-hover:bg-emerald-700"></div>
+            
+            {/* Animated Shapes */}
+            <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-400/30 rounded-full blur-xl group-hover:scale-[3] transition-transform duration-700 ease-out z-0"></div>
+            <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-teal-300/20 rounded-full blur-lg group-hover:scale-[2] transition-transform duration-500 ease-out z-0"></div>
+            
+            {/* Shine Sweep Effect */}
+            <div className="absolute top-[-50%] left-[20%] w-[150%] h-[200%] bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[200%] group-hover:translate-x-[100%] skew-x-[-30deg] transition-transform duration-1000 ease-in-out z-0"></div>
+
+            {/* Content Let's keep it above shapes */}
+            <span className="relative z-10 text-white flex items-center justify-center gap-2">
+              Start Donating
+              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </span>
           </Link>
+          
           <Link
             href="/signup"
-            className="px-10 py-4 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-100 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/20 min-w-[220px]"
+            className="px-8 py-3.5 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-100 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/20 min-w-[200px] text-center"
             style={{ fontWeight: 600 }}
           >
             Create Free Account
           </Link>
-        </div>
+        </motion.div>
 
-        <div className="mt-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.9 }}
+          className="mt-6"
+        >
           <Link
             href="/register-ngo"
             className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-900/80 border border-emerald-500/50 text-emerald-400 font-semibold text-sm rounded-full hover:bg-gray-900 hover:border-emerald-400 transition-all"
@@ -90,14 +173,23 @@ const Hero = () => {
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
             Register as NGO
           </Link>
-        </div>
+        </motion.div>
 
         {/* Scroll Indicator */}
-        <div className="flex flex-col items-center text-xs opacity-60 mt-16 group">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          transition={{ duration: 1, delay: 1.5 }}
+          className="flex flex-col items-center text-xs mt-8 group"
+        >
           <span className="mb-3 font-medium uppercase tracking-widest group-hover:opacity-100 transition-opacity">Scroll to see how it works</span>
-          <div className="w-px h-12 bg-white/40 group-hover:bg-white transition-colors"></div>
-        </div>
-      </div>
+          <motion.div 
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="w-px h-12 bg-white/40 group-hover:bg-white transition-colors"
+          ></motion.div>
+        </motion.div>
+      </motion.div>
 
       {/* Curved Bottom Edge */}
       <div className="absolute bottom-0 left-0 right-0 overflow-hidden">

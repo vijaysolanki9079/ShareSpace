@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import { Camera, MessageCircle, Package } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const HowItWorks = () => {
   const steps = [
@@ -40,15 +43,41 @@ const HowItWorks = () => {
 
       <div className="container mx-auto px-6 relative z-10">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-20">
-          <span className="text-emerald-400 font-bold tracking-[0.2em] uppercase text-xs mb-4 block">Simple Process</span>
-          <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center max-w-2xl mx-auto mb-20"
+        >
+          <motion.span 
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-emerald-400 font-bold tracking-[0.2em] uppercase text-xs mb-4 block"
+          >
+            Simple Process
+          </motion.span>
+          <motion.h2 
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight"
+          >
             How <span className="bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">ShareNest</span> Works
-          </h2>
-          <p className="text-lg text-slate-400 leading-relaxed">
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="text-lg text-slate-400 leading-relaxed"
+          >
             Making a difference is simpler than ever. Connect directly with those in need in just three easy steps.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Steps Grid */}
         <div className="grid md:grid-cols-3 gap-8 relative">

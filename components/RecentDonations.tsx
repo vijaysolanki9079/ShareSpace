@@ -1,5 +1,6 @@
 import React from 'react';
 import { Package, Truck, Clock, MapPin, ArrowUpRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const RecentDonations = () => {
   const donations = [
@@ -39,7 +40,7 @@ const RecentDonations = () => {
   ];
 
   return (
-    <section className="pt-6 pb-24 relative overflow-hidden bg-[#F8FAFC]" id="donations">
+    <section className="pt-0 pb-24 relative overflow-hidden bg-[#F8FAFC]" id="donations">
       
       {/* STRONG MESH GRADIENT BG */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -50,15 +51,41 @@ const RecentDonations = () => {
       <div className="container mx-auto px-6 relative z-10">
         
         {/* Header Section */}
-        <div className="text-center max-w-3xl mx-auto mb-20">
-          <span className="text-emerald-600 font-bold tracking-[0.2em] uppercase text-[10px] mb-4 block">Live Feed</span>
-          <h2 className="text-4xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "50px" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="text-center max-w-3xl mx-auto mb-10"
+        >
+          <motion.span 
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+            className="text-emerald-600 font-bold tracking-[0.2em] uppercase text-[10px] mb-4 block"
+          >
+            Live Feed
+          </motion.span>
+          <motion.h2 
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="text-4xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight"
+          >
             Just Donated <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-sky-600">Nearby</span>
-          </h2>
-          <p className="text-lg text-slate-500 font-medium leading-relaxed">
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="text-lg text-slate-500 font-medium leading-relaxed"
+          >
             See what your neighbors are sharing right now. Join the circle of giving.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Donation Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">

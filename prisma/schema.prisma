@@ -4,7 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -38,6 +40,12 @@ model NGO {
   isVerified            Boolean    @default(false)
   bio                   String?
   image                 String?
+  // Plain decimal coords stored for Leaflet marker rendering
+  latitude              Float?
+  longitude             Float?
+  // PostGIS geography column — managed via raw SQL migration, not Prisma
+  location_geom         Unsupported("geography(Point, 4326)")?
+  locationName          String?
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
 

@@ -18,10 +18,33 @@ const navPillBase =
 function NavLinksGroup({
   isLight,
   secondaryTextColor,
+  isDarkBg,
 }: {
   isLight: boolean;
   secondaryTextColor: string;
+  isDarkBg?: boolean;
 }) {
+  // For dark backgrounds (Explore NGOs, How it Works)
+  if (isDarkBg) {
+    const pill = `${navPillBase} border-white/20 bg-white/10`;
+    const linkClass = `rounded-full px-4 py-2 text-sm font-medium transition-colors text-white/80 hover:text-white`;
+    
+    return (
+      <div className={pill}>
+        <Link href="/explore" className={linkClass}>
+          Explore NGOs
+        </Link>
+        <Link href="/#how-it-works" className={linkClass}>
+          How it Works
+        </Link>
+        <Link href="/about" className={linkClass}>
+          About
+        </Link>
+      </div>
+    );
+  }
+
+  // For light backgrounds
   const pill =
     isLight
       ? `${navPillBase} border-white/20 bg-white/10`
@@ -56,12 +79,14 @@ function UserAuthMenu({
   user,
   dashboardHref,
   onLogout,
+  isDarkBg,
 }: {
   isLight: boolean;
   textColor: string;
   user: { name: string; type: string };
   dashboardHref: string;
   onLogout: () => void;
+  isDarkBg?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -76,7 +101,7 @@ function UserAuthMenu({
   }, []);
 
   const glass =
-    isLight
+    isDarkBg || isLight
       ? 'border border-white/20 bg-white/10 shadow-sm backdrop-blur-md'
       : 'border border-slate-900/10 bg-slate-900/[0.04] shadow-sm backdrop-blur-md';
 
@@ -86,6 +111,8 @@ function UserAuthMenu({
 
   const itemLight = 'text-white hover:bg-white/15';
   const itemDark = 'text-slate-800 hover:bg-slate-900/[0.06]';
+
+  const itemClass = isDarkBg || isLight ? itemLight : itemDark;
 
   return (
     <div className="relative inline-block align-middle" ref={rootRef}>
@@ -97,7 +124,7 @@ function UserAuthMenu({
         aria-haspopup="menu"
       >
         <span className="whitespace-nowrap">
-          <span className={isLight ? 'font-medium text-white/80' : 'font-medium text-gray-600'}>Hi, </span>
+          <span className={isDarkBg || isLight ? 'font-medium text-white/80' : 'font-medium text-gray-600'}>Hi, </span>
           <span className="inline-block max-w-[9rem] truncate align-bottom font-semibold">{firstName}</span>
         </span>
         <ChevronDown className={`h-4 w-4 shrink-0 opacity-90 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -107,7 +134,7 @@ function UserAuthMenu({
           <Link
             href={dashboardHref}
             role="menuitem"
-            className={`block px-3.5 py-2.5 text-sm font-medium ${isLight ? itemLight : itemDark}`}
+            className={`block px-3.5 py-2.5 text-sm font-medium ${itemClass}`}
             onClick={() => setOpen(false)}
           >
             Dashboard
@@ -115,7 +142,7 @@ function UserAuthMenu({
           <button
             type="button"
             role="menuitem"
-            className={`w-full px-3.5 py-2.5 text-left text-sm font-medium ${isLight ? `${itemLight} text-white/95` : `${itemDark} text-slate-700`}`}
+            className={`w-full px-3.5 py-2.5 text-left text-sm font-medium ${isDarkBg || isLight ? `${itemLight} text-white/95` : `${itemDark} text-slate-700`}`}
             onClick={() => {
               setOpen(false);
               onLogout();
@@ -133,11 +160,37 @@ function GuestAuthPills({
   isLight,
   loginBtn,
   signupBtn,
+  isDarkBg,
 }: {
   isLight: boolean;
   loginBtn: string;
   signupBtn: string;
+  isDarkBg?: boolean;
 }) {
+  // For dark backgrounds
+  if (isDarkBg) {
+    const shell =
+      'flex items-center gap-2 rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur-md shadow-sm';
+
+    return (
+      <div className={shell}>
+        <Link
+          href="/login"
+          className="rounded-full px-5 py-2 text-sm font-medium transition-colors text-white/80 hover:text-white hover:bg-white/10"
+        >
+          Log in
+        </Link>
+        <Link
+          href="/signup"
+          className="rounded-full px-5 py-2 text-sm font-medium transition-colors text-white bg-emerald-600 hover:bg-emerald-700"
+        >
+          Sign up
+        </Link>
+      </div>
+    );
+  }
+
+  // For light backgrounds
   const shell =
     isLight
       ? 'flex items-center gap-2 rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur-md shadow-sm'
@@ -167,11 +220,13 @@ const Navbar = ({
   className = 'absolute top-0 left-0 right-0 z-50',
 }: NavbarProps) => {
   const isLight = variant === 'light';
-  const textColor = isLight ? 'text-white' : 'text-gray-900';
-  const secondaryTextColor = isLight ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900';
-  const logoBg = isLight ? 'bg-white/10 border-white/20' : 'bg-gray-100 border-gray-200';
-  const loginBtn = isLight ? 'text-white border-white/60 hover:bg-white/10' : 'text-gray-900 border-gray-300 hover:bg-gray-50';
-  const signupBtn = isLight ? 'text-black bg-white hover:bg-white/90' : 'text-white bg-emerald-600 hover:bg-emerald-700';
+  const isDarkBg = background.includes('slate-900') || background.includes('slate-950') || background.includes('[#022c22]');
+  
+  const textColor = isDarkBg || isLight ? 'text-white' : 'text-gray-900';
+  const secondaryTextColor = isDarkBg || isLight ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900';
+  const logoBg = isDarkBg || isLight ? 'bg-white/10 border-white/20' : 'bg-gray-100 border-gray-200';
+  const loginBtn = isDarkBg || isLight ? 'text-white/80 border-white/40 hover:text-white hover:bg-white/10' : 'text-gray-900 border-gray-300 hover:bg-gray-50';
+  const signupBtn = isDarkBg || isLight ? 'text-white bg-emerald-600 hover:bg-emerald-700' : 'text-white bg-emerald-600 hover:bg-emerald-700';
 
   const { user, isAuthenticated } = useAuth();
 
@@ -197,11 +252,11 @@ const Navbar = ({
           </span>
         </Link>
 
-        <NavLinksGroup isLight={isLight} secondaryTextColor={secondaryTextColor} />
+        <NavLinksGroup isLight={isLight} secondaryTextColor={secondaryTextColor} isDarkBg={isDarkBg} />
 
         <div className="flex shrink-0 items-center gap-3 md:min-w-0">
           {!isAuthenticated || !user ? (
-            <GuestAuthPills isLight={isLight} loginBtn={loginBtn} signupBtn={signupBtn} />
+            <GuestAuthPills isLight={isLight} loginBtn={loginBtn} signupBtn={signupBtn} isDarkBg={isDarkBg} />
           ) : (
             <UserAuthMenu
               isLight={isLight}
@@ -209,6 +264,7 @@ const Navbar = ({
               user={user}
               dashboardHref={dashboardHref}
               onLogout={handleLogout}
+              isDarkBg={isDarkBg}
             />
           )}
         </div>

@@ -20,7 +20,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="h-full antialiased scroll-smooth" data-scroll-behavior="smooth">
-      <body className={`flex min-h-full flex-col font-sans ${nunito.className}`}>
+      <body className={`flex min-h-full flex-col font-sans overflow-x-hidden ${nunito.className}`}>
         <Providers>
           <SiteChrome>{children}</SiteChrome>
         </Providers>
