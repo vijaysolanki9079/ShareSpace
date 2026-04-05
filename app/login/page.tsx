@@ -89,9 +89,9 @@ function LoginForm() {
                     <div className="text-center mb-8 animate-slide-up">
                         <div className="inline-flex items-center gap-3 font-extrabold text-2xl text-gray-900 mb-6">
                             <div className="w-10 h-10 bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 flex items-center justify-center">
-                                <img src={logoImg} alt="ShareNest" className="w-full h-full object-cover" />
+                                <img src={logoImg} alt="ShareSpace" className="w-full h-full object-cover" />
                             </div>
-                            ShareNest
+                            ShareSpace
                         </div>
                         <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome back</h1>
                         <p className="text-sm text-gray-500">Please enter your details to sign in.</p>

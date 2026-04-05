@@ -93,7 +93,7 @@ export default function HeroAnimationGenerator() {
           </div>
           <h1 className="mb-2 text-3xl font-bold text-slate-900">Generate Hero Frames</h1>
           <p className="text-lg text-slate-600">
-            Create animated transition frames for your ShareNest hero section
+            Create animated transition frames for your ShareSpace hero section
           </p>
         </div>
 

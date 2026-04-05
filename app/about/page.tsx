@@ -109,7 +109,7 @@ const About = () => {
             transition={{ delay: 0.25, duration: 0.4, ease: "easeOut" }}
             className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed mb-10 font-medium"
           >
-            ShareNest isn&apos;t just a platform; it&apos;s a movement to reduce waste and strengthen community bonds by ensuring usable items find a second home.
+            ShareSpace isn&apos;t just a platform; it&apos;s a movement to reduce waste and strengthen community bonds by ensuring usable items find a second home.
           </motion.p>
 
           <motion.div
@@ -201,7 +201,7 @@ const About = () => {
                     We noticed a disconnect. Millions of usable items end up in landfills every year, while countless individuals and NGOs struggle to find basic resources. The problem wasn&apos;t a lack of generosity, but a lack of infrastructure.
                   </p>
                   <p className="text-slate-600 text-sm md:text-base mb-8 leading-relaxed">
-                    ShareNest was born to bridge this gap. We created a space where giving is transparent, easy, and impactful. By connecting donors directly with verified NGOs, we ensure every item goes exactly where it&apos;s needed most.
+                    ShareSpace was born to bridge this gap. We created a space where giving is transparent, easy, and impactful. By connecting donors directly with verified NGOs, we ensure every item goes exactly where it&apos;s needed most.
                   </p>
 
                   <div className="flex flex-wrap gap-10 border-t border-slate-200 pt-8">
@@ -233,7 +233,9 @@ const About = () => {
                 transition={{ duration: 0.6 }}
                 className="text-center mb-16"
               >
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900">Our Core Values</h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900">
+                  Our Core <span className="text-emerald-600">Values</span>
+                </h2>
                 <p className="text-slate-600 text-sm md:text-base max-w-2xl mx-auto">
                   The principles that guide every decision we make in our mission to reduce waste.
                 </p>
@@ -358,7 +360,7 @@ const About = () => {
               transition={{ duration: 0.4, delay: 0.2 }}
               className="text-base md:text-lg text-emerald-100/90 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed"
             >
-              Whether you have items to give or need support for your cause, there is a place for you at ShareNest.
+              Whether you have items to give or need support for your cause, there is a place for you at ShareSpace.
             </motion.p>
 
             <motion.div 

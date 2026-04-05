@@ -219,7 +219,7 @@ const CalendarPicker = () => {
   return (
     <div className="flex items-center justify-between mb-8">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome to ShareNest</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome to ShareSpace</h2>
         <p className="text-sm text-gray-600">Start sharing and making community impact today</p>
       </div>
       <div className="flex gap-2">
@@ -315,7 +315,7 @@ export default function DashboardComplete() {
           className="bg-white/70 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-40 px-12 py-6"
         >
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900">ShareNest Dashboard</h1>
+            <h1 className="text-xl font-bold text-gray-900">ShareSpace Dashboard</h1>
             <div className="flex items-center gap-6">
               <div className="relative hidden md:block">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -357,7 +357,7 @@ export default function DashboardComplete() {
               >
                 <AnimatedWave />
                 <div className="relative z-10">
-                  <h2 className="text-4xl font-bold mb-3">Welcome to ShareNest</h2>
+                  <h2 className="text-4xl font-bold mb-3">Welcome to ShareSpace</h2>
                   <p className="text-white/90 max-w-md text-lg">Start your community sharing journey. Make donations that matter.</p>
                 </div>
               </motion.div>

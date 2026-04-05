@@ -1,11 +1,26 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useImageSequence } from '@/hooks/useImageSequence';
 
+const CAROUSEL_TEXTS = [
+  '"Turn everyday items into powerful acts of kindness. ShareSpace connects your donations with nearby individuals and verified NGOs—always free, always impact-first."',
+  '"Give your pre-loved belongings a second life. Join a growing community dedicated to sustainability, reducing waste, and empowering local neighborhoods."',
+  '"Every donation makes a difference. Whether it\'s clothing, electronics, or furniture, your contribution directly supports those who need it most."'
+];
+
 const Hero = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % CAROUSEL_TEXTS.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
+
   const canvasRef = useImageSequence({
     frameCount: 80,
     imagePrefix: '/assets/transitions/Create_a_smooth_202602151314_feos1_',
@@ -75,47 +90,59 @@ const Hero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 md:p-6 mb-8 max-w-xl mx-auto text-left shadow-2xl overflow-hidden"
+          className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 md:p-6 mb-8 max-w-xl mx-auto text-center shadow-2xl overflow-hidden flex flex-col items-center"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
           
           <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: { opacity: 1 },
-              visible: {
-                opacity: 1,
-                transition: { staggerChildren: 0.04, delayChildren: 0.7 },
-              },
-            }}
-            className="relative z-10 text-sm md:text-base leading-relaxed mb-6 text-white font-normal"
+            className="relative z-10 text-sm md:text-base leading-relaxed mb-6 text-white font-normal min-h-[4.5rem] flex items-center justify-center"
             style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
           >
-            {'"Turn everyday items into powerful acts of kindness. ShareNest connects your donations with nearby individuals and verified NGOs—always free, always impact-first."'.split(" ").map((word, i) => (
-              <motion.span
-                key={i}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentIndex}
+                initial="hidden"
+                animate="visible"
+                exit={{ opacity: 0, y: -10, filter: "blur(5px)" }}
                 variants={{
-                  hidden: { opacity: 0, filter: "blur(10px)", y: 10 },
-                  visible: { opacity: 0.95, filter: "blur(0px)", y: 0 }
+                  hidden: { opacity: 1 },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.04 },
+                  },
                 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="inline-block mr-1.5"
               >
-                {word}
-              </motion.span>
-            ))}
+                {CAROUSEL_TEXTS[currentIndex].split(" ").map((word, i) => (
+                  <motion.span
+                    key={i}
+                    variants={{
+                      hidden: { opacity: 0, filter: "blur(10px)", y: 10 },
+                      visible: { opacity: 0.95, filter: "blur(0px)", y: 0 }
+                    }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className="inline-block mr-1.5"
+                  >
+                    {word}
+                  </motion.span>
+                ))}
+              </motion.div>
+            </AnimatePresence>
           </motion.div>
 
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.8, duration: 0.8 }}
-            className="relative z-10 flex gap-2 items-center"
+            className="relative z-10 flex gap-2 items-center justify-center mt-auto"
           >
-            <div className="h-1.5 w-6 bg-emerald-400 rounded-full"></div>
-            <div className="h-1.5 w-6 bg-white/30 rounded-full"></div>
-            <div className="h-1.5 w-6 bg-white/30 rounded-full"></div>
+            {CAROUSEL_TEXTS.map((_, i) => (
+              <motion.div
+                key={i}
+                className={`h-1.5 w-6 rounded-full transition-colors duration-500 ${
+                  i === currentIndex ? 'bg-emerald-400' : 'bg-white/30'
+                }`}
+              />
+            ))}
           </motion.div>
         </motion.div>
 
@@ -176,11 +203,12 @@ const Hero = () => {
         </motion.div>
 
         {/* Scroll Indicator */}
-        <motion.div 
+        <motion.a 
+          href="#how-it-works"
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.6 }}
           transition={{ duration: 1, delay: 1.5 }}
-          className="flex flex-col items-center text-xs mt-8 group"
+          className="flex flex-col items-center text-xs mt-8 group cursor-pointer"
         >
           <span className="mb-3 font-medium uppercase tracking-widest group-hover:opacity-100 transition-opacity">Scroll to see how it works</span>
           <motion.div 
@@ -188,7 +216,7 @@ const Hero = () => {
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="w-px h-12 bg-white/40 group-hover:bg-white transition-colors"
           ></motion.div>
-        </motion.div>
+        </motion.a>
       </motion.div>
 
       {/* Curved Bottom Edge */}

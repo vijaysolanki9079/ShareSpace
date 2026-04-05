@@ -1,6 +1,12 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const Footer = () => {
+  const pathname = usePathname();
+  const howItWorksHref = pathname === '/' ? '#how-it-works' : '/#how-it-works';
+
   return (
     <footer className="relative bg-slate-950 text-white overflow-hidden border-t border-white/10">
       
@@ -17,7 +23,7 @@ const Footer = () => {
         <p className="text-sm text-slate-400">
           © {new Date().getFullYear()} 
           <span className="ml-1 font-semibold bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-transparent">
-            ShareNest
+            ShareSpace
           </span>. All rights reserved.
         </p>
 
@@ -25,19 +31,17 @@ const Footer = () => {
         <div className="flex items-center gap-6 text-sm">
           {[
             { name: 'About', href: '/about' },
+            { name: 'How it Works', href: howItWorksHref },
             { name: 'Explore', href: '/explore' },
             { name: 'Register NGO', href: '/register-ngo' },
           ].map((link, i) => (
             <Link
               key={i}
               href={link.href}
-              className="relative text-slate-400 hover:text-white transition-colors"
+              className="relative text-slate-400 hover:text-white transition-colors group"
             >
               {link.name}
-
-              <span className="absolute left-1/2 -translate-x-1/2 bottom-[-6px] w-0 h-[2px] 
-                bg-gradient-to-r from-emerald-400 to-emerald-500 
-                hover:w-full transition-all duration-300"></span>
+              <span className="absolute left-1/2 -translate-x-1/2 bottom-[-6px] w-0 h-[2px] bg-gradient-to-r from-emerald-400 to-emerald-500 group-hover:w-full transition-all duration-300"></span>
             </Link>
           ))}
         </div>

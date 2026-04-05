@@ -66,7 +66,7 @@ const HowItWorks = () => {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight"
           >
-            How <span className="bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">ShareNest</span> Works
+            How <span className="bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">ShareSpace</span> Works
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}

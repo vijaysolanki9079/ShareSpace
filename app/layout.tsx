@@ -11,8 +11,8 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "ShareNest - Community Giving Platform",
-  description: "ShareNest is a platform connecting donors with verified NGOs and neighbors. Donate items, reduce waste, and make a community impact.",
+  title: "ShareSpace - Community Giving Platform",
+  description: "ShareSpace is a platform connecting donors with verified NGOs and neighbors. Donate items, reduce waste, and make a community impact.",
 };
 
 export default function RootLayout({

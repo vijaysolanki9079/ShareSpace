@@ -135,7 +135,7 @@ const RegisterNGO = () => {
                             transition={{ delay: 0.2, duration: 0.5 }}
                         >
                             <h1 className="text-3xl lg:text-4xl font-bold mb-3 tracking-tight text-gray-900">
-                                Partner with ShareNest
+                                Partner with ShareSpace
                             </h1>
                             <p className="text-gray-500 mb-8 text-lg">
                                 Join 1,200+ verified NGOs connecting with donors in your area.
@@ -339,7 +339,7 @@ const RegisterNGO = () => {
                                     {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
                                 </div>
                                 <p className="italic text-gray-300 mb-6 leading-relaxed">
-                                    &quot;ShareNest has completely transformed how we source clothes for our shelter. The local community is incredibly generous when they know exactly what&apos;s needed.&quot;
+                                    &quot;ShareSpace has completely transformed how we source clothes for our shelter. The local community is incredibly generous when they know exactly what&apos;s needed.&quot;
                                 </p>
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden ring-2 ring-emerald-500/20">

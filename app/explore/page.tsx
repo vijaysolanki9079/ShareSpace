@@ -2,7 +2,7 @@ import ExploreClient from "@/components/ExploreClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Explore | ShareNest",
+  title: "Explore | ShareSpace",
   description: "Discover nearby NGOs and donation drives in your community.",
 };
 

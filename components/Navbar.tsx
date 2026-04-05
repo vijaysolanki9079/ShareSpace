@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { signOut } from 'next-auth/react';
 import { ChevronDown } from 'lucide-react';
@@ -24,6 +25,9 @@ function NavLinksGroup({
   secondaryTextColor: string;
   isDarkBg?: boolean;
 }) {
+  const pathname = usePathname();
+  const howItWorksHref = pathname === '/' ? '#how-it-works' : '/#how-it-works';
+
   // For dark backgrounds (Explore NGOs, How it Works)
   if (isDarkBg) {
     const pill = `${navPillBase} border-white/20 bg-white/10`;
@@ -34,7 +38,7 @@ function NavLinksGroup({
         <Link href="/explore" className={linkClass}>
           Explore NGOs
         </Link>
-        <Link href="/#how-it-works" className={linkClass}>
+        <Link href={howItWorksHref} className={linkClass}>
           How it Works
         </Link>
         <Link href="/about" className={linkClass}>
@@ -57,7 +61,7 @@ function NavLinksGroup({
       <Link href="/explore" className={linkClass}>
         Explore NGOs
       </Link>
-      <Link href="/#how-it-works" className={linkClass}>
+      <Link href={howItWorksHref} className={linkClass}>
         How it Works
       </Link>
       <Link href="/about" className={linkClass}>
@@ -248,7 +252,7 @@ const Navbar = ({
           <span
             className={`text-xl font-extrabold tracking-tight drop-shadow-sm transition-opacity group-hover:opacity-90 ${textColor}`}
           >
-            ShareNest
+            ShareSpace
           </span>
         </Link>
 
