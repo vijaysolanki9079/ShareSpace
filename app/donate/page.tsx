@@ -30,9 +30,9 @@ const Donate = () => {
             transition={{ duration: 0.6 }}
             className="min-h-screen bg-white font-sans text-gray-900"
         >
-            <div className="flex min-h-screen flex-col lg:flex-row">
+            <div className="flex min-h-screen flex-col lg:flex-row items-stretch">
                 {/* Left Side: Visual & Info */}
-                <div className="w-full lg:w-[40%] bg-emerald-900 relative overflow-hidden flex flex-col justify-center p-8 lg:p-16 text-white">
+                <div className="w-full lg:w-[40%] bg-emerald-900 relative overflow-hidden flex flex-col justify-start pt-24 pb-12 px-8 lg:px-16 text-white min-h-[50vh] lg:min-h-screen">
                     <div className="absolute inset-0 opacity-20">
                         <img
                             src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1600&auto=format&fit=crop"
@@ -42,7 +42,7 @@ const Donate = () => {
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 via-emerald-900/90 to-emerald-800/80"></div>
 
-                    <div className="relative z-10">
+                    <div className="relative z-10 mt-4 md:mt-12 lg:mt-20">
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -81,7 +81,7 @@ const Donate = () => {
                 </div>
 
                 {/* Right Side: Form */}
-                <div className="w-full lg:w-[60%] bg-gray-50 flex flex-col justify-start p-6 lg:p-10 pt-16 lg:pt-24">
+                <div className="w-full lg:w-[60%] bg-gray-50 flex flex-col justify-start p-6 lg:p-12 pt-12 md:pt-20 lg:pt-32 pb-24 overflow-y-auto min-h-screen">
                     <div className="max-w-2xl mx-auto w-full">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}

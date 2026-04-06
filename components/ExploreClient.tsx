@@ -9,6 +9,9 @@ import {
     HeartPulse, TreePine, BadgeCheck, Star, Users, Navigation
 } from 'lucide-react';
 import { MOCK_NGOS } from '@/lib/mock-data';
+import { toast } from 'react-hot-toast';
+import SearchHero from '@/components/SearchHero';
+import { LocationResult } from '@/components/LocationAutocomplete';
 
 const MapComponent = dynamic(() => import('@/components/MapComponent'), { 
     ssr: false, 
@@ -33,7 +36,7 @@ export default function ExploreClient() {
     const [searchQuery, setSearchQuery] = useState('');
     const [locationQuery, setLocationQuery] = useState('');
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-    const [isLocating, setIsLocating] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
     const [sortBy, setSortBy] = useState('Recommended');
     const [visibleCount, setVisibleCount] = useState(6);
     const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -48,60 +51,28 @@ export default function ExploreClient() {
         { name: 'Other', icon: <Star size={16} /> },
     ];
 
-    const handleGetLocation = () => {
-        if (!navigator.geolocation) {
-            alert('Geolocation is not supported by your browser');
-            return;
-        }
+    const handleSearch = async (query: { ngoName: string; location: LocationResult | null; }) => {
+        setIsSearching(true);
+        setSearchQuery(query.ngoName);
         
-        setIsLocating(true);
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setUserLocation([position.coords.latitude, position.coords.longitude]);
-                setIsLocating(false);
-            },
-            () => {
-                alert('Unable to retrieve your location. Please check browser permissions.');
-                setIsLocating(false);
-            }
-        );
-    };
-
-    const handleSearchClick = async () => {
-        if (!locationQuery && !searchQuery) return;
-        
-        // If there is a location query, try to geocode it (uses Nominatim API)
-        if (locationQuery) {
-            setIsLocating(true);
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationQuery)}`);
-                const data = await res.json();
-                if (data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    setUserLocation([lat, lon]);
-                } else if (filteredNgos.length > 0) {
-                    // Fallback to the first filtered NGO if geocoding fails to find the place
-                    setUserLocation([filteredNgos[0].lat, filteredNgos[0].lng]);
-                }
-            } catch (error) {
-                console.error("Geocoding failed", error);
-                if (filteredNgos.length > 0) {
-                    setUserLocation([filteredNgos[0].lat, filteredNgos[0].lng]);
-                }
-            } finally {
-                setIsLocating(false);
-            }
-        } 
-        // If there's no location query but we have a search name, jump to the first matching NGO
-        else if (filteredNgos.length > 0) {
-            setUserLocation([filteredNgos[0].lat, filteredNgos[0].lng]);
+        if (query.location) {
+            setUserLocation([query.location.lat, query.location.lon]);
+            setLocationQuery(query.location.displayName);
         }
 
-        // Scroll down to the map
-        if (mapContainerRef.current) {
-            mapContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        // Simulate search delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setIsSearching(false);
+
+        // Auto-scroll to map
+        setTimeout(() => {
+            if (mapContainerRef.current) {
+                mapContainerRef.current.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                });
+            }
+        }, 100);
     };
 
     const ngos = useMemo(() => {
@@ -152,69 +123,9 @@ export default function ExploreClient() {
             className="min-h-screen bg-gray-50 font-sans text-gray-900"
         >
             {/* Search Hero */}
-            <section className="relative bg-emerald-900 px-6 pb-40 md:pb-48 pt-24 text-center text-white">
-                <div className="container mx-auto max-w-5xl">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
-                            Find Organizations Near You
-                        </h1>
-                        <p className="text-emerald-100/80 mb-8 max-w-2xl mx-auto">
-                            Connect with verified NGOs and support causes that matter to you. Search or share your location to discover local giving opportunities.
-                        </p>
+            {/* Search Hero */}
+            <SearchHero onSearch={handleSearch} isSearching={isSearching} />
 
-                        <div className="bg-white p-2 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-2 max-w-4xl mx-auto mb-10">
-                            <div className="flex-1 flex items-center px-4 border-b md:border-b-0 md:border-r border-gray-100 h-12 md:h-auto">
-                                <Search className="text-gray-400 w-5 h-5 mr-3 flex-shrink-0" />
-                                <input
-                                    type="text"
-                                    placeholder="Search by name..."
-                                    className="w-full text-gray-900 placeholder-gray-400 outline-none text-base"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
-                                />
-                            </div>
-                            <div className="flex-[0.6] flex items-center px-4 h-12 md:h-auto border-b md:border-b-0 md:border-r border-gray-100">
-                                <MapPin className="text-gray-400 w-5 h-5 mr-3 flex-shrink-0" />
-                                <input
-                                    type="text"
-                                    placeholder="Area (e.g. Delhi)"
-                                    className="w-full text-gray-900 placeholder-gray-400 outline-none text-base"
-                                    value={locationQuery}
-                                    onChange={(e) => setLocationQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
-                                />
-                            </div>
-                            <button 
-                                onClick={handleGetLocation} 
-                                className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold py-3 px-5 rounded-xl transition-colors h-12 md:h-auto w-full md:w-auto flex-shrink-0"
-                            >
-                                <Navigation className={`w-4 h-4 ${isLocating ? 'animate-pulse' : ''}`} />
-                                {isLocating ? 'Locating...' : 'Near Me'}
-                            </button>
-                            <button 
-                                onClick={handleSearchClick}
-                                disabled={isLocating}
-                                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-75 disabled:hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded-xl transition-colors h-12 md:h-auto w-full md:w-auto"
-                            >
-                                {isLocating ? 'Searching...' : 'Search'}
-                            </button>
-                        </div>
-
-                        <div className="flex items-center justify-center gap-4">
-                            <span className="text-sm font-medium text-emerald-200/60 uppercase tracking-widest">Are you an NGO?</span>
-                            <Link href="/register-ngo" className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-full border border-white/20 transition-all font-medium backdrop-blur-sm group">
-                                <Users size={16} className="text-emerald-400 group-hover:scale-110 transition-transform" />
-                                Register as NGO
-                            </Link>
-                        </div>
-                    </motion.div>
-                </div>
-            </section>
 
             {/* Main Content */}
             <main className="container mx-auto px-6 py-12 pb-24">

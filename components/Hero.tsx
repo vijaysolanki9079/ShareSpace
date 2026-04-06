@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useImageSequence } from '@/hooks/useImageSequence';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 const CAROUSEL_TEXTS = [
   '"Turn everyday items into powerful acts of kindness. ShareSpace connects your donations with nearby individuals and verified NGOs—always free, always impact-first."',
@@ -13,6 +16,16 @@ const CAROUSEL_TEXTS = [
 
 const Hero = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  const handleDonateClick = (e: React.MouseEvent) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      toast.error('Please sign in to donate items!');
+      router.push('/login');
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -155,6 +168,7 @@ const Hero = () => {
         >
           <Link
             href="/donate"
+            onClick={handleDonateClick}
             className="group relative px-8 py-3.5 font-semibold rounded-xl overflow-hidden min-w-[200px] transition-transform hover:scale-105 active:scale-95 shadow-xl shadow-emerald-900/40"
             style={{ fontWeight: 600 }}
           >

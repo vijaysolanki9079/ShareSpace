@@ -18,7 +18,7 @@ import {
   Users,
   Star,
   Leaf,
-  Globe,
+  Globe, Search,
 } from 'lucide-react';
 import MyDonations from './MyDonations';
 import MyRequests from './MyRequests';
@@ -213,6 +213,22 @@ function TopBar() {
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           
+          <Link
+            href="/explore"
+            className="hidden sm:flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-900/40 px-4 h-10 text-sm font-medium text-teal-100/90 shadow-sm backdrop-blur-md transition-all hover:border-teal-400/45 hover:bg-teal-500/20 hover:text-white sm:mr-1"
+          >
+            <Search className="h-4 w-4" />
+            Explore NGOs
+          </Link>
+
+          <Link
+            href="/explore"
+            className="flex sm:hidden items-center justify-center h-10 w-10 rounded-full border border-teal-500/20 bg-teal-900/40 text-teal-100/90 shadow-sm backdrop-blur-md transition-all hover:border-teal-400/45 hover:bg-teal-500/20 hover:text-white"
+            aria-label="Explore NGOs"
+          >
+            <Search className="h-[1.15rem] w-[1.15rem]" />
+          </Link>
+
           <Link
             href="/"
             className="hidden sm:flex items-center gap-2 rounded-full border border-emerald-500/20 bg-black/40 px-4 h-10 text-sm font-medium text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white sm:mr-1"
