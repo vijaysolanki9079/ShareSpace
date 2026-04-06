@@ -1,7 +1,7 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
-export const middleware = withAuth(
+export const proxy = withAuth(
   function middleware(req) {
     // Allow access to protected routes only if authenticated
     if (req.nextauth.token) {
