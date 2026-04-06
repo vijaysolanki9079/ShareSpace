@@ -1,0 +1,85 @@
+
+/home/vijay/Desktop/projects/ShareSpace/app/api/analytics/route.ts
+    5:27  warning  'req' is defined but never used               @typescript-eslint/no-unused-vars
+  113:11  warning  'results' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/vijay/Desktop/projects/ShareSpace/app/api/user/settings/route.ts
+  18:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/vijay/Desktop/projects/ShareSpace/components/ExploreClient.tsx
+   8:5   warning  'Search' is defined but never used      @typescript-eslint/no-unused-vars
+   9:45  warning  'Users' is defined but never used       @typescript-eslint/no-unused-vars
+   9:52  warning  'Navigation' is defined but never used  @typescript-eslint/no-unused-vars
+  12:10  warning  'toast' is defined but never used       @typescript-eslint/no-unused-vars
+
+/home/vijay/Desktop/projects/ShareSpace/components/LocationAutocomplete.tsx
+  243:85  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  243:93  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/home/vijay/Desktop/projects/ShareSpace/components/MapComponent.tsx
+  34:24  warning  'category' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/vijay/Desktop/projects/ShareSpace/components/dashboard/DashboardClient.tsx
+    3:27  warning  'useEffect' is defined but never used                   @typescript-eslint/no-unused-vars
+   20:3   warning  'ChevronRight' is defined but never used                @typescript-eslint/no-unused-vars
+  254:10  warning  'activeFunction' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  254:26  warning  'setActiveFunction' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  255:10  warning  'sidebarOpen' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  255:23  warning  'setSidebarOpen' is assigned a value but never used     @typescript-eslint/no-unused-vars
+
+/home/vijay/Desktop/projects/ShareSpace/components/dashboard/MyRequests.tsx
+  59:87  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/vijay/Desktop/projects/ShareSpace/components/dashboard/PremiumDashboard.tsx
+  272:61  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/vijay/Desktop/projects/ShareSpace/components/dashboard/Settings.tsx
+  32:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  33:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/vijay/Desktop/projects/ShareSpace/lib/auth.ts
+  116:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/vijay/Desktop/projects/ShareSpace/lib/repositories/ngo.ts
+  93:9  warning  'distanceExpr' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/vijay/Desktop/projects/ShareSpace/lib/search-utils.ts
+    8:46  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    8:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   27:53  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   27:63  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  356:27  warning  'event' is defined but never used         @typescript-eslint/no-unused-vars
+
+/home/vijay/Desktop/projects/ShareSpace/lib/server-db.ts
+  41:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/vijay/Desktop/projects/ShareSpace/scripts/patch-bg-zinc-100.cjs
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/vijay/Desktop/projects/ShareSpace/scripts/patch-bg.cjs
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/vijay/Desktop/projects/ShareSpace/scripts/patch-bg2.cjs
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/vijay/Desktop/projects/ShareSpace/scripts/patch-cards.cjs
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/vijay/Desktop/projects/ShareSpace/scripts/patch-h2.cjs
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/vijay/Desktop/projects/ShareSpace/scripts/patch.cjs
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/vijay/Desktop/projects/ShareSpace/scripts/patch.js
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/home/vijay/Desktop/projects/ShareSpace/server/routers/search.ts
+  90:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 40 problems (25 errors, 15 warnings)
+
