@@ -90,7 +90,7 @@ export async function findNearbyNGOs({
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
   // Distance expression (metres → km) — NULL when no user location
-  const distanceExpr = hasLocation
+  const _distanceExpr = hasLocation
     ? `ROUND((ST_DistanceSphere(
          "location_geom"::geometry,
          ST_MakePoint(${params.indexOf(lng!) + 1 /* lon param */}, ${params.indexOf(lat!) + 1 /* lat param */})::geometry

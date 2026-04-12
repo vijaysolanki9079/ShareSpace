@@ -269,7 +269,7 @@ function TopBar() {
                 >
                   <h3 className="mb-3 text-sm font-semibold text-white">Notifications</h3>
                   <div className="flex flex-col gap-2 rounded-xl bg-white/5 p-4 text-center">
-                    <p className="text-sm text-zinc-300">You're all caught up!</p>
+                    <p className="text-sm text-zinc-300">You&apos;re all caught up!</p>
                   </div>
                 </motion.div>
               )}

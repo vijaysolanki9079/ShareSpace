@@ -167,7 +167,7 @@ const Hero = () => {
           className="flex flex-wrap gap-4 justify-center items-center"
         >
           <Link
-            href="/donate"
+            href="/donations"
             onClick={handleDonateClick}
             className="group relative px-8 py-3.5 font-semibold rounded-xl overflow-hidden min-w-[200px] transition-transform hover:scale-105 active:scale-95 shadow-xl shadow-emerald-900/40"
             style={{ fontWeight: 600 }}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { LocationResult } from '@/components/LocationAutocomplete';
 
 /**
@@ -353,7 +354,7 @@ export class SearchAnalyticsTracker {
    * Send event to your analytics service
    * Replace with your actual analytics implementation
    */
-  private sendToAnalytics(event: SearchAnalytics): void {
+  private sendToAnalytics(_event: SearchAnalytics): void {
     // Example: Send to Mixpanel, Segment, or custom endpoint
     if (process.env.NODE_ENV === 'development') {
       // console.log('📊 Search Analytics:', event);

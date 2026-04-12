@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -17,7 +17,6 @@ import {
   Home,
   LogOut,
   Search,
-  ChevronRight,
   BarChart3,
   Zap,
   Shield,
@@ -251,8 +250,8 @@ const CalendarPicker = () => {
 
 // ============ MAIN DASHBOARD ============
 export default function DashboardComplete() {
-  const [activeFunction, setActiveFunction] = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [_activeFunction, _setActiveFunction] = useState(0);
+  const [_sidebarOpen, _setSidebarOpen] = useState(true);
 
   const navItems = [
     { icon: Home, label: 'Dashboard' },

@@ -52,6 +52,15 @@ function getNavbarConfigForPath(pathname: string | null) {
     };
   }
 
+  // Donations - Dark green navbar to match main theme ✨
+  if (path === "/donations") {
+    return {
+      variant: "light" as const,
+      background: "bg-[#022c22]",
+      className: "sticky top-0 left-0 right-0 z-50 shadow-lg",
+    };
+  }
+
   // Default - Light gray navbar
   return {
     variant: "dark" as const,

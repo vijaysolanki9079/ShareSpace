@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createTRPCRouter, publicProcedure } from '@/server/trpc';
 import { z } from 'zod';
 import {

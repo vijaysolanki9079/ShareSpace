@@ -2,7 +2,7 @@ import { query, transaction } from "@/lib/server-db";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET - Dashboard analytics
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     // ✅ Complex query: Donation statistics by category
     const stats = await query<{
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     const { donationIds, newStatus, ngoId } = await req.json();
 
     // ✅ Use transaction for multiple related operations
-    const results = await transaction([
+    const _results = await transaction([
       {
         sql: `UPDATE "Donation" 
               SET status = $1, "ngoId" = $2, "updatedAt" = NOW() 

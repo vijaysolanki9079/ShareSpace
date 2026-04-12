@@ -78,7 +78,7 @@ const About = () => {
           <img
             src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?q=80&w=2074&auto=format&fit=crop"
             alt="Background"
-            className="w-full h-full object-cover opacity-15 mix-blend-luminosity"
+            className="w-full h-full object-cover opacity-50 mix-blend-luminosity"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#022c22]/60 via-[#022c22]/80 to-[#022c22]"></div>
         </div>

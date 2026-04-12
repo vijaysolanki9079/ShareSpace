@@ -21,6 +21,7 @@ interface LocationAutocompleteProps {
   onFocus?: () => void;
   onBlur?: () => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  inputClassName?: string;
 }
 
 export default function LocationAutocomplete({
@@ -31,6 +32,7 @@ export default function LocationAutocomplete({
   onFocus,
   onBlur,
   onKeyDown,
+  inputClassName,
 }: LocationAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -148,7 +150,7 @@ export default function LocationAutocomplete({
               onBlur?.();
               setTimeout(() => setIsOpen(false), 200);
             }}
-            className="w-full pl-12 pr-10 py-3 text-gray-900 placeholder-gray-400 outline-none text-base bg-white rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans"
+            className={inputClassName || "w-full pl-12 pr-10 py-3 text-gray-900 placeholder-gray-400 outline-none text-base bg-white rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-sans"}
           />
           <AnimatePresence>
             {value && (
@@ -240,7 +242,7 @@ export default function LocationAutocomplete({
             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
               <MapPin className="w-6 h-6 text-emerald-600/50" />
             </div>
-            <p className="text-slate-700 font-semibold mb-1">No locations found for "{value}"</p>
+            <p className="text-slate-700 font-semibold mb-1">No locations found for &quot;{value}&quot;</p>
             <p className="text-slate-500 text-sm">Please try a different area or city name</p>
           </motion.div>
         )}

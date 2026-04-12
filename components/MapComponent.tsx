@@ -31,7 +31,7 @@ function LocationMarker({ position }: { position: [number, number] | null }) {
 }
 
 // Default custom icon for NGOs
-const createNgoIcon = (category: string) => {
+const createNgoIcon = (_category: string) => {
   return L.divIcon({
     className: 'bg-transparent',
     html: `<div class="bg-emerald-600 text-white p-2 rounded-full shadow-lg border-2 border-white">

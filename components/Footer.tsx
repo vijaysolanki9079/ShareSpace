@@ -30,10 +30,10 @@ const Footer = () => {
         {/* Right */}
         <div className="flex items-center gap-6 text-sm">
           {[
-            { name: 'About', href: '/about' },
+            { name: 'Explore NGOs', href: '/explore' },
+            { name: 'Donations', href: '/donations' },
             { name: 'How it Works', href: howItWorksHref },
-            { name: 'Explore', href: '/explore' },
-            { name: 'Register NGO', href: '/register-ngo' },
+            { name: 'About', href: '/about' },
           ].map((link, i) => (
             <Link
               key={i}

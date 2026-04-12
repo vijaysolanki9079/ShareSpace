@@ -5,11 +5,10 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import {
-    Search, MapPin, LayoutGrid, Utensils, Home, BookOpen,
-    HeartPulse, TreePine, BadgeCheck, Star, Users, Navigation
+    MapPin, LayoutGrid, Utensils, Home, BookOpen,
+    HeartPulse, TreePine, BadgeCheck, Star
 } from 'lucide-react';
 import { MOCK_NGOS } from '@/lib/mock-data';
-import { toast } from 'react-hot-toast';
 import SearchHero from '@/components/SearchHero';
 import { LocationResult } from '@/components/LocationAutocomplete';
 
@@ -219,7 +218,7 @@ export default function ExploreClient() {
                                     </div>
 
                                     <div className="flex gap-3">
-                                        <Link href="/donate" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors text-center inline-block">
+                                        <Link href="/donations" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors text-center inline-block">
                                             Donate
                                         </Link>
                                         <Link href={`#ngo-${ngo.id}`} className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold py-2.5 rounded-lg transition-colors text-center inline-block">
