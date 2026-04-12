@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { signOut } from 'next-auth/react';
@@ -250,10 +251,14 @@ const Navbar = ({
     <nav className={`${className} ${background}`}>
       <div className="container mx-auto flex items-center justify-between px-6 py-5">
         <Link href="/" className="group flex shrink-0 items-center gap-3">
-          <div
-            className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border shadow-lg backdrop-blur-md transition-transform duration-300 group-hover:rotate-3 group-hover:scale-105 ${logoBg}`}
-          >
-            <span className={`text-sm font-black ${textColor}`}>S</span>
+          <div className="flex items-center justify-center bg-white/10 rounded-full transition-transform duration-300 group-hover:scale-110 border border-gray-200 shadow-md">
+            <Image
+              src="/images/logo-main.png"
+              alt="ShareSpace Logo"
+              width={48}
+              height={48}
+              className="w-12 h-12 object-cover rounded-full"
+            />
           </div>
           <span
             className={`text-xl font-extrabold tracking-tight drop-shadow-sm transition-opacity group-hover:opacity-90 ${textColor}`}

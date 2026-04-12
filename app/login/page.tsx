@@ -8,7 +8,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const bannerImg = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1974&auto=format&fit=crop';
-const logoImg = 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?q=80&w=400&auto=format&fit=crop';
+const logoImg = '/images/logo-main.png';
 
 function LoginForm() {
     const [email, setEmail] = useState('');
@@ -88,7 +88,7 @@ function LoginForm() {
                     {/* Header */}
                     <div className="text-center mb-8 animate-slide-up">
                         <div className="inline-flex items-center gap-3 font-extrabold text-2xl text-gray-900 mb-6">
-                            <div className="w-10 h-10 bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 flex items-center justify-center">
+                            <div className="w-10 h-10 bg-black/10 rounded-xl shadow-md overflow-hidden border border-gray-300 flex items-center justify-center">
                                 <img src={logoImg} alt="ShareSpace" className="w-full h-full object-cover" />
                             </div>
                             ShareSpace
