@@ -1,28 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import Image from 'next/image';
 import {
+  Package,
+  CheckCircle2,
+  Users,
+  Star,
+  TrendingUp,
+  Clock,
+  Plus,
+  MessageSquare,
+  Eye,
+  FileCheck,
+  Home,
+  Zap,
+  AlertCircle,
+  ChevronRight,
+  BarChart3,
+  Shield,
+  RefreshCw,
   Settings,
   Bell,
-  ChevronDown,
+  Search,
+  LogOut,
   HeartHandshake,
   Gift,
   ShoppingBag,
-  MessageCircle,
-  MapPin,
   Calendar,
-  TrendingUp,
-  Home,
-  LogOut,
-  Search,
-  BarChart3,
-  Zap,
-  Shield,
-  RefreshCw,
+  MapPin,
+  ChevronDown,
 } from 'lucide-react';
+import Link from 'next/link';
 
 // ============ ANIMATED WAVE BACKGROUND ============
 const AnimatedWave = () => {
@@ -30,8 +41,8 @@ const AnimatedWave = () => {
     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none">
       <defs>
         <linearGradient id="waveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ stopColor: '#7b61ff', stopOpacity: 0.3 }} />
-          <stop offset="100%" style={{ stopColor: '#7b61ff', stopOpacity: 0.05 }} />
+          <stop offset="0%" style={{ stopColor: '#10b981', stopOpacity: 0.3 }} />
+          <stop offset="100%" style={{ stopColor: '#10b981', stopOpacity: 0.05 }} />
         </linearGradient>
       </defs>
       <motion.path
@@ -55,7 +66,7 @@ const AnimatedWave = () => {
 const CircularProgress = ({
   percentage,
   label,
-  color = '#7b61ff',
+  color = '#10b981',
 }: {
   percentage: number;
   label: string;
@@ -73,7 +84,7 @@ const CircularProgress = ({
     >
       <div className="relative w-32 h-32">
         <svg className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx="64" cy="64" r={radius} fill="none" stroke="#e0e7ff" strokeWidth="8" />
+          <circle cx="64" cy="64" r={radius} fill="none" stroke="#e0fce8" strokeWidth="8" />
           <motion.circle
             cx="64"
             cy="64"
@@ -102,12 +113,12 @@ const AreaChart = () => {
   const data = [30, 45, 35, 60, 50, 75, 60, 55, 70, 65];
 
   return (
-    <div className="relative w-full h-48 flex items-end justify-around px-4 py-6 bg-gradient-to-b from-white to-indigo-50 rounded-2xl">
+    <div className="relative w-full h-48 flex items-end justify-around px-4 py-6 bg-gradient-to-b from-white to-emerald-50 rounded-2xl">
       <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 600 200">
         <defs>
           <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#7b61ff', stopOpacity: 0.4 }} />
-            <stop offset="100%" style={{ stopColor: '#7b61ff', stopOpacity: 0 }} />
+            <stop offset="0%" style={{ stopColor: '#10b981', stopOpacity: 0.4 }} />
+            <stop offset="100%" style={{ stopColor: '#10b981', stopOpacity: 0 }} />
           </linearGradient>
         </defs>
         <motion.path
@@ -120,7 +131,7 @@ const AreaChart = () => {
         <motion.polyline
           points={data.map((v, i) => `${(i / (data.length - 1)) * 600},${200 - v * 1.5}`).join(' ')}
           fill="none"
-          stroke="#7b61ff"
+          stroke="#10b981"
           strokeWidth="2"
           initial={{ strokeDasharray: 600, strokeDashoffset: 600 }}
           animate={{ strokeDasharray: 600, strokeDashoffset: 0 }}
@@ -143,8 +154,8 @@ const StatCard = ({
   icon: Icon,
   label,
   value,
-  color = 'from-orange-400 to-orange-500',
-  bgColor = 'bg-orange-100',
+  color = 'from-emerald-400 to-emerald-500',
+  bgColor = 'bg-emerald-100',
 }: {
   icon: LucideIcon;
   label: string;
@@ -176,7 +187,7 @@ const FunctionCard = ({
   icon: Icon,
   label,
   active = false,
-  color = 'from-red-400 to-red-500',
+  color = 'from-emerald-400 to-emerald-500',
 }: {
   icon: LucideIcon;
   label: string;
@@ -220,7 +231,7 @@ const CalendarPicker = () => {
     <div className="flex items-center justify-between mb-8">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome to ShareSpace</h2>
-        <p className="text-sm text-gray-600">Start sharing and making community impact today</p>
+        <p className="text-sm text-gray-600">Manage donations and track your community impact</p>
       </div>
       <div className="flex gap-2">
         <motion.button whileHover={{ scale: 1.1 }} className="p-2 bg-white rounded-lg border border-gray-200 hover:bg-gray-50">
@@ -233,7 +244,7 @@ const CalendarPicker = () => {
               onClick={() => setSelectedDate(item.date)}
               className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                 selectedDate === item.date
-                  ? 'bg-indigo-600 text-white shadow-md'
+                  ? 'bg-emerald-600 text-white shadow-md'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
               whileHover={{ scale: 1.05 }}
@@ -249,38 +260,42 @@ const CalendarPicker = () => {
   );
 };
 
-// ============ MAIN DASHBOARD ============
-export default function DashboardComplete() {
-  const [_activeFunction, _setActiveFunction] = useState(0);
+export default function NGODashboardView() {
+  const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [_sidebarOpen, _setSidebarOpen] = useState(true);
 
   const navItems = [
     { icon: Home, label: 'Dashboard' },
     { icon: Gift, label: 'Donations' },
     { icon: ShoppingBag, label: 'Requests' },
-    { icon: MessageCircle, label: 'Messages' },
-    { icon: MapPin, label: 'NGOs' },
-    { icon: Calendar, label: 'Events' },
+    { icon: MessageSquare, label: 'Messages' },
+    { icon: MapPin, label: 'Map' },
+    { icon: BarChart3, label: 'Analytics' },
     { icon: Settings, label: 'Settings' },
   ];
 
   const functions = [
-    { icon: BarChart3, label: 'Analytics', color: 'from-red-400 to-red-500', active: true },
-    { icon: Zap, label: 'Optimization', color: 'from-yellow-400 to-yellow-500' },
-    { icon: Shield, label: 'Protection', color: 'from-cyan-400 to-cyan-500' },
-    { icon: RefreshCw, label: 'Refresh', color: 'from-purple-400 to-purple-500' },
+    { icon: BarChart3, label: 'Analytics', color: 'from-emerald-400 to-emerald-500', active: true },
+    { icon: TrendingUp, label: 'Growth', color: 'from-blue-400 to-blue-500' },
+    { icon: Shield, label: 'Verification', color: 'from-cyan-400 to-cyan-500' },
+    { icon: RefreshCw, label: 'Refresh', color: 'from-teal-400 to-teal-500' },
   ];
+  const monthlyGoal = 100;
+  const itemsReceived = 68;
+  const requestsFulfilled = 34;
+  const peopleSupportedThisMonth = 210;
+  const reliabilityScore = 4.8;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex scroll-smooth">
       {/* ============ SIDEBAR ============ */}
       <motion.div
         initial={{ x: -100 }}
         animate={{ x: 0 }}
-        className="w-32 bg-gradient-to-b from-indigo-900 to-purple-900 text-white p-6 flex flex-col items-center justify-between"
+        className="fixed left-0 top-0 h-screen w-32 bg-gradient-to-b from-emerald-900 to-teal-900 text-white p-6 flex flex-col items-center justify-between z-50"
       >
         <div className="space-y-8 w-full">
-          <div className="flex items-center justify-center bg-white/90 rounded-full transition-transform duration-300 hover:scale-110 border border-indigo-200 shadow-md">
+          <div className="flex items-center justify-center bg-white/90 rounded-full transition-transform duration-300 hover:scale-110 border border-emerald-200 shadow-md">
             <Image
               src="/images/main-logo.png"
               alt="ShareSpace Logo"
@@ -311,7 +326,7 @@ export default function DashboardComplete() {
       </motion.div>
 
       {/* ============ MAIN CONTENT ============ */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto ml-32 scroll-smooth">
         {/* Top Navigation */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -319,14 +334,14 @@ export default function DashboardComplete() {
           className="bg-white/70 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-40 px-12 py-6"
         >
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900">ShareSpace Dashboard</h1>
+            <h1 className="text-xl font-bold text-gray-900">NGO Dashboard</h1>
             <div className="flex items-center gap-6">
               <div className="relative hidden md:block">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="pl-12 pr-4 py-2 bg-gray-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="pl-12 pr-4 py-2 bg-gray-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
               <motion.button whileHover={{ scale: 1.1 }} className="relative p-2 bg-gray-100 rounded-lg hover:bg-gray-200">
@@ -334,10 +349,12 @@ export default function DashboardComplete() {
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
               </motion.button>
               <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
-                <img src="https://storage.googleapis.com/banani-avatars/avatar%2Ffemale%2F25-35%2FSouth%20Asian%2F4" alt="User" className="w-8 h-8 rounded-lg" />
-                <div className="text-sm">
-                  <p className="font-semibold text-gray-900">Priya Sharma</p>
-                  <p className="text-xs text-gray-600">Donor</p>
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  NG
+                </div>
+                <div className="text-sm min-w-0">
+                  <p className="font-semibold text-gray-900 truncate">Test NGO</p>
+                  <p className="text-xs text-gray-600">Verified</p>
                 </div>
               </div>
             </div>
@@ -357,12 +374,12 @@ export default function DashboardComplete() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl p-12 text-white overflow-hidden h-64 flex items-center"
+                className="relative bg-gradient-to-br from-emerald-600 to-teal-600 rounded-3xl p-12 text-white overflow-hidden h-64 flex items-center"
               >
                 <AnimatedWave />
                 <div className="relative z-10">
-                  <h2 className="text-4xl font-bold mb-3">Welcome to ShareSpace</h2>
-                  <p className="text-white/90 max-w-md text-lg">Start your community sharing journey. Make donations that matter.</p>
+                  <h2 className="text-4xl font-bold mb-3">Welcome Back!</h2>
+                  <p className="text-white/90 max-w-md text-lg">Track your community impact and manage donations effectively.</p>
                 </div>
               </motion.div>
 
@@ -370,20 +387,44 @@ export default function DashboardComplete() {
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-6">Weekly Impact</h3>
                 <div className="grid grid-cols-2 gap-6">
-                  <StatCard icon={Gift} label="Items Donated" value="12" bgColor="bg-orange-100" color="from-orange-400 to-orange-500" />
-                  <StatCard icon={TrendingUp} label="Requests Fulfilled" value="8" bgColor="bg-blue-100" color="from-blue-400 to-blue-500" />
-                  <StatCard icon={MessageCircle} label="Messages" value="24" bgColor="bg-purple-100" color="from-purple-400 to-purple-500" />
-                  <StatCard icon={HeartHandshake} label="Connections" value="15" bgColor="bg-pink-100" color="from-pink-400 to-pink-500" />
+                  <StatCard
+                    icon={Package}
+                    label="Items Received"
+                    value={itemsReceived}
+                    bgColor="bg-emerald-100"
+                    color="from-emerald-400 to-emerald-500"
+                  />
+                  <StatCard
+                    icon={CheckCircle2}
+                    label="Requests Fulfilled"
+                    value={requestsFulfilled}
+                    bgColor="bg-blue-100"
+                    color="from-blue-400 to-blue-500"
+                  />
+                  <StatCard
+                    icon={Users}
+                    label="People Supported"
+                    value={peopleSupportedThisMonth}
+                    bgColor="bg-purple-100"
+                    color="from-purple-400 to-purple-500"
+                  />
+                  <StatCard
+                    icon={Star}
+                    label="Reliability Score"
+                    value={`${reliabilityScore}★`}
+                    bgColor="bg-yellow-100"
+                    color="from-yellow-400 to-yellow-500"
+                  />
                 </div>
               </div>
 
-              {/* Monitoring Section */}
+              {/* Progress Indicators */}
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Your Impact Growth</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Monthly Goals</h3>
                 <div className="grid grid-cols-3 gap-6 mb-8">
-                  <CircularProgress percentage={75} label="Donations" color="#f97316" />
-                  <CircularProgress percentage={60} label="Requests" color="#3b82f6" />
-                  <CircularProgress percentage={85} label="Community" color="#7b61ff" />
+                  <CircularProgress percentage={68} label="Items Goal" color="#10b981" />
+                  <CircularProgress percentage={56} label="Requests Goal" color="#3b82f6" />
+                  <CircularProgress percentage={85} label="Community Score" color="#06b6d4" />
                 </div>
               </div>
 
@@ -400,8 +441,8 @@ export default function DashboardComplete() {
               </div>
             </div>
 
-            {/* Right Column - Functions */}
-            <div className="space-y-6">
+            {/* Right Column - Functions & Actions */}
+            <div className="space-y-6 sticky top-0 h-fit">
               <h3 className="text-xl font-bold text-gray-900">Quick Actions</h3>
               {functions.map((func, i) => (
                 <FunctionCard
@@ -417,25 +458,25 @@ export default function DashboardComplete() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 text-white mt-8"
+                className="bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-6 text-white mt-8"
               >
-                <h4 className="font-bold text-lg mb-4">Your Stats</h4>
+                <h4 className="font-bold text-lg mb-4">ORG Stats</h4>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Profile Completion</span>
-                    <span className="font-bold">92%</span>
+                    <span className="text-sm">Monthly Progress</span>
+                    <span className="font-bold">68%</span>
                   </div>
                   <div className="w-full bg-white/20 rounded-full h-2">
                     <motion.div
                       className="bg-white rounded-full h-2"
                       initial={{ width: 0 }}
-                      animate={{ width: '92%' }}
+                      animate={{ width: '68%' }}
                       transition={{ duration: 1.5, ease: 'easeOut' }}
                     />
                   </div>
                   <div className="flex justify-between items-center pt-3">
-                    <span className="text-sm">Community Score</span>
-                    <span className="font-bold">4.8/5.0</span>
+                    <span className="text-sm">Verification</span>
+                    <span className="font-bold">✓ VERIFIED</span>
                   </div>
                 </div>
               </motion.div>
