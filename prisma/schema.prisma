@@ -34,23 +34,46 @@ model NGO {
   registrationNumber    String
   website               String?
   missionArea           String
+  // Legacy field: kept for backward compatibility
   verificationDocument  String?
   isVerified            Boolean    @default(false)
+  verificationStatus    String     @default("pending") // pending, approved, rejected
+  rejectionReason       String?
   bio                   String?
   image                 String?
+  knownIssues           String?    // e.g., "Name mismatch in PAN Card", concatenated issues
   // Plain decimal coords stored for Leaflet marker rendering
   latitude              Float?
   longitude             Float?
-  // PostGIS geography column — managed via raw SQL migration, not Prisma
-  location_geom         Unsupported("geography(Point, 4326)")?
   locationName          String?
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
 
-  donationsReceived Donation[]
-  eventDrives       EventDrive[]
+  donationsReceived   Donation[]
+  eventDrives         EventDrive[]
+  verificationDocs    NGOVerificationDocument[]
 
   @@index([email])
+  @@index([isVerified])
+  @@index([verificationStatus])
+}
+
+model NGOVerificationDocument {
+  id                String   @id @default(cuid())
+  ngoId             String
+  ngo               NGO      @relation(fields: [ngoId], references: [id], onDelete: Cascade)
+  documentType      String   // "registration_certificate", "pan_card", "darpan_id", "address_proof", 
+                             // "bank_account", "kyc_members", "12a_certificate", "80g_certificate", 
+                             // "fcra_certificate", "audited_financials", "annual_report", "non_blacklisting"
+  fileName          String
+  fileUrl           String   // URL to Supabase Storage or Cloudinary
+  uploadedAt        DateTime @default(now())
+  status            String   @default("pending") // pending, verified, rejected
+  verificationNote  String?  // Admin notes during verification
+
+  @@index([ngoId])
+  @@index([documentType])
+  @@index([status])
 }
 
 model Account {
