@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
-import Image from 'next/image';
 import {
   Settings,
   Bell,
@@ -280,14 +279,10 @@ export default function DashboardComplete() {
         className="w-32 bg-gradient-to-b from-indigo-900 to-purple-900 text-white p-6 flex flex-col items-center justify-between"
       >
         <div className="space-y-8 w-full">
-          <div className="flex items-center justify-center bg-white/90 rounded-full transition-transform duration-300 hover:scale-110 border border-indigo-200 shadow-md">
-            <Image
-              src="/images/main-logo.png"
-              alt="ShareSpace Logo"
-              width={48}
-              height={48}
-              className="w-12 h-12 object-cover rounded-full"
-            />
+          <div className="flex items-center justify-center gap-2 font-bold text-lg tracking-wider">
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <HeartHandshake className="w-5 h-5 text-indigo-900" />
+            </div>
           </div>
 
           <nav className="space-y-6">
