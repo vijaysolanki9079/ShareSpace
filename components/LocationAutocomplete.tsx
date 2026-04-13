@@ -239,7 +239,7 @@ export default function LocationAutocomplete({
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl border border-gray-100 shadow-xl z-[9999] px-4 py-8 text-center font-sans"
           >
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500/20 to-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-3 border border-emerald-500/30 shadow-md">
               <MapPin className="w-6 h-6 text-emerald-600/50" />
             </div>
             <p className="text-slate-700 font-semibold mb-1">No locations found for &quot;{value}&quot;</p>

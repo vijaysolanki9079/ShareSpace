@@ -45,8 +45,8 @@ const NearbyNGOs = () => {
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
               />
               <div className="absolute inset-0 bg-slate-950/40 pointer-events-none transition-opacity duration-500 group-hover:bg-slate-950/20" />
-              <div className="absolute -bottom-3 right-4 rounded-xl border border-zinc-100 bg-white p-2.5 shadow-md">
-                <BadgeCheck className="h-6 w-6 text-emerald-600" strokeWidth={2} />
+              <div className="absolute -bottom-3 right-4 rounded-xl border border-emerald-400/40 bg-gradient-to-br from-white/80 to-emerald-50/60 backdrop-blur-sm p-2.5 shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-shadow">
+                <BadgeCheck className="h-6 w-6 text-emerald-600" strokeWidth={1.75} />
               </div>
             </div>
             <div className="px-1 pb-1">
@@ -55,22 +55,22 @@ const NearbyNGOs = () => {
                   {ngo.category}
                 </span>
                 <div className="flex items-center gap-1 text-slate-200">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" strokeWidth={1.75} />
                   <span className="text-xs font-semibold tabular-nums">{ngo.rating}</span>
                 </div>
               </div>
               <h3 className="mb-4 text-lg font-semibold text-slate-100">{ngo.name}</h3>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-emerald-600" strokeWidth={1.75} />
                   <span>{ngo.dist} away</span>
                 </div>
                 <button
                   type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-white transition-transform hover:scale-105 hover:bg-zinc-800"
+                  className="group/arrow flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 border border-zinc-700/50 text-white transition-all hover:scale-105 hover:bg-emerald-600/20 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/20"
                   aria-label={`View ${ngo.name}`}
                 >
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 group-hover/arrow:translate-x-0.5 transition-transform" strokeWidth={1.75} />
                 </button>
               </div>
             </div>

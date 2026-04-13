@@ -92,11 +92,15 @@ const HowItWorks = () => {
                 0{index + 1}
               </div>
 
-              <div className="mb-8 relative">
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:rotate-[10deg]`}>
-                   {/* Icon Glow */}
-                   <div className={`absolute inset-0 blur-2xl opacity-20 group-hover:opacity-50 transition-opacity ${step.iconColor.replace('text', 'bg')}`}></div>
-                   <step.icon className={`w-10 h-10 relative z-10 ${step.iconColor}`} />
+              <div className="mb-8 relative group/icon">
+                {/* Premium Icon Wrapper */}
+                <div className="relative">
+                  {/* Glow layer on hover */}
+                  <div className={`absolute inset-0 blur-xl opacity-0 group-hover/icon:opacity-75 transition-opacity rounded-2xl ${step.iconColor.replace('text', 'bg')}`}></div>
+                  {/* Icon container with glass effect */}
+                  <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover/icon:rotate-[10deg] ${step.iconColor.replace('text', 'bg')}/20 border ${step.iconColor.replace('text', 'border')}/40 shadow-lg backdrop-blur-md hover:${step.iconColor.replace('text', 'bg')}/30 hover:${step.iconColor.replace('text', 'border')}/60`}>
+                    <step.icon className={`w-5 h-5 relative z-10 ${step.iconColor}`} strokeWidth={1.75} />
+                  </div>
                 </div>
               </div>
 

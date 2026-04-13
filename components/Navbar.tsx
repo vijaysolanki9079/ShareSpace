@@ -138,7 +138,7 @@ function UserAuthMenu({
           <span className={isDarkBg || isLight ? 'font-medium text-white/80' : 'font-medium text-gray-600'}>Hi, </span>
           <span className="inline-block max-w-[9rem] truncate align-bottom font-semibold">{firstName}</span>
         </span>
-        <ChevronDown className={`h-4 w-4 shrink-0 opacity-90 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 shrink-0 opacity-90 transition-transform ${open ? 'rotate-180' : ''}`} strokeWidth={1.75} />
       </button>
       {open && (
         <div className={menuShell} role="menu">
@@ -251,13 +251,13 @@ const Navbar = ({
     <nav className={`${className} ${background}`}>
       <div className="container mx-auto flex items-center justify-between px-6 py-5">
         <Link href="/" className="group flex shrink-0 items-center gap-3">
-          <div className="flex items-center justify-center bg-white/10 rounded-full transition-transform duration-300 group-hover:scale-110 border border-gray-200 shadow-md">
+          <div className="flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
             <Image
-              src="/images/logo-main.png"
+              src="/images/-logo-main.png"
               alt="ShareSpace Logo"
-              width={48}
-              height={48}
-              className="w-12 h-12 object-cover rounded-full"
+              width={40}
+              height={40}
+              className="w-10 h-10"
             />
           </div>
           <span

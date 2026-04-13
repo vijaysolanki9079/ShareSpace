@@ -119,15 +119,15 @@ const MyRequests = () => {
                   <div
                     className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadge.bg} ${statusBadge.textColor}`}
                   >
-                    <StatusIcon className="h-3.5 w-3.5" />
+                    <StatusIcon className="h-3.5 w-3.5" strokeWidth={1.75} />
                     {statusBadge.text}
                   </div>
                 </div>
                 <div className="absolute bottom-3 left-3 rounded-lg bg-zinc-950/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-200 backdrop-blur-md z-10">
                   {request.category}
                 </div>
-                <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/20 bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-200 backdrop-blur-sm">
-                  <MapPin className="h-3.5 w-3.5 text-emerald-600" />
+                <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/20 bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-200 backdrop-blur-sm shadow-sm">
+                  <MapPin className="h-3.5 w-3.5 text-emerald-600" strokeWidth={1.75} />
                   {request.distance}
                 </div>
               </div>

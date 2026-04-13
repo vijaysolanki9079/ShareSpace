@@ -255,8 +255,8 @@ export default function Settings() {
               {!isPasswordVerified ? (
                 <>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                      <Shield className="h-5 w-5 text-emerald-400" />
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center shadow-md">
+                      <Shield className="h-5 w-5 text-emerald-400" strokeWidth={1.75} />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-white">Security Verification</h3>
@@ -304,7 +304,7 @@ export default function Settings() {
                 <>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                      <Mail className="h-5 w-5 text-emerald-400" />
+                      <Mail className="h-5 w-5 text-emerald-400" strokeWidth={1.75} />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-white">Change Email Address</h3>

@@ -92,10 +92,10 @@ const Messages = () => {
             </div>
             <button
               type="button"
-              className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+              className=\"group rounded-lg p-2 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 text-zinc-400 transition-all hover:border-emerald-500/50 hover:text-emerald-600 hover:shadow-md hover:shadow-emerald-500/20\"
               aria-label="More"
             >
-              <MoreVertical className="h-5 w-5" />
+              <MoreVertical className="h-5 w-5" strokeWidth={1.75} />
             </button>
           </div>
 

@@ -251,8 +251,13 @@ const About = () => {
                     transition={{ delay: idx * 0.1, duration: 0.5 }}
                     className="group bg-white/60 backdrop-blur-md p-8 rounded-xl border border-emerald-100 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer"
                   >
-                    <div className={`w-12 h-12 ${value.colorClass} rounded-lg flex items-center justify-center mb-6 ${value.colorText} group-hover:scale-110 transition-transform duration-300`}>
-                      {value.icon}
+                    <div className="mb-6 relative group/icon">
+                      {/* Premium Icon Wrapper */}
+                      <div className="absolute inset-0 blur-lg opacity-0 group-hover/icon:opacity-60 transition-opacity bg-gradient-to-r from-emerald-500/50 to-emerald-400/30 rounded-lg" />
+                      <div className={`relative w-12 h-12 ${value.colorClass} rounded-lg flex items-center justify-center ${value.colorText} group-hover/icon:scale-110 transition-transform duration-300 border border-emerald-400/20 shadow-md group-hover/icon:shadow-lg group-hover/icon:shadow-emerald-500/30`}>
+                        {/* Apply strokeWidth to icon if it accepts it */}
+                        {React.cloneElement(value.icon, { strokeWidth: 1.75 })}
+                      </div>
                     </div>
                     <h3 className="text-xl font-bold mb-3 text-slate-900">{value.title}</h3>
                     <p className="text-slate-600 text-sm leading-relaxed">{value.text}</p>

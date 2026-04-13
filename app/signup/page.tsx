@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 
 const bannerImg = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1974&auto=format&fit=crop';
-const logoImg = '/images/logo-main.png';
+const logoImg = '/images/-logo-main.png';
 
 const Signup = () => {
     const [fullName, setFullName] = useState('');

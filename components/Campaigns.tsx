@@ -101,7 +101,7 @@ const Campaigns = () => {
               className="group relative px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-3 overflow-hidden"
             >
               <span className="relative z-10">View all campaigns</span>
-              <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" strokeWidth={1.75} />
               <div className="absolute inset-0 bg-emerald-50 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
             </Link>
           </motion.div>

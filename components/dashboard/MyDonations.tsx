@@ -62,17 +62,17 @@ const MyDonations = () => {
                   <p className="mt-1 text-[13px] text-slate-400">{item.date}</p>
                 </div>
                 <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-all ${
                     item.status === 'completed'
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-amber-500/20 text-amber-400'
+                      ? 'bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-400 border-emerald-500/30 shadow-md shadow-emerald-500/20'
+                      : 'bg-gradient-to-br from-amber-500/20 to-orange-500/10 text-amber-400 border-amber-500/30 shadow-md shadow-amber-500/20'
                   }`}
                   title={item.status}
                 >
                   {item.status === 'completed' ? (
-                    <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
+                    <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />
                   ) : (
-                    <Clock className="h-4 w-4" strokeWidth={2} />
+                    <Clock className="h-4 w-4" strokeWidth={1.75} />
                   )}
                 </div>
               </div>

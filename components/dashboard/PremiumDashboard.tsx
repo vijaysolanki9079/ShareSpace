@@ -106,9 +106,9 @@ function Sidebar({
       </div>
       {/* Frosted glass: blurs the glow behind for aurora / glassmorphism look */}
       <div className="relative z-10 flex h-full flex-col bg-black/10 p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] backdrop-blur-[0px] sm:p-7">
-        <Link href="/" className="mb-9 flex items-center gap-3 transition-opacity hover:opacity-80">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-900/40">
-          <Leaf className="h-6 w-6" strokeWidth={2} aria-hidden />
+        <Link href="/" className="mb-9 flex items-center gap-3 transition-opacity hover:opacity-80 group">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-500/20 text-white shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/40 transition-shadow" >
+          <Leaf className="h-6 w-6" strokeWidth={1.75} aria-hidden />
         </div>
         <div>
           <h1 className="text-lg font-semibold tracking-tight text-white">ShareSpace</h1>
@@ -135,9 +135,16 @@ function Sidebar({
                   : 'text-zinc-400 hover:bg-white/10 hover:text-white'
               }`}
             >
-              <item.icon
-                className={`h-[22px] w-[22px] shrink-0 transition-colors duration-300 ${isActive ? 'text-emerald-400' : 'text-zinc-500'}`}
-              />
+              <div className={`relative flex items-center justify-center h-[28px] w-[28px] rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/10 transition-all duration-300 shrink-0 ${
+                isActive
+                  ? 'border border-emerald-500/50 shadow-lg shadow-emerald-500/30'
+                  : 'border border-emerald-500/20 hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/20'
+              }`}>
+                <item.icon
+                  className={`h-[18px] w-[18px] transition-colors duration-300 ${isActive ? 'text-emerald-400' : 'text-zinc-500 group-hover:text-zinc-400'}`}
+                  strokeWidth={1.75}
+                />
+              </div>
               {item.label}
             </motion.button>
           );
@@ -148,21 +155,29 @@ function Sidebar({
         <button
           type="button"
           onClick={() => setActive('settings')}
-          className={`group flex w-full items-center gap-3.5 rounded-xl px-4 py-3.5 text-[14px] font-medium tracking-[0.01em] transition-all duration-300 ${
+          className={`group/settings flex w-full items-center gap-3.5 rounded-xl px-4 py-3.5 text-[14px] font-medium tracking-[0.01em] transition-all duration-300 ${
             active === 'settings'
               ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-500/5 text-emerald-300 ring-1 ring-emerald-500/30'
               : 'text-zinc-400 hover:bg-white/10 hover:text-white'
           }`}
         >
-          <Settings className={`h-[22px] w-[22px] transition-colors ${active === 'settings' ? 'text-emerald-400' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
+          <div className={`relative flex items-center justify-center h-[22px] w-[22px] rounded-lg transition-all duration-300 shrink-0 ${
+            active === 'settings'
+              ? 'bg-emerald-500/20 border border-emerald-500/40'
+              : 'border border-transparent group-hover/settings:border-white/20'
+          }`}>
+            <Settings className={`h-5 w-5 transition-colors ${active === 'settings' ? 'text-emerald-400' : 'text-zinc-500 group-hover/settings:text-zinc-400'}`} strokeWidth={1.75} />
+          </div>
           Settings
         </button>
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: '/' })}
-          className="flex w-full items-center gap-3.5 rounded-xl px-4 py-3.5 text-[14px] font-medium tracking-[0.01em] text-red-500/80 transition-all duration-300 hover:bg-red-500/15 hover:text-red-400"
+          className="group/logout flex w-full items-center gap-3.5 rounded-xl px-4 py-3.5 text-[14px] font-medium tracking-[0.01em] text-red-500/80 transition-all duration-300 hover:bg-red-500/15 hover:text-red-400 hover:shadow-lg hover:shadow-red-500/10"
         >
-          <LogOut className="h-[22px] w-[22px] opacity-75" />
+          <div className="relative flex items-center justify-center h-[22px] w-[22px] rounded-lg border border-transparent group-hover/logout:border-red-500/30 transition-all">
+            <LogOut className="h-5 w-5 opacity-75 group-hover/logout:opacity-100 transition-opacity" strokeWidth={1.75} />
+          </div>
           Sign out
         </button>
         </div>
@@ -215,34 +230,37 @@ function TopBar() {
           
           <Link
             href="/explore"
-            className="hidden sm:flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-900/40 px-4 h-10 text-sm font-medium text-teal-100/90 shadow-sm backdrop-blur-md transition-all hover:border-teal-400/45 hover:bg-teal-500/20 hover:text-white sm:mr-1"
+            className="hidden sm:flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-900/40 px-4 h-10 text-sm font-medium text-teal-100/90 shadow-sm backdrop-blur-md transition-all hover:border-teal-400/45 hover:bg-teal-500/20 hover:text-white hover:shadow-lg hover:shadow-teal-500/20 sm:mr-1"
           >
-            <Search className="h-4 w-4" />
+            <Search className="h-4 w-4" strokeWidth={1.75} />
             Explore NGOs
           </Link>
 
           <Link
             href="/explore"
-            className="flex sm:hidden items-center justify-center h-10 w-10 rounded-full border border-teal-500/20 bg-teal-900/40 text-teal-100/90 shadow-sm backdrop-blur-md transition-all hover:border-teal-400/45 hover:bg-teal-500/20 hover:text-white"
+            className="group flex sm:hidden items-center justify-center h-10 w-10 rounded-full border border-teal-500/20 bg-teal-900/40 text-teal-100/90 shadow-sm backdrop-blur-md transition-all hover:border-teal-400/45 hover:bg-teal-500/20 hover:text-white hover:shadow-lg hover:shadow-teal-500/20"
             aria-label="Explore NGOs"
           >
-            <Search className="h-[1.15rem] w-[1.15rem]" />
+            {/* Glow effect */}
+            <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-60 blur-lg bg-teal-500/40 transition-opacity" />
+            <Search className="h-[1.15rem] w-[1.15rem] relative z-[1]" strokeWidth={1.75} />
           </Link>
 
           <Link
             href="/"
-            className="hidden sm:flex items-center gap-2 rounded-full border border-emerald-500/20 bg-black/40 px-4 h-10 text-sm font-medium text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white sm:mr-1"
+            className="hidden sm:flex items-center gap-2 rounded-full border border-emerald-500/20 bg-black/40 px-4 h-10 text-sm font-medium text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white hover:shadow-lg hover:shadow-emerald-500/20 sm:mr-1"
           >
-            <Globe className="h-4 w-4" />
+            <Globe className="h-4 w-4" strokeWidth={1.75} />
             Back Home
           </Link>
           
           <Link
             href="/"
-            className="flex sm:hidden items-center justify-center h-10 w-10 rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white"
+            className="group flex sm:hidden items-center justify-center h-10 w-10 rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white hover:shadow-lg hover:shadow-emerald-500/20"
             aria-label="Back Home"
           >
-            <Globe className="h-[1.15rem] w-[1.15rem]" />
+            <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-60 blur-lg bg-emerald-500/40 transition-opacity" />
+            <Globe className="h-[1.15rem] w-[1.15rem] relative z-[1]" strokeWidth={1.75} />
           </Link>
           <div className="relative">
             <button
@@ -254,7 +272,7 @@ function TopBar() {
               className="relative flex h-10 w-10 items-center justify-center rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white"
               aria-label="Notifications"
             >
-              <Bell className="h-[1.15rem] w-[1.15rem]" strokeWidth={2} />
+              <Bell className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.75} />
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] ring-2 ring-black/60" />
             </button>
 
@@ -461,7 +479,7 @@ function DashboardHome() {
             transition={{ delay: i * 0.05, ...tPage }}
             className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-300/10 to-blue-400/10 p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-[24px] transition-all hover:from-slate-300/15 hover:to-blue-400/15 hover:border-blue-400/30 group"
           >
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-300/10 text-blue-200 border border-blue-300/20">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-300/10 border border-blue-300/30 text-blue-200 shadow-md group-hover:shadow-lg group-hover:shadow-blue-500/20 transition-shadow">
               <s.icon className="h-5 w-5" strokeWidth={1.75} />
             </div>
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-300 drop-shadow-md">{s.label}</p>
