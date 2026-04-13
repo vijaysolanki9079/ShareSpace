@@ -3,11 +3,37 @@
 import React, { useState } from 'react';
 import { Send, Search, MoreVertical } from 'lucide-react';
 
-const Messages = () => {
+interface MessagesProps {
+  mode?: 'user' | 'ngo';
+}
+
+const Messages = ({ mode = 'user' }: MessagesProps) => {
   const [selectedChat, setSelectedChat] = useState(1);
   const [message, setMessage] = useState('');
 
-  const conversations = [
+  const conversations =
+    mode === 'ngo'
+      ? [
+          {
+            id: 1,
+            name: 'Riya Sharma',
+            lastMessage: 'Can we confirm the pickup window for tomorrow?',
+            time: '45m ago',
+            unread: 3,
+            isNGO: false,
+            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+          },
+          {
+            id: 2,
+            name: 'Relief Volunteers Group',
+            lastMessage: 'The school supplies batch has arrived.',
+            time: '3h ago',
+            unread: 0,
+            isNGO: true,
+            avatar: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=100',
+          },
+        ]
+      : [
     {
       id: 1,
       name: 'Annapoorna Food Relief',
@@ -26,15 +52,19 @@ const Messages = () => {
       isNGO: false,
       avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
     },
-  ];
+        ];
 
   const active = conversations.find((c) => c.id === selectedChat) ?? conversations[0];
 
   return (
     <div className="flex min-h-[420px] flex-col gap-0 sm:min-h-[520px]">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-transparent">Messages</h2>
-        <p className="mt-1 text-sm text-slate-300">Chat with donors and organizations</p>
+        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-transparent">
+          Messages
+        </h2>
+        <p className="mt-1 text-sm text-slate-300">
+          {mode === 'ngo' ? 'Coordinate with donors, volunteers, and recipients' : 'Chat with donors and organizations'}
+        </p>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-sm lg:flex-row">
@@ -86,7 +116,7 @@ const Messages = () => {
               <div className="min-w-0">
                 <h3 className="truncate text-sm font-semibold text-zinc-900">{active.name}</h3>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">
-                  {active.isNGO ? 'Verified NGO' : 'Neighbor'}
+                  {active.isNGO ? 'Verified NGO' : mode === 'ngo' ? 'Community member' : 'Neighbor'}
                 </p>
               </div>
             </div>
@@ -102,12 +132,16 @@ const Messages = () => {
           <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4 sm:p-5">
             <div className="flex justify-start">
               <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-zinc-100 bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-800">
-                Hello! We saw your listing for jackets.
+                {mode === 'ngo'
+                  ? 'Hi, can your organization confirm delivery timing for this request?'
+                  : 'Hello! We saw your listing for jackets.'}
               </div>
             </div>
             <div className="flex justify-end">
               <div className="max-w-[85%] rounded-2xl rounded-br-md bg-emerald-600 px-4 py-3 text-sm leading-relaxed text-white shadow-sm">
-                Hi! Yes, they are available for pickup.
+                {mode === 'ngo'
+                  ? 'Yes, our team can coordinate pickup and distribution tomorrow.'
+                  : 'Hi! Yes, they are available for pickup.'}
               </div>
             </div>
           </div>

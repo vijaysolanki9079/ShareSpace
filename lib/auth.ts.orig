@@ -79,13 +79,11 @@ export const authOptions: AuthOptions = {
           throw new Error("Invalid email or password");
         } catch (error) {
           console.error("Authorization error:", error instanceof Error ? error.message : error);
+          // Bubble up actual error message instead of generic "Authentication failed"
           if (error instanceof Error) throw error;
           throw new Error("Authentication failed");
         }
-      },
-    }),
-  ],
-
+        }
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
@@ -142,6 +140,7 @@ export const authOptions: AuthOptions = {
         token.type = (user as any).type;
         token.name = user.name;
         token.picture = user.image;
+        // Bio and location are fetched depending on type if needed, but we rely on subsequent updates.
       }
       return token;
     },

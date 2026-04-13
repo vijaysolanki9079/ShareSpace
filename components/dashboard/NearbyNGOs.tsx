@@ -3,7 +3,11 @@
 import React from 'react';
 import { MapPin, BadgeCheck, Star, ArrowRight } from 'lucide-react';
 
-const NearbyNGOs = () => {
+interface NearbyNGOsProps {
+  mode?: 'user' | 'ngo';
+}
+
+const NearbyNGOs = ({ mode = 'user' }: NearbyNGOsProps) => {
   const ngos = [
     {
       id: 1,
@@ -27,8 +31,14 @@ const NearbyNGOs = () => {
     <div className="space-y-8">
       <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-transparent">Nearby NGOs</h2>
-          <p className="mt-1 text-sm text-slate-300">Verified organizations close to you</p>
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-transparent">
+            Nearby NGOs
+          </h2>
+          <p className="mt-1 text-sm text-slate-300">
+            {mode === 'ngo'
+              ? 'Trusted organizations you can collaborate with locally'
+              : 'Verified organizations close to you'}
+          </p>
         </div>
       </header>
 

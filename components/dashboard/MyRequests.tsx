@@ -4,10 +4,62 @@
 import React, { useState } from 'react';
 import { ShoppingBag, CheckCircle2, Clock, XCircle, MapPin, User, MessageCircle } from 'lucide-react';
 
-const MyRequests = () => {
+interface MyRequestsProps {
+  mode?: 'user' | 'ngo';
+}
+
+const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
   const [filter, setFilter] = useState('all');
 
-  const requests = [
+  const requests =
+    mode === 'ngo'
+      ? [
+          {
+            id: 1,
+            title: 'Family ration kit request',
+            category: 'Food',
+            condition: 'Urgent',
+            status: 'pending',
+            donor: 'Community volunteer',
+            distance: '1.0 km',
+            date: '2024-01-22',
+            image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop',
+          },
+          {
+            id: 2,
+            title: 'Uniform support for students',
+            category: 'Education',
+            condition: 'Verified request',
+            status: 'approved',
+            donor: 'Asha Foundation',
+            distance: '3.2 km',
+            date: '2024-01-21',
+            image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&h=300&fit=crop',
+          },
+          {
+            id: 3,
+            title: 'Blanket distribution round',
+            category: 'Essentials',
+            condition: 'Completed drive',
+            status: 'completed',
+            donor: 'Winter relief camp',
+            distance: '0.8 km',
+            date: '2024-01-15',
+            image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=400&h=300&fit=crop',
+          },
+          {
+            id: 4,
+            title: 'Medical supplies request',
+            category: 'Healthcare',
+            condition: 'Duplicate submission',
+            status: 'rejected',
+            donor: 'Clinic partner',
+            distance: '4.2 km',
+            date: '2024-01-18',
+            image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=300&fit=crop',
+          },
+        ]
+      : [
     {
       id: 1,
       title: 'Study Desk',
@@ -52,7 +104,7 @@ const MyRequests = () => {
       date: '2024-01-18',
       image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
     },
-  ];
+        ];
 
   const filteredRequests = filter === 'all' ? requests : requests.filter((r) => r.status === filter);
 
@@ -70,14 +122,20 @@ const MyRequests = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-transparent">My requests</h2>
-          <p className="mt-1 text-sm text-slate-300">Items you have asked for from donors nearby</p>
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-transparent">
+            {mode === 'ngo' ? 'Community requests' : 'My requests'}
+          </h2>
+          <p className="mt-1 text-sm text-slate-300">
+            {mode === 'ngo'
+              ? 'Requests your NGO is reviewing or fulfilling'
+              : 'Items you have asked for from donors nearby'}
+          </p>
         </div>
         <button
           type="button"
           className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
         >
-          Browse items
+          {mode === 'ngo' ? 'Review intake' : 'Browse items'}
         </button>
       </div>
 
@@ -162,7 +220,7 @@ const MyRequests = () => {
                       type="button"
                       className="flex-1 rounded-lg bg-emerald-500/20 py-2 text-[13px] font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/30 ring-1 ring-emerald-500/30"
                     >
-                      View details
+                      {mode === 'ngo' ? 'Open request' : 'View details'}
                     </button>
                     <button
                       type="button"
@@ -178,7 +236,7 @@ const MyRequests = () => {
                     type="button"
                     className="mt-4 w-full rounded-lg bg-emerald-600/20 py-2 text-[13px] font-semibold text-emerald-300 ring-1 ring-emerald-500/40 transition-colors hover:bg-emerald-500/30"
                   >
-                    Arrange pickup
+                    {mode === 'ngo' ? 'Assign delivery' : 'Arrange pickup'}
                   </button>
                 )}
               </div>
@@ -191,12 +249,16 @@ const MyRequests = () => {
         <div className="rounded-2xl border border-dashed border-white/10 bg-white/5/80 py-14 text-center">
           <ShoppingBag className="mx-auto mb-4 h-14 w-14 text-zinc-300" />
           <h3 className="text-lg font-semibold text-slate-100">No requests found</h3>
-          <p className="mt-1 text-sm text-slate-300">Try another filter or browse available items.</p>
+          <p className="mt-1 text-sm text-slate-300">
+            {mode === 'ngo'
+              ? 'Try another filter or check for new community submissions.'
+              : 'Try another filter or browse available items.'}
+          </p>
           <button
             type="button"
             className="mt-6 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
           >
-            Browse available items
+            {mode === 'ngo' ? 'Refresh queue' : 'Browse available items'}
           </button>
         </div>
       )}

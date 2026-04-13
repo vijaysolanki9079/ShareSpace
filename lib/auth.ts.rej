@@ -1,0 +1,16 @@
+--- auth.ts
++++ auth.ts
+@@ -83,8 +83,11 @@
+             if (error instanceof Error) throw error;
+             throw new Error("Authentication failed");
+           }
+-          }
+-    callbacks: {
++        }
++      })
++  ],
++
++  callbacks: {
+       async signIn({ user, account }) {
+         if (account?.provider === "google") {
+           if (!user?.email) return false;

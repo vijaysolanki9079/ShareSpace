@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Globe } from 'lucide-react';
 import Link from 'next/link';
@@ -10,14 +10,40 @@ import { useRouter, useSearchParams } from 'next/navigation';
 const bannerImg = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1974&auto=format&fit=crop';
 const logoImg = '/images/-logo-main.png';
 
+function getAuthErrorMessage(error: string | null) {
+    if (!error) return '';
+
+    switch (error) {
+        case 'OAuthCallback':
+            return 'Google sign-in failed during the callback step. For local development, verify your Google OAuth app includes http://localhost:3000/api/auth/callback/google as an authorized redirect URI.';
+        case 'OAuthSignin':
+            return 'Unable to start Google sign-in. Please check your Google OAuth client configuration.';
+        case 'AccessDenied':
+            return 'Access was denied during sign-in.';
+        case 'Configuration':
+            return 'Authentication is not configured correctly. Please check the Google and NextAuth environment variables.';
+        case 'Callback':
+            return 'The sign-in callback failed. Please try again.';
+        case 'CredentialsSignin':
+            return 'Authentication failed. Please check your credentials.';
+        default:
+            return error; // Return the exact error passed from the server
+    }
+}
+
 function LoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+    const searchParams = useSearchParams();
+    const callbackError = searchParams.get('error');
+    const [error, setError] = useState(getAuthErrorMessage(callbackError));
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const searchParams = useSearchParams();
     const success = searchParams.get('success');
+
+    useEffect(() => {
+        setError(getAuthErrorMessage(callbackError));
+    }, [callbackError]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -32,7 +58,7 @@ function LoginForm() {
             });
 
             if (result?.error) {
-                setError(result.error || 'Invalid credentials');
+                setError(getAuthErrorMessage(result.error) || result.error || 'Invalid credentials');
                 return;
             }
 
@@ -196,4 +222,3 @@ export default function LoginPage() {
         </Suspense>
     );
 }
-

@@ -3,7 +3,11 @@
 import React, { useState } from 'react';
 import { Calendar, MapPin, Clock, Users } from 'lucide-react';
 
-const EventsDrives = () => {
+interface EventsDrivesProps {
+  mode?: 'user' | 'ngo';
+}
+
+const EventsDrives = ({ mode = 'user' }: EventsDrivesProps) => {
   const [filter, setFilter] = useState('upcoming');
 
   const events = [
@@ -73,8 +77,12 @@ const EventsDrives = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-transparent">Events & drives</h2>
-          <p className="mt-1 text-sm text-slate-300">Join community events near you</p>
+          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-transparent">
+            Events & drives
+          </h2>
+          <p className="mt-1 text-sm text-slate-300">
+            {mode === 'ngo' ? 'Manage outreach events and distribution drives' : 'Join community events near you'}
+          </p>
         </div>
       </div>
 
@@ -163,7 +171,7 @@ const EventsDrives = () => {
                     type="button"
                     className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
                   >
-                    Join event
+                    {mode === 'ngo' ? 'Manage event' : 'Join event'}
                   </button>
                 )}
               </div>

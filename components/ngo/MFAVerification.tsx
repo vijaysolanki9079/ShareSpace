@@ -5,17 +5,19 @@ import { motion } from 'framer-motion';
 import { Shield, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface MFAVerificationProps {
+    ngoId: string;
     method: 'authenticator' | 'webauthn';
     email: string;
-    onVerificationComplete: () => void;
+    onVerificationComplete: (code: string) => void;
     onBack: () => void;
 }
 
-export default function MFAVerification({ method, email, onVerificationComplete, onBack }: MFAVerificationProps) {
+export default function MFAVerification({ ngoId, method, email: _email, onVerificationComplete, onBack }: MFAVerificationProps) {
     const [code, setCode] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleVerify = async (e: React.FormEvent) => {
@@ -23,30 +25,44 @@ export default function MFAVerification({ method, email, onVerificationComplete,
         setError('');
 
         if (method === 'authenticator') {
-            if (!code || code.length !== 6) {
-                setError('Please enter a valid 6-digit code');
+            if (!code || code.length < 6) {
+                setError('Please enter your verification code (6 digits or backup code)');
                 return;
             }
 
-            // Verify the authenticator code
-            // In production, this would be verified against TOTP using a library like speakeasy
-            if (code === '000000') {
-                setError('Demo code. For testing, use: 000000');
-                return;
-            }
-
-            // Mock verification
             setLoading(true);
-            await new Promise(resolve => setTimeout(resolve, 1000));
 
-            if (code === '123456' || /^\d{6}$/.test(code)) {
-                setSuccess(true);
-                setTimeout(() => {
-                    onVerificationComplete();
-                }, 1500);
-            } else {
-                setError('Invalid code. Please try again.');
-                setCode('');
+            try {
+                // ✅ Call verify-login API with ngoId and code
+                const response = await fetch('/api/auth/mfa/verify-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ngoId,
+                        code
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // ✅ Verification successful
+                    setSuccess(true);
+                    setTimeout(() => {
+                        onVerificationComplete(code);
+                    }, 1500);
+                } else {
+                    // ❌ Verification failed
+                    if (data.attemptsRemaining !== undefined) {
+                        setAttemptsRemaining(data.attemptsRemaining);
+                    }
+                    setError(data.error || 'Verification failed. Please try again.');
+                    setCode('');
+                    setLoading(false);
+                }
+            } catch (err) {
+                console.error('[MFA Verification] Error:', err);
+                setError('Network error. Please try again.');
                 setLoading(false);
             }
         }
@@ -155,7 +171,16 @@ export default function MFAVerification({ method, email, onVerificationComplete,
                                     className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2"
                                 >
                                     <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                                    <p className="text-sm text-red-700">{error}</p>
+                                    <div>
+                                        <p className="text-sm text-red-700">{error}</p>
+                                        {attemptsRemaining !== null && (
+                                            <p className="text-xs text-red-600 mt-1">
+                                                {attemptsRemaining > 0
+                                                    ? `${attemptsRemaining} attempt(s) remaining`
+                                                    : 'Account locked. Try again later.'}
+                                            </p>
+                                        )}
+                                    </div>
                                 </motion.div>
                             )}
 
@@ -167,24 +192,24 @@ export default function MFAVerification({ method, email, onVerificationComplete,
                                     ref={inputRef}
                                     type="text"
                                     inputMode="numeric"
-                                    maxLength={6}
+                                    maxLength={12}
                                     value={code}
                                     onChange={(e) => {
-                                        const value = e.target.value.replace(/[^0-9]/g, '');
+                                        const value = e.target.value.toUpperCase().replace(/[^0-9A-Z-]/g, '');
                                         setCode(value);
                                         setError('');
                                     }}
-                                    placeholder="000000"
-                                    className="w-full h-12 px-4 border-2 border-gray-200 rounded-lg text-2xl text-center font-mono font-bold text-gray-900 bg-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-colors"
+                                    placeholder="000000 or XXXX-XXXX-XXXX"
+                                    className="w-full h-12 px-4 border-2 border-gray-200 rounded-lg text-lg text-center font-mono text-gray-900 bg-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-colors"
                                     disabled={loading}
                                     autoFocus
                                 />
-                                <p className="text-xs text-gray-500 mt-2 text-center">Code refreshes every 30 seconds</p>
+                                <p className="text-xs text-gray-500 mt-2 text-center">Enter your 6-digit code or backup code</p>
                             </div>
 
                             <button
                                 type="submit"
-                                disabled={loading || code.length !== 6}
+                                disabled={loading || (code.length !== 6 && code.length !== 12)}
                                 className="w-full h-11 bg-emerald-600 text-white font-semibold text-sm rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Verifying...' : 'Verify Code'}

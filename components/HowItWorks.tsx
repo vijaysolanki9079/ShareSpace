@@ -38,7 +38,7 @@ const HowItWorks = () => {
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-emerald-600/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse"></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-sky-600/10 rounded-full mix-blend-screen filter blur-[150px]"></div>
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-600/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse delay-700"></div>
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-600/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse" style={{ animationDelay: '700ms' }}></div>
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
@@ -95,10 +95,14 @@ const HowItWorks = () => {
               <div className="mb-8 relative group/icon">
                 {/* Premium Icon Wrapper */}
                 <div className="relative">
-                  {/* Glow layer on hover */}
-                  <div className={`absolute inset-0 blur-xl opacity-0 group-hover/icon:opacity-75 transition-opacity rounded-2xl ${step.iconColor.replace('text', 'bg')}`}></div>
                   {/* Icon container with glass effect */}
-                  <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover/icon:rotate-[10deg] ${step.iconColor.replace('text', 'bg')}/20 border ${step.iconColor.replace('text', 'border')}/40 shadow-lg backdrop-blur-md hover:${step.iconColor.replace('text', 'bg')}/30 hover:${step.iconColor.replace('text', 'border')}/60`}>
+                  <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover/icon:rotate-[10deg] shadow-lg backdrop-blur-md ${
+                    step.iconColor === 'text-emerald-400' 
+                      ? 'bg-emerald-400/20 border border-emerald-400/40 group-hover:bg-emerald-400/30 group-hover:border-emerald-400/60'
+                      : step.iconColor === 'text-sky-400'
+                      ? 'bg-sky-400/20 border border-sky-400/40 group-hover:bg-sky-400/30 group-hover:border-sky-400/60'
+                      : 'bg-amber-400/20 border border-amber-400/40 group-hover:bg-amber-400/30 group-hover:border-amber-400/60'
+                  }`}>
                     <step.icon className={`w-5 h-5 relative z-10 ${step.iconColor}`} strokeWidth={1.75} />
                   </div>
                 </div>

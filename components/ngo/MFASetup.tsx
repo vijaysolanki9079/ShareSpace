@@ -1,54 +1,51 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Smartphone, Copy, Check, ArrowRight } from 'lucide-react';
+import { Copy, Check, ArrowRight, Lock, Smartphone as PhoneIcon } from 'lucide-react';
 
 interface MFASetupProps {
     method: 'authenticator' | 'webauthn';
     email: string;
-    ngoName: string;
-    onSetupComplete: () => void;
+    organizationName: string;
+    secret?: string;
+    qrCodeUrl?: string;
+    backupCodes?: string[];
+    onSetupComplete: (verificationCode: string) => void;
     onBack: () => void;
 }
 
-export default function MFASetup({ method, email, ngoName, onSetupComplete, onBack }: MFASetupProps) {
+export default function MFASetup({ method, email, organizationName, secret, qrCodeUrl, backupCodes: _backupCodes, onSetupComplete, onBack }: MFASetupProps) {
     const [copied, setCopied] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [verificationCode, setVerificationCode] = useState('');
+    const [error, setError] = useState<string | null>(null);
 
-    // Generate a mock secret for authenticator app
-    const secret = 'JBSWY3DPEBLW64TMMUXAXO2I62A';  // Sample secret - in production, generate cryptographically secure secret
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth://totp/${encodeURIComponent(ngoName + ' ' + email)}?secret=${secret}&issuer=ShareSpace`;
+    const displaySecret = secret || '';
+    const displayQrUrl = qrCodeUrl || '';
 
     const handleCopySecret = () => {
-        navigator.clipboard.writeText(secret);
+        navigator.clipboard.writeText(displaySecret);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleWebAuthnSetup = async () => {
-        setLoading(true);
-        try {
-            // In a real implementation, this would use WebAuthn API
-            // For now, simulate the setup
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            onSetupComplete();
-        } catch (error) {
-            console.error('WebAuthn setup error:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const handleVerify = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
 
-    const handleContinue = async () => {
-        if (method === 'webauthn') {
-            await handleWebAuthnSetup();
-        } else {
-            setLoading(true);
-            await new Promise(resolve => setTimeout(resolve, 500));
-            setLoading(false);
-            onSetupComplete();
+        if (!verificationCode || verificationCode.length !== 6) {
+            setError('Please enter a valid 6-digit code');
+            return;
         }
+
+        if (!/^\d{6}$/.test(verificationCode)) {
+            setError('Code must contain only digits');
+            return;
+        }
+
+        setLoading(true);
+        onSetupComplete(verificationCode);
     };
 
     return (
@@ -56,157 +53,205 @@ export default function MFASetup({ method, email, ngoName, onSetupComplete, onBa
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative min-h-screen flex items-center justify-center font-sans overflow-hidden bg-gray-900"
+            className="relative min-h-screen flex items-center justify-center font-sans overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 py-4"
         >
-            {/* Background */}
-            <div className="absolute inset-0 bg-cover bg-center opacity-50 z-0 blur-sm scale-110"
-                style={{
-                    backgroundImage: 'url(https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1974)',
-                }}
-            />
-            <div className="absolute inset-0 z-0 opacity-20 pointer-events-none"
-                style={{
-                    backgroundImage:
-                        'linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000),' +
-                        'linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000)',
-                    backgroundSize: '60px 60px',
-                    backgroundPosition: '0 0, 30px 30px'
-                }}
-            />
-
-            <div className="relative z-10 w-full max-w-[440px] px-6">
-                <div className="bg-white rounded-3xl p-10 shadow-2xl w-full">
+            <div className="relative z-10 w-full flex flex-col md:flex-row items-center gap-6 max-w-5xl mx-auto px-4">
+                {/* Left Side - Instructions & Code Input */}
+                <motion.div
+                    initial={{ x: -50, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="flex-1 flex flex-col justify-center w-full md:order-1 min-w-0"
+                >
                     {/* Header */}
-                    <div className="text-center mb-8">
-                        <div className="flex justify-center mb-4">
-                            <Smartphone className="w-12 h-12 text-emerald-600" strokeWidth={1.5} />
+                    <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="p-2 bg-emerald-100 rounded-lg">
+                                <Lock className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            <h1 className="text-2xl font-bold text-gray-900">
+                                Secure Your Account
+                            </h1>
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                            {method === 'authenticator' ? 'Set Up Authenticator App' : 'Set Up Security Key'}
-                        </h1>
-                        <p className="text-sm text-gray-600">
-                            {method === 'authenticator'
-                                ? 'Add your organization account to your authenticator app'
-                                : 'Follow the steps to register your security key'
-                            }
+                        <p className="text-gray-600 text-xs leading-relaxed">
+                            Set up two-factor authentication to protect your NGO account.
                         </p>
                     </div>
 
                     {method === 'authenticator' ? (
-                        // Authenticator App Setup
-                        <div className="space-y-6">
-                            {/* Step 1: Download App */}
-                            <div>
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-600 text-white text-sm font-bold">1</div>
-                                    <h3 className="font-semibold text-gray-900">Download an Authenticator App</h3>
+                        <div className="space-y-4">
+                            {/* Step 1 */}
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs">1</div>
+                                    <h3 className="font-semibold text-gray-900 text-sm">Download an Authenticator App</h3>
                                 </div>
-                                <p className="text-sm text-gray-600 ml-11 mb-3">Choose one of these apps:</p>
-                                <div className="ml-11 space-y-2 mb-3">
-                                    <div className="text-xs text-gray-700 flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                                        Google Authenticator
-                                    </div>
-                                    <div className="text-xs text-gray-700 flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                                        Microsoft Authenticator
-                                    </div>
-                                    <div className="text-xs text-gray-700 flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                                        Authy
-                                    </div>
-                                </div>
+                                <p className="text-xs text-gray-600 pl-8">Choose from Google Authenticator, Microsoft Authenticator, or Authy</p>
                             </div>
 
-                            {/* Step 2: Scan QR Code */}
-                            <div>
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-600 text-white text-sm font-bold">2</div>
-                                    <h3 className="font-semibold text-gray-900">Scan QR Code</h3>
+                            {/* Step 2 */}
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs">2</div>
+                                    <h3 className="font-semibold text-gray-900 text-sm">Scan QR Code or Enter Key</h3>
                                 </div>
-                                <div className="ml-11 bg-gray-100 p-4 rounded-lg flex justify-center mb-3">
-                                    <img src={qrCodeUrl} alt="QR Code" className="w-40 h-40" />
-                                </div>
-                                <p className="text-xs text-gray-600 ml-11 mb-3">Or enter this code manually:</p>
-                                <div className="ml-11 flex items-center gap-2 mb-3">
-                                    <code className="flex-1 text-xs font-mono bg-gray-100 p-3 rounded text-gray-900">
-                                        {secret}
+                                
+                                <p className="text-xs text-gray-600 pl-8">Your secret key (save in a safe place):</p>
+                                <div className="ml-8 flex items-center gap-2 bg-white border border-gray-200 rounded p-2">
+                                    <code className="flex-1 text-xs font-mono text-gray-900 break-all">
+                                        {displaySecret}
                                     </code>
                                     <button
+                                        type="button"
                                         onClick={handleCopySecret}
-                                        className="p-2 hover:bg-gray-100 rounded transition-colors"
+                                        className="p-1 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
                                     >
                                         {copied ? (
-                                            <Check className="w-4 h-4 text-emerald-600" />
+                                            <Check className="w-3 h-3 text-emerald-600" />
                                         ) : (
-                                            <Copy className="w-4 h-4 text-gray-600" />
+                                            <Copy className="w-3 h-3 text-gray-600" />
                                         )}
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Step 3: Verify */}
-                            <div>
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-600 text-white text-sm font-bold">3</div>
-                                    <h3 className="font-semibold text-gray-900">Enter verification code</h3>
+                            {/* Step 3 */}
+                            <form onSubmit={handleVerify} className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs">3</div>
+                                    <h3 className="font-semibold text-gray-900 text-sm">Enter Verification Code</h3>
                                 </div>
-                                <p className="text-xs text-gray-600 ml-11">You&apos;ll verify this code on the next screen before completing setup.</p>
-                            </div>
+                                <div className="ml-8">
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        value={verificationCode}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                            setVerificationCode(val);
+                                        }}
+                                        placeholder="000000"
+                                        className="w-full text-center text-xl font-mono tracking-widest px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-emerald-600 focus:outline-none transition-colors bg-white max-w-xs"
+                                    />
+                                </div>
+                                {error && (
+                                    <div className="ml-8 p-2 mt-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-center gap-2 max-w-xs">
+                                        <span>⚠️</span>
+                                        {error}
+                                    </div>
+                                )}
+                            </form>
 
                             {/* Info Box */}
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 ml-11 -mb-4">
-                                <p className="text-xs text-blue-700">
-                                    <span className="font-semibold">Save your backup codes</span> in a safe place. You&apos;ll need them if you lose access to your authenticator app.
-                                </p>
+                            <div className="bg-blue-50 border-l-4 border-blue-500 rounded p-2 ml-8 text-xs max-w-xs">
+                                <p className="text-blue-900 font-semibold">💾 Save Your Backup Codes</p>
                             </div>
                         </div>
                     ) : (
-                        // WebAuthn/Security Key Setup
-                        <div className="space-y-6">
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <p className="text-sm text-blue-900 mb-3">
-                                    <span className="font-semibold">Insert your security key</span> when prompted on the next screen.
-                                </p>
-                                <ul className="text-xs text-blue-800 space-y-1 ml-4">
-                                    <li className="list-disc">Supported: YubiKey, Google Titan, or any FIDO2 compatible device</li>
-                                    <li className="list-disc">Have your device ready and connected to your computer</li>
-                                </ul>
-                            </div>
-
-                            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 text-center">
-                                <div className="text-4xl mb-3">🔐</div>
-                                <p className="text-sm text-gray-700 font-medium">Security Key Registration</p>
-                                <p className="text-xs text-gray-600 mt-2">Click continue when ready to register your hardware key</p>
-                            </div>
-
-                            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                                <p className="text-xs text-emerald-700">
-                                    <span className="font-semibold">Why hardware keys?</span> They&apos;re immune to phishing and provide the highest level of security for your NGO account.
+                        <div className="space-y-3">
+                            <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                                <p className="text-xs text-blue-900 mb-2">
+                                    <span className="font-semibold">🔐 Insert Your Security Key</span>
                                 </p>
                             </div>
                         </div>
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3 mt-8">
+                    <div className="flex gap-2 ml-8 mt-4 max-w-xs">
                         <button
+                            type="button"
                             onClick={onBack}
                             disabled={loading}
-                            className="flex-1 h-11 bg-gray-100 text-gray-900 font-semibold text-sm rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                            className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-900 font-semibold text-sm rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                         >
                             Back
                         </button>
                         <button
-                            onClick={handleContinue}
-                            disabled={loading}
-                            className="flex-1 h-11 bg-emerald-600 text-white font-semibold text-sm rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                            onClick={handleVerify}
+                            disabled={loading || verificationCode.length !== 6}
+                            className="flex-1 px-4 py-2 bg-emerald-600 text-white font-semibold text-sm rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                            {loading ? 'Setting up...' : 'Continue'}
-                            <ArrowRight className="w-4 h-4" />
+                            {loading ? (
+                                <>
+                                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Verifying...
+                                </>
+                            ) : (
+                                <>
+                                    Verify 
+                                    <ArrowRight className="w-3 h-3" />
+                                </>
+                            )}
                         </button>
                     </div>
-                </div>
+                </motion.div>
+
+                {/* Right Side - Setup Guidance & QR */}
+                <motion.div
+                    initial={{ x: 50, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex-1 flex flex-col items-center justify-center w-full md:order-2 min-w-0"
+                >
+                    <div className="relative w-full max-w-sm">
+                        {/* Decorative background */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-200/20 to-teal-200/20 rounded-2xl blur-2xl" />
+                        
+                        <motion.div
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.3, type: 'spring' }}
+                            className="relative bg-white p-5 rounded-2xl shadow-lg border border-gray-100"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100">
+                                    <PhoneIcon className="w-5 h-5 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900">Authenticator setup</p>
+                                    <p className="text-xs text-gray-600">
+                                        Scan the QR code to configure your app.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-5 flex flex-col items-center justify-center p-3 bg-white rounded-2xl border border-gray-200 shadow-sm">
+                                {displayQrUrl ? (
+                                    <img 
+                                        src={displayQrUrl} 
+                                        alt="MFA QR Code" 
+                                        className="w-48 h-48 object-contain"
+                                    />
+                                ) : (
+                                    <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs text-center p-4">
+                                        QR Code not available
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3 flex flex-col gap-1 items-center">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Account</p>
+                                <p className="text-sm text-gray-900 font-medium text-center">{organizationName}</p>
+                                <p className="text-xs text-gray-500 text-center">{email}</p>
+                            </div>
+                        </motion.div>
+
+                        {/* Security Badge */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                            className="mt-6 text-center"
+                        >
+                            <div className="inline-flex items-center gap-1 text-emerald-600">
+                                <Lock className="w-3 h-3" />
+                                <span className="text-xs font-semibold">Enterprise Grade Security</span>
+                            </div>
+                        </motion.div>
+                    </div>
+                </motion.div>
             </div>
         </motion.div>
     );

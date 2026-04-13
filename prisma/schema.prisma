@@ -7,6 +7,12 @@ datasource db {
   provider = "postgresql"
 }
 
+// Seed configuration for development data
+// Run with: npx prisma db seed
+// Read more: https://www.prisma.io/docs/orm/prisma-migrate/workflows/seeding-a-database
+
+
+
 model User {
   id        String     @id @default(cuid())
   email     String     @unique
@@ -46,12 +52,25 @@ model NGO {
   latitude              Float?
   longitude             Float?
   locationName          String?
+  
+  // MFA Fields
+  mfaSetupComplete      Boolean    @default(false)
+  mfaMethod             String?    // 'authenticator' | 'webauthn'
+  mfaSecret             String?    // Encrypted TOTP secret
+  mfaBackupCodes        String[]   @default([]) // Hashed backup codes (JSON)
+  mfaSetupCompletedAt   DateTime?
+  isFirstLogin          Boolean    @default(true)
+  lastLoginAt           DateTime?
+  mfaFailedAttempts     Int        @default(0)
+  mfaLockedUntil        DateTime?
+  
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
 
   donationsReceived   Donation[]
   eventDrives         EventDrive[]
   verificationDocs    NGOVerificationDocument[]
+  mfaAuditLogs        MFAAuditLog[]
 
   @@index([email])
   @@index([isVerified])
@@ -174,4 +193,19 @@ model EventDrive {
 
   @@index([ngoId])
   @@index([date])
+}
+
+model MFAAuditLog {
+  id        String   @id @default(cuid())
+  ngoId     String
+  ngo       NGO      @relation(fields: [ngoId], references: [id], onDelete: Cascade)
+  action    String   // 'setup', 'verify', 'failed_verify', 'backup_code_used', 'setup_complete', 'failed_verify_login', 'verify_login'
+  success   Boolean
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([ngoId])
+  @@index([action])
+  @@index([createdAt])
 }

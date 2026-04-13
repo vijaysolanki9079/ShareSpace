@@ -2,197 +2,136 @@
 
 import React, { Suspense, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Shield, Smartphone, Key, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import MFASetup from '@/components/ngo/MFASetup';
-import MFAVerification from '@/components/ngo/MFAVerification';
+import MFAFlowCoordinator from '@/components/ngo/MFAFlowCoordinator';
 
 const bannerImg = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1974&auto=format&fit=crop';
 const logoImg = '/images/-logo-main.png';
 
-type Stage = 'login' | 'mfa-method' | 'mfa-setup' | 'mfa-verify';
+interface NGOLoginFormState {
+  email: string;
+  password: string;
+  error: string;
+  loading: boolean;
+  ngoId?: string;
+  organizationName?: string;
+  isFirstLogin?: boolean;
+  showMFAFlow: boolean;
+}
 
 function NGOLoginForm() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [stage, setStage] = useState<Stage>('login');
-    const [mfaMethod, setMfaMethod] = useState<'authenticator' | 'webauthn' | null>(null);
-    const [ngoData, setNgoData] = useState<{ id: string; name: string } | null>(null);
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const success = searchParams.get('success');
+  const [formState, setFormState] = useState<NGOLoginFormState>({
+    email: '',
+    password: '',
+    error: '',
+    loading: false,
+    showMFAFlow: false
+  });
 
-    const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const success = searchParams.get('success');
 
-        try {
-            // In a real app, this would verify against the NGO database
-            // For now, we'll proceed to MFA method selection
-            if (!email.includes('@')) {
-                setError('Please enter a valid email');
-                setLoading(false);
-                return;
-            }
+  const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormState(prev => ({ ...prev, error: '', loading: true }));
 
-            // Simulate API call to verify NGO credentials
-            await new Promise(resolve => setTimeout(resolve, 800));
+    try {
+      if (!formState.email.includes('@')) {
+        setFormState(prev => ({ ...prev, error: 'Please enter a valid email', loading: false }));
+        return;
+      }
 
-            // Mock NGO data - in production, verify credentials first
-            if (email && password) {
-                setNgoData({
-                    id: 'ngo-001',
-                    name: email.split('@')[0]
-                });
-                setStage('mfa-method');
-            }
-        } catch (err) {
-            setError('An error occurred. Please try again.');
-            console.error('Login error:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+      if (!formState.password || formState.password.length < 6) {
+        setFormState(prev => ({ ...prev, error: 'Please enter a valid password', loading: false }));
+        return;
+      }
 
-    if (stage === 'mfa-method') {
-        return (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="relative min-h-screen flex items-center justify-center font-sans overflow-hidden bg-gray-900"
-            >
-                {/* Background Image from Assets */}
-                <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-50 z-0 blur-sm scale-110"
-                    style={{
-                        backgroundImage: `url(${bannerImg})`
-                    }}
-                />
-                {/* Overlay Pattern */}
-                <div
-                    className="absolute inset-0 z-0 opacity-20 pointer-events-none"
-                    style={{
-                        backgroundImage:
-                            'linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000),' +
-                            'linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000)',
-                        backgroundSize: '60px 60px',
-                        backgroundPosition: '0 0, 30px 30px'
-                    }}
-                />
+      // Call API to verify NGO credentials
+      const response = await fetch('/api/auth/ngo-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formState.email.toLowerCase().trim(),
+          password: formState.password,
+        }),
+      });
 
-                <div className="relative z-10 w-full max-w-[440px] px-6">
-                    <div className="bg-white rounded-3xl p-10 shadow-2xl w-full">
-                        {/* Header */}
-                        <div className="text-center mb-8">
-                            <div className="flex justify-center mb-4">
-                                <Shield className="w-12 h-12 text-emerald-600" strokeWidth={1.5} />
-                            </div>
-                            <h1 className="text-2xl font-bold text-gray-900 mb-2">Set Up Security</h1>
-                            <p className="text-sm text-gray-600">Protect your NGO account with two-step verification</p>
-                            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-full border border-emerald-200">
-                                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                                <span className="text-xs font-medium text-emerald-700">Verified NGO Badge</span>
-                            </div>
-                        </div>
+      if (!response.ok) {
+        const data = await response.json();
+        setFormState(prev => ({ ...prev, error: data.error || 'Login failed', loading: false }));
+        return;
+      }
 
-                        {/* MFA Options */}
-                        <div className="space-y-4">
-                            <button
-                                onClick={() => {
-                                    setMfaMethod('authenticator');
-                                    setStage('mfa-setup');
-                                }}
-                                className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-emerald-500 hover:bg-emerald-50/50 transition-all group cursor-pointer"
-                            >
-                                <div className="flex items-start gap-3">
-                                    <Smartphone className="w-6 h-6 text-emerald-600 mt-0.5 group-hover:scale-110 transition-transform" />
-                                    <div className="text-left">
-                                        <h3 className="font-semibold text-gray-900">Authenticator App</h3>
-                                        <p className="text-xs text-gray-600 mt-1">Use Google Authenticator, Microsoft Authenticator, or Authy</p>
-                                    </div>
-                                </div>
-                            </button>
+      const ngoData = await response.json();
 
-                            <button
-                                onClick={() => {
-                                    setMfaMethod('webauthn');
-                                    setStage('mfa-setup');
-                                }}
-                                className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-emerald-500 hover:bg-emerald-50/50 transition-all group cursor-pointer"
-                            >
-                                <div className="flex items-start gap-3">
-                                    <Key className="w-6 h-6 text-emerald-600 mt-0.5 group-hover:scale-110 transition-transform" />
-                                    <div className="text-left">
-                                        <h3 className="font-semibold text-gray-900">Security Key (YubiKey)</h3>
-                                        <p className="text-xs text-gray-600 mt-1">Hardware security key via WebAuthn</p>
-                                    </div>
-                                </div>
-                            </button>
-                        </div>
+      // Successfully verified credentials - now show MFA flow
+      setFormState(prev => ({
+        ...prev,
+        ngoId: ngoData.id,
+        organizationName: ngoData.name,
+        isFirstLogin: !ngoData.hasMFAEnrolled,
+        showMFAFlow: true,
+        loading: false
+      }));
 
-                        {/* Info Box */}
-                        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex gap-3">
-                            <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-blue-700">You can set up multiple authentication methods for better security and flexibility.</p>
-                        </div>
-
-                        {/* Back Button */}
-                        <button
-                            onClick={() => {
-                                setStage('login');
-                                setError('');
-                            }}
-                            className="w-full mt-6 h-11 bg-gray-100 text-gray-900 font-semibold text-sm rounded-lg hover:bg-gray-200 transition-colors"
-                        >
-                            Back to Login
-                        </button>
-                    </div>
-                </div>
-            </motion.div>
-        );
+    } catch (err) {
+      setFormState(prev => ({ ...prev, error: 'An error occurred. Please try again.', loading: false }));
+      console.error('Login error:', err);
     }
+  };
 
-    if (stage === 'mfa-setup' && mfaMethod) {
-        return (
-            <MFASetup
-                method={mfaMethod}
-                email={email}
-                ngoName={ngoData?.name || 'ShareSpace NGO'}
-                onSetupComplete={() => {
-                    setStage('mfa-verify');
-                }}
-                onBack={() => {
-                    setStage('mfa-method');
-                    setMfaMethod(null);
-                }}
-            />
-        );
+  // Handle MFA flow completion
+  const handleMFAComplete = async () => {
+    try {
+      // Create session via NextAuth
+      const result = await signIn('credentials', {
+        email: formState.email.toLowerCase().trim(),
+        password: formState.password,
+        type: 'ngo',
+        mfaVerified: 'true',
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        // Session created, redirect to dashboard
+        router.push('/ngo-dashboard');
+      } else {
+        setFormState(prev => ({
+          ...prev,
+          error: 'Failed to create session. Please try again.',
+          showMFAFlow: false
+        }));
+      }
+    } catch (err) {
+      setFormState(prev => ({
+        ...prev,
+        error: 'An error occurred during sign in.',
+        showMFAFlow: false
+      }));
+      console.error('Sign in error:', err);
     }
+  };
 
-    if (stage === 'mfa-verify') {
-        return (
-            <MFAVerification
-                method={mfaMethod!}
-                email={email}
-                onVerificationComplete={() => {
-                    // In a real app, this would authenticate the user
-                    router.push('/ngo-dashboard');
-                }}
-                onBack={() => {
-                    setStage('mfa-method');
-                    setMfaMethod(null);
-                }}
-            />
-        );
-    }
+  // If MFA flow is active, show MFA coordinator
+  if (formState.showMFAFlow && formState.ngoId && formState.organizationName !== undefined) {
+    return (
+      <MFAFlowCoordinator
+        ngoId={formState.ngoId}
+        email={formState.email}
+        organizationName={formState.organizationName}
+        isFirstLogin={formState.isFirstLogin ?? true}
+        onFlowComplete={handleMFAComplete}
+      />
+    );
+  }
 
-    // Main Login Form
+  // Login form
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -254,9 +193,9 @@ function NGOLoginForm() {
                     )}
 
                     {/* Error Message */}
-                    {error && (
+                    {formState.error && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm animate-slide-up">
-                            {error}
+                            {formState.error}
                         </div>
                     )}
 
@@ -268,10 +207,10 @@ function NGOLoginForm() {
                                 type="email"
                                 className="w-full h-11 px-4 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                                 placeholder="admin@organization.org"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                value={formState.email}
+                                onChange={(e) => setFormState(prev => ({ ...prev, email: e.target.value }))}
                                 required
-                                disabled={loading}
+                                disabled={formState.loading}
                             />
                         </div>
 
@@ -281,10 +220,10 @@ function NGOLoginForm() {
                                 type="password"
                                 className="w-full h-11 px-4 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                                 placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                value={formState.password}
+                                onChange={(e) => setFormState(prev => ({ ...prev, password: e.target.value }))}
                                 required
-                                disabled={loading}
+                                disabled={formState.loading}
                             />
                             <div className="flex justify-end mt-2">
                                 <a href="#" className="text-xs font-medium text-gray-500 hover:text-gray-900">Forgot password?</a>
@@ -293,10 +232,10 @@ function NGOLoginForm() {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={formState.loading}
                             className="w-full h-11 bg-gray-900 text-white font-semibold text-sm rounded-lg hover:bg-gray-800 transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading ? 'Verifying...' : 'Sign In to Portal'}
+                            {formState.loading ? 'Verifying...' : 'Sign In to Portal'}
                         </button>
                     </form>
 

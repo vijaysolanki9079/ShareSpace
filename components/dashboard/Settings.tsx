@@ -6,7 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { Camera, Lock, Mail, User, MapPin, AlignLeft, Shield, AlertCircle, CheckCircle2 } from 'lucide-react';
 
-export default function Settings() {
+interface SettingsProps {
+  mode?: 'user' | 'ngo';
+}
+
+export default function Settings({ mode = 'user' }: SettingsProps) {
   const { data: session, update } = useSession();
   
   const [formData, setFormData] = useState({
@@ -96,8 +100,14 @@ export default function Settings() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white tracking-tight">Account Settings</h2>
-        <p className="text-zinc-400 mt-1 text-sm">Manage your public profile and private details.</p>
+        <h2 className="text-2xl font-bold text-white tracking-tight">
+          {mode === 'ngo' ? 'Organization Settings' : 'Account Settings'}
+        </h2>
+        <p className="text-zinc-400 mt-1 text-sm">
+          {mode === 'ngo'
+            ? 'Manage your public organization profile and trusted access details.'
+            : 'Manage your public profile and private details.'}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -138,14 +148,14 @@ export default function Settings() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-emerald-100/90 flex items-center gap-2">
                 <User className="h-4 w-4 text-emerald-400/70" />
-                Full Name
+                {mode === 'ngo' ? 'Organization Name' : 'Full Name'}
               </label>
               <input
                 type="text"
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 className="block w-full px-4 py-2.5 border border-white/10 rounded-xl bg-black/40 text-white placeholder-zinc-500 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/40 sm:text-sm transition-all"
-                placeholder="John Doe"
+                placeholder={mode === 'ngo' ? 'Helping Hands Foundation' : 'John Doe'}
               />
             </div>
 
@@ -164,20 +174,21 @@ export default function Settings() {
               />
             </div>
 
-            {/* Location */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-emerald-100/90 flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-emerald-400/70" />
-                Location
-              </label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="block w-full px-4 py-2.5 border border-white/10 rounded-xl bg-black/40 text-white placeholder-zinc-500 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/40 sm:text-sm transition-all"
-                placeholder="City, Country"
-              />
-            </div>
+            {mode !== 'ngo' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-emerald-100/90 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-emerald-400/70" />
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  className="block w-full px-4 py-2.5 border border-white/10 rounded-xl bg-black/40 text-white placeholder-zinc-500 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/40 sm:text-sm transition-all"
+                  placeholder="City, Country"
+                />
+              </div>
+            )}
 
             {message && (
               <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 flex items-center gap-2 text-emerald-400 text-sm">
