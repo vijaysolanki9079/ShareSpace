@@ -21,13 +21,18 @@ model User {
   bio       String?
   location  String?
   image     String?
+  publicKey String?
+  encryptedPrivateKey String?
+  keyDerivationSalt String?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
   donationsDonated Donation[] @relation("DonationDonor")
   requestsMade     Request[]  @relation("RequestRequester")
-  messagesSent     Message[]  @relation("MessageSender")
-  messagesReceived Message[]  @relation("MessageReceiver")
+  
+  // Chat relations
+  conversationsAsUser1 Conversation[] @relation("User1Conv")
+  conversationsAsUser2 Conversation[] @relation("User2Conv")
 
   @@index([email])
 }
@@ -40,7 +45,6 @@ model NGO {
   registrationNumber    String
   website               String?
   missionArea           String
-  // Legacy field: kept for backward compatibility
   verificationDocument  String?
   isVerified            Boolean    @default(false)
   verificationStatus    String     @default("pending") // pending, approved, rejected
@@ -48,7 +52,6 @@ model NGO {
   bio                   String?
   image                 String?
   knownIssues           String?    // e.g., "Name mismatch in PAN Card", concatenated issues
-  // Plain decimal coords stored for Leaflet marker rendering
   latitude              Float?
   longitude             Float?
   locationName          String?
@@ -64,13 +67,22 @@ model NGO {
   mfaFailedAttempts     Int        @default(0)
   mfaLockedUntil        DateTime?
   
+  // E2EE Chat Fields
+  publicKey             String?
+  encryptedPrivateKey   String?
+  keyDerivationSalt     String?
+
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
 
-  donationsReceived   Donation[]
-  eventDrives         EventDrive[]
-  verificationDocs    NGOVerificationDocument[]
-  mfaAuditLogs        MFAAuditLog[]
+  donationsReceived     Donation[]
+  eventDrives           EventDrive[]
+  verificationDocs      NGOVerificationDocument[]
+  mfaAuditLogs          MFAAuditLog[]
+  
+  // Chat relations
+  conversationsAsNgo1   Conversation[] @relation("NGO1Conv")
+  conversationsAsNgo2   Conversation[] @relation("NGO2Conv")
 
   @@index([email])
   @@index([isVerified])
@@ -168,17 +180,45 @@ model Request {
   @@index([status])
 }
 
-model Message {
-  id         String   @id @default(cuid())
-  senderId   String
-  sender     User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiverId String
-  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  content    String
-  createdAt  DateTime @default(now())
+model Conversation {
+  id        String   @id @default(cuid())
+  
+  // Participants (Flexible to allow User-User, User-NGO, or NGO-NGO)
+  user1Id   String?
+  user1     User?    @relation("User1Conv", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2Id   String?
+  user2     User?    @relation("User2Conv", fields: [user2Id], references: [id], onDelete: Cascade)
+  
+  ngo1Id    String?
+  ngo1      NGO?     @relation("NGO1Conv", fields: [ngo1Id], references: [id], onDelete: Cascade)
+  ngo2Id    String?
+  ngo2      NGO?     @relation("NGO2Conv", fields: [ngo2Id], references: [id], onDelete: Cascade)
+  
+  messages  Message[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([ngo1Id])
+  @@index([ngo2Id])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  senderId       String
+  senderType     String       // 'USER' or 'NGO'
+  
+  content        String       // Encrypted cipher text
+  
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
   @@index([senderId])
-  @@index([receiverId])
 }
 
 model EventDrive {

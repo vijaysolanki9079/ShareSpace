@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '@/server/trpc';
 import { findNearbyNGOs } from '@/lib/repositories/ngo';
 import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
 // Validation schema for NGO registration form
 const ngoRegisterSchema = z.object({
@@ -94,13 +95,16 @@ export const ngoRouter = createTRPCRouter({
         knownIssues.push('Organization name is unusually long');
       }
 
-      // Create NGO record
+      // Use bcrypt to hash the password securely
+      const hashedPassword = await bcrypt.hash(input.password, 10);
+
+      // Create new NGO
       const ngo = await prisma.nGO.create({
         data: {
           organizationName: input.organizationName,
           registrationNumber: input.registrationNumber,
           email: input.email,
-          password: input.password, // TODO: Hash this properly with bcrypt
+          password: hashedPassword,
           website: input.website || null,
           missionArea: input.missionArea,
           verificationStatus: 'pending',

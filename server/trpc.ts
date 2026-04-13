@@ -1,17 +1,16 @@
-/**
- * server/trpc.ts
- * Core tRPC initialisation: context builder, router factory, and public procedure.
- * Raw SQL (pg) is used for PostGIS queries; Prisma handles standard CRUD.
- */
-import { initTRPC } from '@trpc/server';
+import { initTRPC, TRPCError } from '@trpc/server';
 import { prisma } from '@/lib/prisma';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 // ─── Context ────────────────────────────────────────────────────────────────
 export async function createTRPCContext(opts: { headers: Headers }) {
+  const session = await getServerSession(authOptions);
   return {
     prisma,
+    session,
     ...opts,
   };
 }
@@ -34,4 +33,18 @@ const t = initTRPC.context<Context>().create({
 });
 
 export const createTRPCRouter = t.router;
-export const publicProcedure    = t.procedure;
+export const publicProcedure = t.procedure;
+
+// Reusable middleware that checks if users are logged in
+const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
+  if (!ctx.session?.user) {
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  }
+  return next({
+    ctx: {
+      session: { ...ctx.session, user: ctx.session.user },
+    },
+  });
+});
+
+export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);

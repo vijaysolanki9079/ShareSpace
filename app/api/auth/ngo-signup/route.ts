@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { createClient } from "@supabase/supabase-js";
+
+// Initialize Supabase Client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,12 +50,65 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    let verificationDocumentPath = null;
+    let verificationDocumentPath: string | null = null;
 
-    // TODO: Handle file upload to Supabase Storage
-    // For now, we'll just store the filename
+    // Validate and upload document
     if (verificationDocument) {
-      verificationDocumentPath = verificationDocument.name;
+      // Validate file type (PDF, JPEG, PNG)
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+      if (!allowedTypes.includes(verificationDocument.type)) {
+        return NextResponse.json(
+          { error: "Invalid file type. Only PDF, JPEG, and PNG are allowed." },
+          { status: 400 }
+        );
+      }
+
+      // Validate file size (<= 5MB)
+      const MAX_SIZE = 5 * 1024 * 1024;
+      if (verificationDocument.size > MAX_SIZE) {
+        return NextResponse.json(
+          { error: "File size exceeds 5MB limit." },
+          { status: 400 }
+        );
+      }
+
+      try {
+        const fileExt = verificationDocument.name.split('.').pop();
+        const uniqueName = `ngo-cert-${Date.now()}-${Math.round(Math.random() * 1000)}.${fileExt}`;
+        
+        // Convert File to ArrayBuffer then Buffer for upload
+        const arrayBuffer = await verificationDocument.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const { data, error } = await supabase.storage
+          .from('documents')
+          .upload(uniqueName, buffer, {
+            contentType: verificationDocument.type,
+            upsert: false
+          });
+
+        if (error) {
+          console.error("Supabase upload error:", error);
+          return NextResponse.json(
+            { error: "Failed to upload document" },
+            { status: 500 }
+          );
+        }
+        
+        // Save the public URL
+        const { data: publicUrlData } = supabase.storage
+          .from('documents')
+          .getPublicUrl(data.path);
+          
+        verificationDocumentPath = publicUrlData.publicUrl;
+
+      } catch (uploadError) {
+        console.error("Upload process error:", uploadError);
+        return NextResponse.json(
+          { error: "Error during file upload" },
+          { status: 500 }
+        );
+      }
     }
 
     // Create NGO record

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, User, Shield } from 'lucide-react';
 
@@ -14,6 +15,8 @@ interface LoginDropdownProps {
 export default function LoginDropdown({ isDarkBg, isLight, className = '' }: LoginDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const isRegisterNgo = pathname?.startsWith('/register-ngo');
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -58,10 +61,12 @@ export default function LoginDropdown({ isDarkBg, isLight, className = '' }: Log
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`absolute top-[calc(100%+8px)] left-0 z-50 min-w-[240px] rounded-2xl shadow-2xl border backdrop-blur-lg overflow-hidden ${
-              isLightBg
-                ? 'bg-gradient-to-br from-white/20 via-white/15 to-white/10 border-white/30 shadow-xl shadow-black/10'
-                : 'bg-gradient-to-br from-white/95 via-white/90 to-white/85 border-white/40 shadow-lg'
+            className={`absolute top-[calc(100%+8px)] left-0 z-50 min-w-[240px] rounded-2xl shadow-2xl border overflow-hidden ${
+              isRegisterNgo
+                ? 'bg-[#022c22] border-[#064e3b] shadow-xl'
+                : isLightBg
+                ? 'backdrop-blur-lg bg-gradient-to-br from-white/20 via-white/15 to-white/10 border-white/30 shadow-xl shadow-black/10'
+                : 'backdrop-blur-lg bg-gradient-to-br from-white/95 via-white/90 to-white/85 border-white/40 shadow-lg'
             }`}
           >
             {/* Normal User Option */}
