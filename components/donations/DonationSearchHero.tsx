@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Package, MapPin, Search } from 'lucide-react';
+import { Package, MapPin, Search, Navigation } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import LocationAutocomplete, {
   LocationResult,
 } from '@/components/LocationAutocomplete';
@@ -26,6 +27,50 @@ export default function DonationSearchHero({
   const [locationResult, setLocationResult] = useState<LocationResult | null>(
     null
   );
+  const [isLocating, setIsLocating] = useState(false);
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`,
+            { headers: { 'User-Agent': 'ShareSpace-Donation-Platform' } }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            const locationName = data.address?.city || data.address?.town || data.address?.village || 'Current Location';
+            const locationResultData: LocationResult = { name: locationName, displayName: locationName, lat: latitude, lon: longitude, type: 'city' };
+            setLocationResult(locationResultData);
+            setLocationQuery(locationName);
+            toast.success('Location found successfully!');
+            // Trigger search automatically
+            onSearch({ item: itemQuery, location: locationResultData });
+          }
+        } catch (error) {
+          console.error('Reverse geocoding failed:', error);
+          const locationResultData: LocationResult = { name: 'Current Location', displayName: 'Current Location', lat: latitude, lon: longitude, type: 'city' };
+          setLocationResult(locationResultData);
+          setLocationQuery('Current Location');
+          toast.success('Location found successfully (Name unknown)');
+          // Trigger search automatically
+          onSearch({ item: itemQuery, location: locationResultData });
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      () => {
+        toast.error('Unable to retrieve your location. Please check browser permissions.');
+        setIsLocating(false);
+      }
+    );
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,11 +143,20 @@ export default function DonationSearchHero({
               </div>
               <button
                 type="submit"
-                disabled={isSearching}
+                disabled={isSearching || isLocating}
                 className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-700 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-emerald-500/30 transform hover:scale-105"
               >
                 <Search size={18} />
                 <span>{isSearching ? 'Searching...' : 'Find NGOs'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleGetLocation}
+                disabled={isLocating || isSearching}
+                className="w-full bg-emerald-50 hover:bg-emerald-100 disabled:opacity-60 disabled:hover:bg-emerald-50 text-emerald-700 font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow-md border border-emerald-200/50"
+              >
+                <Navigation size={18} className={isLocating ? 'animate-pulse' : ''} />
+                <span>{isLocating ? 'Locating...' : 'Near Me'}</span>
               </button>
             </div>
           </motion.form>

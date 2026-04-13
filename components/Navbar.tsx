@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { signOut } from 'next-auth/react';
 import { ChevronDown } from 'lucide-react';
+import LoginDropdown from '@/components/LoginDropdown';
 
 type NavbarProps = {
   variant?: 'light' | 'dark';
@@ -43,7 +44,7 @@ function NavLinksGroup({
           Donations
         </Link>
         <Link href={howItWorksHref} className={linkClass}>
-          How it Works
+          How It Works
         </Link>
         <Link href="/about" className={linkClass}>
           About
@@ -69,7 +70,7 @@ function NavLinksGroup({
         Donations
       </Link>
       <Link href={howItWorksHref} className={linkClass}>
-        How it Works
+        How It Works
       </Link>
       <Link href="/about" className={linkClass}>
         About
@@ -135,7 +136,7 @@ function UserAuthMenu({
         aria-haspopup="menu"
       >
         <span className="whitespace-nowrap">
-          <span className={isDarkBg || isLight ? 'font-medium text-white/80' : 'font-medium text-gray-600'}>Hi, </span>
+          <span className={isDarkBg || isLight ? 'font-medium text-white/80' : 'font-medium text-gray-600'}>Welcome, </span>
           <span className="inline-block max-w-[9rem] truncate align-bottom font-semibold">{firstName}</span>
         </span>
         <ChevronDown className={`h-4 w-4 shrink-0 opacity-90 transition-transform ${open ? 'rotate-180' : ''}`} strokeWidth={1.75} />
@@ -185,17 +186,12 @@ function GuestAuthPills({
 
     return (
       <div className={shell}>
-        <Link
-          href="/login"
-          className="rounded-full px-5 py-2 text-sm font-medium transition-colors text-white/80 hover:text-white hover:bg-white/10"
-        >
-          Log in
-        </Link>
+        <LoginDropdown isDarkBg={true} />
         <Link
           href="/signup"
           className="rounded-full px-5 py-2 text-sm font-medium transition-colors text-white bg-emerald-600 hover:bg-emerald-700"
         >
-          Sign up
+          Register
         </Link>
       </div>
     );
@@ -209,17 +205,12 @@ function GuestAuthPills({
 
   return (
     <div className={shell}>
-      <Link
-        href="/login"
-        className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${loginBtn}`}
-      >
-        Log in
-      </Link>
+      <LoginDropdown isLight={isLight} />
       <Link
         href="/signup"
         className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${signupBtn}`}
       >
-        Sign up
+        Register
       </Link>
     </div>
   );
@@ -257,7 +248,7 @@ const Navbar = ({
               alt="ShareSpace Logo"
               width={40}
               height={40}
-              className="w-10 h-10"
+              className="w-10 h-10 mb-1.5"
             />
           </div>
           <span

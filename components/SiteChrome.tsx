@@ -78,6 +78,7 @@ export default function SiteChrome({
   const hideChrome =
     pathname === "/login" ||
     pathname === "/signup" ||
+    pathname === "/ngo-login" ||
     pathname?.startsWith("/dashboard") ||
     pathname?.startsWith("/ngo-dashboard");
 
