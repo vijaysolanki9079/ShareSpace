@@ -1,3 +1,5 @@
+// Defensive import to avoid TypeScript issues across @prisma/client versions
+// @ts-ignore
 import { PrismaClient } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
 

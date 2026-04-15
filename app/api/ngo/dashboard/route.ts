@@ -83,7 +83,7 @@ export async function GET() {
 
     const reliabilityScore = clampReliabilityScore(trustBase);
 
-    const complianceBadges = docs.map((doc) =>
+    const complianceBadges = (docs as any[]).map((doc: any) =>
       doc.documentType === '80g_certificate' ? '80G' : 'FCRA'
     );
 
@@ -110,7 +110,7 @@ export async function GET() {
         reliabilityScore,
         eventsHosted: eventCount,
       },
-      recentActivity: recentActivity.map((item) => ({
+      recentActivity: recentActivity.map((item: any) => ({
         title: item.action.replace(/_/g, ' '),
         date: item.createdAt.toISOString(),
         success: item.success,

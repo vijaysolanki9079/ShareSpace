@@ -250,8 +250,8 @@ export const ngoRouter = createTRPCRouter({
         select: { documentType: true },
       });
 
-      const submittedTypes = new Set(submittedDocs.map(d => d.documentType));
-      const allMandatorySubmitted = MANDATORY_DOCUMENTS.every(doc => submittedTypes.has(doc));
+      const submittedTypes = new Set((submittedDocs as any[]).map((d: any) => d.documentType));
+      const allMandatorySubmitted = MANDATORY_DOCUMENTS.every((doc: any) => submittedTypes.has(doc));
 
       return {
         document: doc,
@@ -271,7 +271,7 @@ export const ngoRouter = createTRPCRouter({
         orderBy: { uploadedAt: 'desc' },
       });
 
-      return docs.map(doc => ({
+      return (docs as any[]).map((doc: any) => ({
         ...doc,
         label: formatDocumentLabel(doc.documentType),
         statusBadge: getStatusBadge(doc.status),

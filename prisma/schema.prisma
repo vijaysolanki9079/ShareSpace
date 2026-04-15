@@ -30,6 +30,10 @@ model User {
   donationsDonated Donation[] @relation("DonationDonor")
   requestsMade     Request[]  @relation("RequestRequester")
   
+  // Item request system
+  itemRequestsMade ItemRequest[]
+  itemResponsesGiven ItemResponse[]
+  
   // Chat relations
   conversationsAsUser1 Conversation[] @relation("User1Conv")
   conversationsAsUser2 Conversation[] @relation("User2Conv")
@@ -79,6 +83,7 @@ model NGO {
   eventDrives           EventDrive[]
   verificationDocs      NGOVerificationDocument[]
   mfaAuditLogs          MFAAuditLog[]
+  itemRequests          ItemRequest[]
   
   // Chat relations
   conversationsAsNgo1   Conversation[] @relation("NGO1Conv")
@@ -180,31 +185,6 @@ model Request {
   @@index([status])
 }
 
-model Conversation {
-  id        String   @id @default(cuid())
-  
-  // Participants (Flexible to allow User-User, User-NGO, or NGO-NGO)
-  user1Id   String?
-  user1     User?    @relation("User1Conv", fields: [user1Id], references: [id], onDelete: Cascade)
-  user2Id   String?
-  user2     User?    @relation("User2Conv", fields: [user2Id], references: [id], onDelete: Cascade)
-  
-  ngo1Id    String?
-  ngo1      NGO?     @relation("NGO1Conv", fields: [ngo1Id], references: [id], onDelete: Cascade)
-  ngo2Id    String?
-  ngo2      NGO?     @relation("NGO2Conv", fields: [ngo2Id], references: [id], onDelete: Cascade)
-  
-  messages  Message[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([user1Id])
-  @@index([user2Id])
-  @@index([ngo1Id])
-  @@index([ngo2Id])
-}
-
 model Message {
   id             String       @id @default(cuid())
   conversationId String
@@ -248,4 +228,125 @@ model MFAAuditLog {
   @@index([ngoId])
   @@index([action])
   @@index([createdAt])
+}
+
+// ====== ITEM REQUEST SYSTEM (P2P & NGO) ======
+
+model ItemCategory {
+  id          String        @id @default(cuid())
+  name        String        @unique // 'furniture', 'clothes', 'toys', 'tools', 'electronics', etc.
+  description String?
+  icon        String?
+  createdAt   DateTime      @default(now())
+
+  itemRequests ItemRequest[]
+
+  @@index([name])
+}
+
+model ItemRequest {
+  id            String        @id @default(cuid())
+  
+  // Requester (user who needs the item)
+  requesterId   String
+  requester     User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  
+  // Request details
+  title         String        // e.g., "Need a bed frame"
+  description   String
+  categoryId    String
+  category      ItemCategory  @relation(fields: [categoryId], references: [id])
+  
+  // Images (array of URLs from Supabase Storage)
+  images        String[]      @default([])
+  
+  // Location (PostGIS: store as point in database)
+  latitude      Float
+  longitude     Float
+  locationName  String?       // e.g., "Delhi, 500m radius"
+  radius        Int           @default(5000) // Search radius in meters (default 5km)
+  
+  // Status tracking
+  status        String        @default("open") // 'open', 'fulfilled', 'closed'
+  
+  // Optional: link to NGO if posted through NGO dashboard
+  ngoId         String?
+  ngo           NGO?          @relation(fields: [ngoId], references: [id], onDelete: SetNull)
+  
+  // Responses from donors
+  responses     ItemResponse[]
+  
+  // Chat conversations
+  conversations Conversation[]  @relation("ItemRequestConv")
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([requesterId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([ngoId])
+  @@index([createdAt])
+}
+
+model ItemResponse {
+  id            String        @id @default(cuid())
+  
+  // Response from donor
+  donorId       String
+  donor         User          @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  
+  // To which request
+  itemRequestId String
+  itemRequest   ItemRequest   @relation(fields: [itemRequestId], references: [id], onDelete: Cascade)
+  
+  // Active conversation for this response
+  conversationId String?
+  conversation   Conversation? @relation("ItemResponseConv", fields: [conversationId], references: [id], onDelete: SetNull)
+  
+  // Status: is donor still interested, did they fulfil it, etc.
+  status        String        @default("interested") // 'interested', 'fulfilled', 'no_longer_interested'
+  
+  message       String?       // Initial message from donor
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([donorId, itemRequestId])
+  @@index([donorId])
+  @@index([itemRequestId])
+  @@index([status])
+}
+
+// Extended Conversation for item requests
+model Conversation {
+  id        String   @id @default(cuid())
+  
+  // Participants (Flexible to allow User-User, User-NGO, or NGO-NGO)
+  user1Id   String?
+  user1     User?    @relation("User1Conv", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2Id   String?
+  user2     User?    @relation("User2Conv", fields: [user2Id], references: [id], onDelete: Cascade)
+  
+  ngo1Id    String?
+  ngo1      NGO?     @relation("NGO1Conv", fields: [ngo1Id], references: [id], onDelete: Cascade)
+  ngo2Id    String?
+  ngo2      NGO?     @relation("NGO2Conv", fields: [ngo2Id], references: [id], onDelete: Cascade)
+  
+  // Item request related chat
+  itemRequestId String?
+  itemRequest   ItemRequest? @relation("ItemRequestConv", fields: [itemRequestId], references: [id], onDelete: Cascade)
+  
+  itemResponses ItemResponse[] @relation("ItemResponseConv")
+  
+  messages  Message[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([ngo1Id])
+  @@index([ngo2Id])
+  @@index([itemRequestId])
 }
