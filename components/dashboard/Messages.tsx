@@ -142,8 +142,8 @@ const Messages = ({ mode = 'user' }: MessagesProps) => {
 
       if (!targetPublicKey) return; // Cant decrypt without public key
 
-      const decrypted = await Promise.all(
-        messagesQuery.data.map(async (msg) => {
+          const decrypted = await Promise.all(
+            (messagesQuery.data as any[]).map(async (msg: any) => {
           try {
             // For sender=me, I decrypt using their public key. For sender=target, I decrypt using their public key.
             // (In a complete implementation we might need to encrypt specifically for myself, but WebCrypto ECDH uses shared secrets that work symmetrically).

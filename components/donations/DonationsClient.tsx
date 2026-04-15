@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, ArrowRight, ShieldCheck, Filter } from 'lucide-react';
 import Link from 'next/link';
 import DonationSearchHero from './DonationSearchHero';
+import DonationModal from './DonationModal';
 import { LocationResult } from '@/components/LocationAutocomplete';
 
 // Dummy data for donations
@@ -25,6 +26,8 @@ export default function DonationsClient() {
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState('date-desc');
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedDonation, setSelectedDonation] = useState<typeof dummyDonations[0] | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const handleSearch = async (query: { item: string; location: LocationResult | null; }) => {
@@ -119,39 +122,46 @@ export default function DonationsClient() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3, delay: idx * 0.05 }}
                 key={donation.id}
-                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col group"
+                onClick={() => {
+                  setSelectedDonation(donation);
+                  setIsModalOpen(true);
+                }}
+                className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col group hover:border-emerald-200 hover:scale-105 cursor-pointer"
               >
+                {/* Header Section with Avatar */}
+                <div className="bg-gradient-to-r from-emerald-50 to-blue-50 p-5 border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                      {donation.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-base">{donation.name}</h3>
+                      <p className="text-xs text-gray-500 font-medium">{new Date(donation.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content Section */}
                 <div className="p-6 flex-1">
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xl shadow-sm border border-emerald-200">
-                        {donation.name.charAt(0)}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">{donation.name}</h3>
-                        <p className="text-xs text-gray-500 font-medium">{new Date(donation.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
-                      </div>
-                    </div>
-                    <div className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100 flexitems-center gap-1 font-bold shadow-sm">
-                      ₹{donation.amount.toLocaleString('en-IN')}
-                    </div>
+                  <div className="mb-6">
+                    <p className="text-xs text-emerald-600 font-semibold uppercase tracking-wide mb-2">💚 Supported Cause</p>
+                    <p className="text-gray-800 font-semibold text-base leading-snug group-hover:text-emerald-700 transition-colors">{donation.cause}</p>
                   </div>
                   
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500 mb-1">Supported Cause</p>
-                    <p className="text-gray-800 font-medium leading-snug">{donation.cause}</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
-                    <ShieldCheck className="text-emerald-600 shrink-0" size={16} />
-                    <p className="text-sm text-gray-600 truncate">
-                      Via <span className="font-semibold text-gray-900">{donation.ngo}</span>
+                  <div className="flex items-center gap-2 py-4 px-3 bg-gradient-to-r from-emerald-50 to-transparent rounded-lg border border-emerald-100">
+                    <ShieldCheck className="text-emerald-600 shrink-0" size={18} />
+                    <p className="text-sm text-gray-600">
+                      Via <span className="font-bold text-emerald-700">{donation.ngo}</span>
                     </p>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 group-hover:bg-emerald-50 transition-colors mt-auto">
-                   <Link href="/explore" className="flex items-center justify-between text-sm font-semibold text-emerald-600 group-hover:text-emerald-800">
-                    <span>Support similar causes</span>
+
+                {/* Footer with CTA */}
+                <div className="bg-gradient-to-r from-emerald-50 to-blue-50 px-6 py-4 border-t border-gray-100 group-hover:from-emerald-100 group-hover:to-blue-100 transition-all mt-auto">
+                   <Link href="/explore" className="flex items-center justify-between text-sm font-bold text-emerald-700 group-hover:text-emerald-900 hover:gap-2 transition-all">
+                    <span className="flex items-center gap-2">
+                      <span>✨ Support similar causes</span>
+                    </span>
                     <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
@@ -182,6 +192,12 @@ export default function DonationsClient() {
           </motion.div>
         )}
       </div>
+
+      <DonationModal
+        donation={selectedDonation}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

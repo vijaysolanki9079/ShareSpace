@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,7 @@ const Hero = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const heroRef = useRef<HTMLElement | null>(null);
 
   const handleDonateClick = (e: React.MouseEvent) => {
     if (!isAuthenticated) {
@@ -34,6 +35,98 @@ const Hero = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Smooth-first-scroll guard: intercept the first user scroll/touch/keydown
+  // and programmatically perform a smooth scroll to the hero bottom.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Respect users who prefer reduced motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    // Only guard when starting at the top of the page
+    if (window.scrollY > 5) return;
+
+    let handled = false;
+
+    const removeListeners = () => {
+      window.removeEventListener('wheel', onWheel as any, { passive: false } as any);
+      window.removeEventListener('touchmove', onTouchMove as any, { passive: false } as any);
+      window.removeEventListener('keydown', onKeyDown as any);
+    };
+
+    const doSmoothScroll = () => {
+      if (handled) return;
+      handled = true;
+
+      const heroEl = heroRef.current;
+      const target = heroEl ? heroEl.offsetHeight : window.innerHeight;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const final = Math.min(target, maxScroll);
+
+      // Perform smooth scroll; remove listeners after a short delay to let the browser animate
+      window.scrollTo({ top: final, behavior: 'smooth' });
+      setTimeout(removeListeners, 900);
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      if (handled) return;
+      if (window.scrollY > 5) return; // don't intercept mid-page
+      // Don't intercept if the user is interacting with a form control
+      const active = document.activeElement as HTMLElement | null;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+      const targ = e.target as HTMLElement | null;
+      if (targ && targ.closest && targ.closest('input,textarea,select,button,a,[role="button"]')) return;
+
+      e.preventDefault();
+      doSmoothScroll();
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (handled) return;
+      if (window.scrollY > 5) return;
+      // Respect form interaction on touch devices
+      const active = document.activeElement as HTMLElement | null;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+      const targ = e.target as HTMLElement | null;
+      if (targ && targ.closest && targ.closest('input,textarea,select,button,a,[role="button"]')) return;
+
+      e.preventDefault();
+      doSmoothScroll();
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (handled) return;
+      if (window.scrollY > 5) return;
+      // Don't intercept when typing into inputs
+      const active = document.activeElement as HTMLElement | null;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+
+      // Keys that commonly scroll down (include common space key values)
+      if (
+        e.key === 'PageDown' ||
+        e.key === 'ArrowDown' ||
+        e.key === ' ' ||
+        e.key === 'Spacebar' ||
+        e.code === 'Space'
+      ) {
+        e.preventDefault();
+        doSmoothScroll();
+      }
+    };
+
+    // Attach non-passive listeners so we can preventDefault()
+    window.addEventListener('wheel', onWheel as any, { passive: false } as any);
+    window.addEventListener('touchmove', onTouchMove as any, { passive: false } as any);
+    window.addEventListener('keydown', onKeyDown as any);
+
+    // Cleanup
+    return () => {
+      handled = true;
+      removeListeners();
+    };
+  }, []);
+
   const canvasRef = useImageSequence({
     frameCount: 80,
     imagePrefix: '/assets/transitions/Create_a_smooth_202602151314_feos1_',
@@ -43,7 +136,7 @@ const Hero = () => {
   });
 
   return (
-    <section className="relative bg-slate-500 min-h-[850px] flex items-center justify-center text-white overflow-hidden">
+    <section ref={heroRef} className="relative bg-slate-500 min-h-[850px] flex items-center justify-center text-white overflow-hidden">
 
       {/* Animation Canvas Container */}
       <div className="absolute inset-0 z-0">

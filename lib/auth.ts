@@ -108,7 +108,8 @@ export const authOptions: AuthOptions = {
           }
           return true;
         } catch (error) {
-          console.error("Error during Google sign-in:", error);
+          const msg = error instanceof Error ? error.message : String(error);
+          console.error("[NextAuth] Google sign-in callback error:", msg, error);
           return false;
         }
       }
@@ -116,6 +117,7 @@ export const authOptions: AuthOptions = {
     },
 
     async jwt({ token, user, account, trigger, session }) {
+      try {
       if (trigger === "update" && session) {
         if (session.name) token.name = session.name;
         if (session.image) token.picture = session.image;
@@ -125,6 +127,7 @@ export const authOptions: AuthOptions = {
 
       // On initial sign in
       if (account?.provider === "google" && user?.email) {
+        if (isDev) console.log("[jwt] Processing Google sign-in for user:", user.email);
         const dbUser = await prisma.user.findUnique({
           where: { email: user.email },
         });
@@ -144,9 +147,14 @@ export const authOptions: AuthOptions = {
         token.picture = user.image;
       }
       return token;
+      } catch (error) {
+        console.error("[NextAuth jwt callback error]:", error instanceof Error ? error.message : error);
+        throw error;
+      }
     },
 
     async session({ session, token }) {
+      try {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.type = token.type === "ngo" ? "ngo" : "user";
@@ -156,6 +164,10 @@ export const authOptions: AuthOptions = {
         if (token.location !== undefined) (session.user as any).location = token.location;
       }
       return session;
+      } catch (error) {
+        console.error("[NextAuth session callback error]:", error instanceof Error ? error.message : error);
+        throw error;
+      }
     },
   },
 
@@ -182,9 +194,23 @@ export const authOptions: AuthOptions = {
   },
 
   events: {
-    async signOut() {
-      // Handle sign out if needed
+    async signIn(message: any) {
+      try {
+        // log sign in details for debugging (avoid logging secrets)
+        // message typically contains { user, account, isNewUser }
+        // eslint-disable-next-line no-console
+        console.log('[next-auth][event] signIn', { user: (message as any)?.user?.email, provider: (message as any)?.account?.provider });
+      } catch (e) {
+        // ignore
+      }
     },
+
+    async signOut() {
+      // eslint-disable-next-line no-console
+      console.log('[next-auth][event] signOut');
+    },
+
+    // Note: NextAuth does not expose a generic `error` event in all versions.
   },
 
   session: {
