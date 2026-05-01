@@ -103,13 +103,13 @@ const EventsDrives = ({ mode = 'user' }: EventsDrivesProps) => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filteredEvents.map((event) => (
           <article
             key={event.id}
-            className="group overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md shadow-sm transition-all hover:border-white/20 hover:shadow-md"
+            className="group overflow-hidden rounded-xl border border-white/10 bg-slate-900/40 backdrop-blur-md shadow-sm transition-all hover:border-white/20 hover:shadow-md"
           >
-            <div className="relative aspect-[16/10] overflow-hidden bg-slate-800">
+            <div className="relative aspect-[2/1] overflow-hidden bg-slate-800">
               <img
                 src={event.image}
                 alt={event.title}
@@ -132,15 +132,15 @@ const EventsDrives = ({ mode = 'user' }: EventsDrivesProps) => {
               </div>
             </div>
 
-            <div className="p-5">
-              <h3 className="text-lg font-semibold text-slate-100 transition-colors group-hover:text-emerald-800">
+            <div className="p-3">
+              <h3 className="text-sm font-semibold text-slate-100 transition-colors group-hover:text-emerald-400">
                 {event.title}
               </h3>
               <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-400">{event.description}</p>
 
-              <ul className="mb-4 mt-4 space-y-2 border-t border-zinc-100 pt-4 text-sm text-zinc-600">
+              <ul className="mb-3 mt-3 space-y-1.5 border-t border-white/10 pt-3 text-[13px] text-white">
                 <li className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 shrink-0 text-zinc-400" />
+                  <Calendar className="h-4 w-4 shrink-0 text-slate-300" />
                   {new Date(event.date).toLocaleDateString('en-US', {
                     month: 'long',
                     day: 'numeric',
@@ -148,28 +148,28 @@ const EventsDrives = ({ mode = 'user' }: EventsDrivesProps) => {
                   })}
                 </li>
                 <li className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 shrink-0 text-zinc-400" />
+                  <Clock className="h-4 w-4 shrink-0 text-slate-300" />
                   {event.time}
                 </li>
                 <li className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <MapPin className="h-4 w-4 shrink-0 text-zinc-400" />
+                  <MapPin className="h-4 w-4 shrink-0 text-slate-300" />
                   <span className="min-w-0 flex-1 truncate">{event.location}</span>
-                  <span className="text-xs font-semibold text-emerald-700">{event.distance}</span>
+                  <span className="text-xs font-semibold text-emerald-400">{event.distance}</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Users className="h-4 w-4 shrink-0 text-zinc-400" />
+                  <Users className="h-4 w-4 shrink-0 text-slate-300" />
                   {event.attendees} attending
                 </li>
               </ul>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 pt-4">
-                <p className="text-sm text-slate-400">
-                  By <span className="font-semibold text-slate-200">{event.organizer}</span>
+              <div className="mt-3 space-y-3 border-t border-white/10 pt-3">
+                <p className="text-[13px] text-slate-400 truncate">
+                  By <span className="font-medium text-slate-200">{event.organizer}</span>
                 </p>
                 {event.status === 'upcoming' && (
                   <button
                     type="button"
-                    className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                    className="w-full rounded-lg bg-emerald-500/10 py-1.5 text-[13px] font-semibold text-emerald-400 ring-1 ring-emerald-500/20 transition-colors hover:bg-emerald-500/20"
                   >
                     {mode === 'ngo' ? 'Manage event' : 'Join event'}
                   </button>

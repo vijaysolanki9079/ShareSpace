@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, MapPin, AlertCircle, Check } from 'lucide-react';
+import { Upload, MapPin, AlertCircle, Check, Info, ArrowRight } from 'lucide-react';
+import ItemAutocomplete from './ItemAutocomplete';
 import { useSession } from 'next-auth/react';
 
 interface ItemCategory {
@@ -38,41 +39,15 @@ export default function CreateRequestForm({
   const [success, setSuccess] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
 
-  // Load categories on mount
   useEffect(() => {
     fetchCategories();
-  }, []);
-
-  // Get user's current location
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setFormState((prev) => ({
-            ...prev,
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          }));
-        },
-        (error) => {
-          console.log('Location access denied:', error);
-          // Default to Delhi if user denies location
-          setFormState((prev) => ({
-            ...prev,
-            latitude: 28.6139,
-            longitude: 77.209,
-            locationName: 'Delhi (default)',
-          }));
-        }
-      );
-    }
+    handleGetLocation();
   }, []);
 
   const fetchCategories = async () => {
     try {
       const res = await fetch('/api/requests/categories');
       const data = await res.json();
-
       if (data.categories) {
         setCategories(data.categories);
       }
@@ -94,7 +69,7 @@ export default function CreateRequestForm({
           setGettingLocation(false);
         },
         (error) => {
-          setError('Could not get your location. Please type it manually.');
+          console.warn('Location access denied');
           setGettingLocation(false);
         }
       );
@@ -106,26 +81,8 @@ export default function CreateRequestForm({
     setError(null);
     setLoading(true);
 
-    if (!formState.title.trim()) {
-      setError('Please enter a title');
-      setLoading(false);
-      return;
-    }
-
-    if (!formState.description.trim()) {
-      setError('Please enter a description');
-      setLoading(false);
-      return;
-    }
-
-    if (!formState.categoryId) {
-      setError('Please select a category');
-      setLoading(false);
-      return;
-    }
-
-    if (!formState.latitude || !formState.longitude) {
-      setError('Please set your location');
+    if (!formState.title.trim() || !formState.description.trim() || !formState.categoryId) {
+      setError('Please fill in all required fields');
       setLoading(false);
       return;
     }
@@ -139,237 +96,161 @@ export default function CreateRequestForm({
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || 'Failed to create request');
-        setLoading(false);
-        return;
+        throw new Error(data.error || 'Failed to create request');
       }
 
       const data = await response.json();
       setSuccess(true);
-
-      // Reset form
-      setFormState({
-        title: '',
-        description: '',
-        categoryId: '',
-        locationName: '',
-        latitude: 0,
-        longitude: 0,
-        radius: 5000,
-        images: [],
-      });
-
       setTimeout(() => {
         if (onSuccess) onSuccess(data.requestId);
-      }, 1000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      }, 1500);
+    } catch (err: any) {
+      setError(err.message);
       setLoading(false);
     }
   };
 
-  if (!session?.user) {
-    return (
-      <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <p className="text-yellow-800">
-          Please log in to create a donation request.
-        </p>
-      </div>
-    );
-  }
+  if (!session?.user) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-lg"
-    >
-      <h2 className="text-2xl font-bold mb-6 text-gray-900">
-        Post a Donation Request
-      </h2>
-
-      {success && (
+    <div className="max-w-4xl mx-auto">
+      {success ? (
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="mb-6 p-4 bg-green-100 border border-green-300 rounded-lg flex items-center gap-3 text-green-800"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center py-20 text-center"
         >
-          <Check size={20} />
-          <span>Request created successfully! 🎉</span>
-        </motion.div>
-      )}
-
-      {error && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="mb-6 p-4 bg-red-100 border border-red-300 rounded-lg flex items-center gap-3 text-red-800"
-        >
-          <AlertCircle size={20} />
-          <span>{error}</span>
-        </motion.div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            What do you need? *
-          </label>
-          <input
-            type="text"
-            value={formState.title}
-            onChange={(e) =>
-              setFormState((prev) => ({ ...prev, title: e.target.value }))
-            }
-            placeholder="e.g., Used sofa, children's books, old laptop"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={loading}
-          />
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description *
-          </label>
-          <textarea
-            value={formState.description}
-            onChange={(e) =>
-              setFormState((prev) => ({
-                ...prev,
-                description: e.target.value,
-              }))
-            }
-            placeholder="Describe what you need in detail. Mention condition, size, color, or specific requirements..."
-            rows={4}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={loading}
-          />
-        </div>
-
-        {/* Category */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category *
-          </label>
-          <select
-            value={formState.categoryId}
-            onChange={(e) =>
-              setFormState((prev) => ({ ...prev, categoryId: e.target.value }))
-            }
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={loading}
-          >
-            <option value="">Select a category</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)} -{' '}
-                {cat.description}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Location */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700">
-            Your Location *
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={formState.locationName}
-              onChange={(e) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  locationName: e.target.value,
-                }))
-              }
-              placeholder="e.g., Delhi - Sector 5"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-              disabled={loading}
-            />
-            <button
-              type="button"
-              onClick={handleGetLocation}
-              disabled={loading || gettingLocation}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 flex items-center gap-2"
-            >
-              <MapPin size={18} />
-              {gettingLocation ? 'Getting...' : 'Detect'}
-            </button>
+          <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/10">
+            <Check size={48} strokeWidth={3} />
           </div>
-          {formState.latitude && formState.longitude && (
-            <p className="text-sm text-gray-500">
-              Coordinates: {formState.latitude.toFixed(4)},
-              {formState.longitude.toFixed(4)}
-            </p>
-          )}
-        </div>
+          <h3 className="text-3xl font-black text-gray-900 mb-2">Request Posted!</h3>
+          <p className="text-gray-500 font-medium">Your community can now see what you need.</p>
+        </motion.div>
+      ) : (
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Left Column: Core Info */}
+          <div className="space-y-8">
+            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+               <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4 block">1. What do you need?</label>
+               <ItemAutocomplete
+                value={formState.title}
+                onChange={(val) => setFormState((prev) => ({ ...prev, title: val }))}
+                placeholder="e.g., Sofa, Books, Laptop"
+              />
+              <p className="mt-4 text-xs text-gray-400 flex items-center gap-2">
+                <Info size={14} /> Try to be as specific as possible
+              </p>
+            </div>
 
-        {/* Radius */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Search Radius (km)
-          </label>
-          <input
-            type="range"
-            min="1"
-            max="25"
-            step="1"
-            value={formState.radius / 1000}
-            onChange={(e) =>
-              setFormState((prev) => ({
-                ...prev,
-                radius: parseInt(e.target.value) * 1000,
-              }))
-            }
-            className="w-full"
-            disabled={loading}
-          />
-          <p className="text-sm text-gray-600 mt-2">
-            Donors can see this request within {formState.radius / 1000} km
-          </p>
-        </div>
+            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+               <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4 block">2. Describe the need</label>
+               <textarea
+                value={formState.description}
+                onChange={(e) => setFormState((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="Briefly explain why you need this item and what condition you're looking for..."
+                rows={5}
+                className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 transition-all resize-none"
+              />
+            </div>
 
-        {/* Images */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Add Photos
-          </label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500">
-            <Upload className="mx-auto mb-2 text-gray-400" size={32} />
-            <p className="text-sm text-gray-600">
-              Drag photos here or click to select (optional)
-            </p>
+            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+               <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4 block">3. Select Category</label>
+               <div className="grid grid-cols-2 gap-2">
+                  {categories.map(cat => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setFormState(p => ({ ...p, categoryId: cat.id }))}
+                      className={`px-4 py-3 rounded-xl text-xs font-bold transition-all text-left border ${
+                        formState.categoryId === cat.id 
+                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg' 
+                        : 'bg-gray-50 text-gray-600 border-transparent hover:bg-gray-100'
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+               </div>
+            </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Note: Image upload coming soon
-          </p>
-        </div>
 
-        {/* Submit */}
-        <div className="flex gap-3 pt-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {loading ? 'Creating...' : 'Post Request'}
-          </button>
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={loading}
-              className="flex-1 px-6 py-3 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 disabled:bg-gray-100"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </form>
-    </motion.div>
+          {/* Right Column: Location & Extras */}
+          <div className="space-y-8">
+            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+               <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4 block">4. Location & Reach</label>
+               <div className="space-y-4">
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                      type="text"
+                      value={formState.locationName}
+                      onChange={(e) => setFormState(p => ({ ...p, locationName: e.target.value }))}
+                      placeholder="Your neighborhood (e.g., Koramangala)"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  
+                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-black text-emerald-800 uppercase tracking-tight">Visibility Radius</span>
+                      <span className="text-xs font-bold text-emerald-600 bg-white px-2 py-1 rounded-lg border border-emerald-200">{formState.radius/1000} km</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="25"
+                      value={formState.radius/1000}
+                      onChange={(e) => setFormState(p => ({ ...p, radius: parseInt(e.target.value)*1000 }))}
+                      className="w-full accent-emerald-600"
+                    />
+                  </div>
+               </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+               <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4 block">5. Media (Optional)</label>
+               <div className="border-2 border-dashed border-gray-100 rounded-3xl p-10 text-center flex flex-col items-center justify-center bg-gray-50/50 hover:bg-emerald-50 transition-colors group cursor-pointer">
+                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-emerald-500 shadow-sm mb-3 transition-colors">
+                    <Upload size={24} />
+                  </div>
+                  <p className="text-xs font-bold text-gray-500 group-hover:text-emerald-700">Add an example image</p>
+                  <p className="text-[10px] text-gray-400 mt-1">Help donors identify the item faster</p>
+               </div>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-700 text-sm font-medium">
+                <AlertCircle size={18} />
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-4">
+               {onCancel && (
+                 <button
+                   type="button"
+                   onClick={onCancel}
+                   className="flex-1 py-4 bg-gray-100 text-gray-600 font-bold rounded-2xl hover:bg-gray-200 transition-all"
+                 >
+                   Discard
+                 </button>
+               )}
+               <button
+                 type="submit"
+                 disabled={loading}
+                 className="flex-[2] py-4 bg-emerald-500 text-black font-bold rounded-2xl hover:bg-emerald-400 shadow-xl shadow-emerald-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+               >
+                 {loading ? 'Posting...' : (
+                   <>
+                     Confirm & Post
+                     <ArrowRight size={18} strokeWidth={3} />
+                   </>
+                 )}
+               </button>
+            </div>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }

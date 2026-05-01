@@ -15,14 +15,20 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 
+import { trpc } from '@/lib/trpc';
+import { useRouter } from 'next/navigation';
+
 export default function RequestDetailPage() {
   const params = useParams();
   const requestId = params.id as string;
   const { data: session } = useSession();
+  const router = useRouter();
   const [request, setRequest] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [messaging, setMessaging] = useState(false);
+
+  const startConversation = trpc.chat.startConversation.useMutation();
 
   useEffect(() => {
     fetchRequestDetail();
@@ -54,24 +60,27 @@ export default function RequestDetailPage() {
 
     setMessaging(true);
     try {
-      // Create conversation via existing chat API
-      const response = await fetch('/api/chat/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          itemRequestId: requestId,
-          participantId: request.requester.id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to start conversation');
+      // Get current location if possible for proximity share
+      let locationParams = '';
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        locationParams = `&shareLocation=true&lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`;
+      } catch (e) {
+        console.warn('Location access denied or timed out');
       }
 
-      const data = await response.json();
-      // Redirect to chat
-      window.location.href = `/dashboard/conversations/${data.conversationId}`;
+      // Create conversation via tRPC chat router (Prisma-backed)
+      const conv = await startConversation.mutateAsync({
+        targetId: request.requester.id,
+        targetType: 'user', // ItemRequest requester is always a User
+      });
+
+      // Redirect to the dashboard messages section with this chat selected
+      router.push(`/dashboard?section=messages&chatId=${conv.id}${locationParams}`);
     } catch (err) {
+      console.error(err);
       alert('Failed to start conversation');
       setMessaging(false);
     }

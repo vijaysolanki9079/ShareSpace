@@ -8,103 +8,21 @@ interface MyRequestsProps {
   mode?: 'user' | 'ngo';
 }
 
+import { useSession } from 'next-auth/react';
+import { trpc } from '@/lib/trpc';
+
 const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
   const [filter, setFilter] = useState('all');
+  
+  const { data: session } = useSession();
+  const userId = session?.user?.id as string;
+  
+  const { data: fetchedRequests, isLoading, refetch } = trpc.item.getMyRequests.useQuery(
+    { userId },
+    { enabled: !!userId && mode === 'user' }
+  );
 
-  const requests =
-    mode === 'ngo'
-      ? [
-          {
-            id: 1,
-            title: 'Family ration kit request',
-            category: 'Food',
-            condition: 'Urgent',
-            status: 'pending',
-            donor: 'Community volunteer',
-            distance: '1.0 km',
-            date: '2024-01-22',
-            image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop',
-          },
-          {
-            id: 2,
-            title: 'Uniform support for students',
-            category: 'Education',
-            condition: 'Verified request',
-            status: 'approved',
-            donor: 'Asha Foundation',
-            distance: '3.2 km',
-            date: '2024-01-21',
-            image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&h=300&fit=crop',
-          },
-          {
-            id: 3,
-            title: 'Blanket distribution round',
-            category: 'Essentials',
-            condition: 'Completed drive',
-            status: 'completed',
-            donor: 'Winter relief camp',
-            distance: '0.8 km',
-            date: '2024-01-15',
-            image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=400&h=300&fit=crop',
-          },
-          {
-            id: 4,
-            title: 'Medical supplies request',
-            category: 'Healthcare',
-            condition: 'Duplicate submission',
-            status: 'rejected',
-            donor: 'Clinic partner',
-            distance: '4.2 km',
-            date: '2024-01-18',
-            image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=300&fit=crop',
-          },
-        ]
-      : [
-    {
-      id: 1,
-      title: 'Study Desk',
-      category: 'Furniture',
-      condition: 'Good condition',
-      status: 'pending',
-      donor: 'John Doe',
-      distance: '2.5 km',
-      date: '2024-01-22',
-      image: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=400&h=300&fit=crop',
-    },
-    {
-      id: 2,
-      title: 'Fiction Books Bundle',
-      category: 'Books',
-      condition: 'Like new',
-      status: 'approved',
-      donor: 'Sarah Chen',
-      distance: '1.2 km',
-      date: '2024-01-21',
-      image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=300&fit=crop',
-    },
-    {
-      id: 3,
-      title: 'Winter Blankets',
-      category: 'Household',
-      condition: 'Good',
-      status: 'completed',
-      donor: 'Community Drive',
-      distance: '0.8 km',
-      date: '2024-01-15',
-      image: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400&h=300&fit=crop',
-    },
-    {
-      id: 4,
-      title: 'Kids Bicycle',
-      category: 'Toys',
-      condition: 'Used',
-      status: 'rejected',
-      donor: 'Mike Wilson',
-      distance: '3.5 km',
-      date: '2024-01-18',
-      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
-    },
-        ];
+  const requests = fetchedRequests || [];
 
   const filteredRequests = filter === 'all' ? requests : requests.filter((r) => r.status === filter);
 
@@ -156,94 +74,102 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {filteredRequests.map((request) => {
-          const statusBadge = getStatusBadge(request.status);
-          const StatusIcon = statusBadge.icon;
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-[300px] rounded-xl bg-white/5 animate-pulse border border-white/10" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filteredRequests.map((request) => {
+            const statusBadge = getStatusBadge(request.status);
+            const StatusIcon = statusBadge.icon;
 
-          return (
-            <article
-              key={request.id}
-              className="group overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md shadow-sm transition-all duration-300 hover:border-white/20 hover:shadow-md"
-            >
-              <div className="relative aspect-[16/10] overflow-hidden bg-slate-800">
-                <img
-                  src={request.image}
-                  alt={request.title}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                />
-              <div className="absolute inset-0 bg-slate-950/40 pointer-events-none transition-opacity duration-500 group-hover:bg-slate-950/20" />
-                <div className="absolute right-3 top-3">
-                  <div
-                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadge.bg} ${statusBadge.textColor}`}
-                  >
-                    <StatusIcon className="h-3.5 w-3.5" strokeWidth={1.75} />
-                    {statusBadge.text}
+            return (
+              <article
+                key={request.id}
+                className="group overflow-hidden rounded-xl border border-white/10 bg-slate-900/40 backdrop-blur-md shadow-sm transition-all duration-300 hover:border-white/20 hover:shadow-md"
+              >
+                <div className="relative aspect-[2/1] overflow-hidden bg-slate-800">
+                  <img
+                    src={request.image}
+                    alt={request.title}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                <div className="absolute inset-0 bg-slate-950/40 pointer-events-none transition-opacity duration-500 group-hover:bg-slate-950/20" />
+                  <div className="absolute right-3 top-3">
+                    <div
+                      className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadge.bg} ${statusBadge.textColor}`}
+                    >
+                      <StatusIcon className="h-3.5 w-3.5" strokeWidth={1.75} />
+                      {statusBadge.text}
+                    </div>
                   </div>
-                </div>
-                <div className="absolute bottom-3 left-3 rounded-lg bg-zinc-950/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-200 backdrop-blur-md z-10">
-                  {request.category}
-                </div>
-                <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/20 bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-200 backdrop-blur-sm shadow-sm">
-                  <MapPin className="h-3.5 w-3.5 text-emerald-600" strokeWidth={1.75} />
-                  {request.distance}
-                </div>
-              </div>
-
-              <div className="p-4">
-                <h3 className="text-base font-semibold text-slate-100 transition-colors group-hover:text-emerald-400">
-                  {request.title}
-                </h3>
-                <p className="mt-1.5 flex items-center gap-2 text-[13px] text-slate-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  {request.condition}
-                </p>
-
-                <div className="mt-3 space-y-1.5 border-t border-white/10 pt-3">
-                  <div className="flex items-center gap-2 text-[13px] text-zinc-400">
-                    <User className="h-3.5 w-3.5" />
-                    <span className="font-medium text-slate-200">{request.donor}</span>
+                  <div className="absolute bottom-3 left-3 rounded-lg bg-zinc-950/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-200 backdrop-blur-md z-10">
+                    {request.category}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <Clock className="h-3.5 w-3.5" />
-                    {new Date(request.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
+                  <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full border border-white/20 bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-800 backdrop-blur-sm shadow-sm">
+                    <MapPin className="h-3.5 w-3.5 text-emerald-600" strokeWidth={1.75} />
+                    {request.distance}
                   </div>
                 </div>
 
-                {request.status === 'pending' && (
-                  <div className="mt-4 flex gap-2">
+                <div className="p-3">
+                  <h3 className="text-sm font-semibold text-slate-100 transition-colors group-hover:text-emerald-400">
+                    {request.title}
+                  </h3>
+                  <p className="mt-1.5 flex items-center gap-2 text-[13px] text-slate-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    {request.condition}
+                  </p>
+
+                  <div className="mt-2 space-y-1.5 border-t border-white/10 pt-2">
+                    <div className="flex items-center gap-2 text-[13px] text-zinc-400">
+                      <User className="h-3.5 w-3.5" />
+                      <span className="font-medium text-slate-200">{request.donor}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <Clock className="h-3.5 w-3.5" />
+                      {new Date(request.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </div>
+                  </div>
+
+                  {request.status === 'pending' && (
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        className="flex-1 rounded-lg bg-emerald-500/20 py-1.5 text-[13px] font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/30 ring-1 ring-emerald-500/30"
+                      >
+                        {mode === 'ngo' ? 'Open request' : 'View details'}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-lg border border-white/10 px-3 py-2 text-zinc-400 transition-colors hover:border-emerald-400/50 hover:bg-emerald-500/10 hover:text-emerald-300"
+                        aria-label="Message"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                  {request.status === 'approved' && (
                     <button
                       type="button"
-                      className="flex-1 rounded-lg bg-emerald-500/20 py-2 text-[13px] font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/30 ring-1 ring-emerald-500/30"
+                      className="mt-3 w-full rounded-lg bg-emerald-600/20 py-1.5 text-[13px] font-semibold text-emerald-300 ring-1 ring-emerald-500/40 transition-colors hover:bg-emerald-500/30"
                     >
-                      {mode === 'ngo' ? 'Open request' : 'View details'}
+                      {mode === 'ngo' ? 'Assign delivery' : 'Arrange pickup'}
                     </button>
-                    <button
-                      type="button"
-                      className="rounded-lg border border-white/10 px-3 py-2 text-zinc-400 transition-colors hover:border-emerald-400/50 hover:bg-emerald-500/10 hover:text-emerald-300"
-                      aria-label="Message"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-                {request.status === 'approved' && (
-                  <button
-                    type="button"
-                    className="mt-4 w-full rounded-lg bg-emerald-600/20 py-2 text-[13px] font-semibold text-emerald-300 ring-1 ring-emerald-500/40 transition-colors hover:bg-emerald-500/30"
-                  >
-                    {mode === 'ngo' ? 'Assign delivery' : 'Arrange pickup'}
-                  </button>
-                )}
-              </div>
-            </article>
-          );
-        })}
-      </div>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
       {filteredRequests.length === 0 && (
         <div className="rounded-2xl border border-dashed border-white/10 bg-white/5/80 py-14 text-center">
@@ -256,9 +182,10 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
           </p>
           <button
             type="button"
+            onClick={() => refetch()}
             className="mt-6 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
           >
-            {mode === 'ngo' ? 'Refresh queue' : 'Browse available items'}
+            Refresh List
           </button>
         </div>
       )}

@@ -52,8 +52,17 @@ function getNavbarConfigForPath(pathname: string | null) {
     };
   }
 
-  // Donations - Dark green navbar to match main theme ✨
-  if (path === "/donations") {
+  // Donations & Requests - Dark green navbar to match main theme ✨
+  if (path === "/donations" || path === "/requests" || path.startsWith("/requests/")) {
+    return {
+      variant: "light" as const,
+      background: "bg-[#022c22]",
+      className: "sticky top-0 left-0 right-0 z-50 shadow-lg",
+    };
+  }
+
+  // NGO Profile - Dark green navbar to match theme ✨
+  if (path.startsWith("/ngo/")) {
     return {
       variant: "light" as const,
       background: "bg-[#022c22]",

@@ -2,8 +2,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Loader, X, CheckCircle2 } from 'lucide-react';
-import { trpc } from '@/lib/trpc'; // Updated path for the project
+import { MapPin, Loader, X, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { trpc } from '@/lib/trpc'; 
+import { toast } from 'react-hot-toast';
+import { showIndiaOnlyToast } from '@/lib/toast-utils';
 
 export interface LocationResult {
   name: string;
@@ -37,6 +39,7 @@ export default function LocationAutocomplete({
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
+  const [showIndiaAlert, setShowIndiaAlert] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -67,7 +70,15 @@ export default function LocationAutocomplete({
     }
   };
 
-  const handleSelectLocation = (location: LocationResult) => {
+  const handleSelectLocation = (location: any) => {
+    // Check if location is in India
+    if (location.countryCode && location.countryCode.toLowerCase() !== 'in') {
+      setShowIndiaAlert(true);
+      // Auto-hide after 5 seconds
+      setTimeout(() => setShowIndiaAlert(false), 5000);
+      return;
+    }
+
     setSelectedLocation(location);
     onChange(location.displayName);
     onLocationSelect(location);
@@ -132,6 +143,39 @@ export default function LocationAutocomplete({
 
   return (
     <div ref={containerRef} className="relative w-full">
+      <AnimatePresence>
+        {showIndiaAlert && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="absolute bottom-full left-0 right-0 mb-4 z-[10001]"
+          >
+            <div className="bg-white border-2 border-emerald-500 shadow-[0_20px_50px_rgba(6,78,59,0.2)] rounded-2xl p-4 relative">
+              {/* Arrow pointing down */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-r-2 border-b-2 border-emerald-500 rotate-45" />
+              
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 text-xl">🇮🇳</div>
+                <div className="flex-1">
+                  <p className="text-emerald-900 font-bold text-sm leading-tight">
+                    📍 ShareSpace currently only operates within India.
+                  </p>
+                  <p className="text-emerald-600/60 text-[10px] mt-1 font-medium italic">
+                    Focusing on local impact for now.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowIndiaAlert(false)}
+                  className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="relative">
         <div className="relative flex items-center h-12 md:h-auto z-[60]">
           <MapPin className="absolute left-4 text-gray-400 w-5 h-5 flex-shrink-0 pointer-events-none" />
@@ -186,40 +230,42 @@ export default function LocationAutocomplete({
       <AnimatePresence>
         {isOpen && suggestions.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl border border-gray-100 shadow-xl z-[9999] overflow-hidden p-2"
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-emerald-100 shadow-2xl z-[100] overflow-hidden p-1.5"
           >
-            <div className="max-h-[220px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300/50 scrollbar-track-transparent pr-1">
+            <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 scrollbar-track-transparent pr-1">
               {suggestions.map((location: LocationResult, index: number) => {
                 const isSelected = selectedLocation?.lat === location.lat && selectedLocation?.lon === location.lon;
+                const isHighlighted = highlightedIndex === index;
                 return (
                   <motion.button
                     key={`${location.lat}-${location.lon}`}
                     onClick={() => handleSelectLocation(location)}
                     onMouseEnter={() => setHighlightedIndex(index)}
                     className={`
-                      w-full relative px-4 py-3 text-left transition-colors duration-200 flex items-center gap-3 font-sans rounded-xl mb-1 last:mb-0
-                      ${highlightedIndex === index ? 'bg-gray-100/80 cursor-pointer' : 'hover:bg-gray-50 cursor-pointer'}
-                      ${isSelected ? 'bg-emerald-50/80 text-emerald-900 font-medium' : 'text-gray-800'}
+                      w-full relative px-4 py-3.5 text-left transition-all duration-200 flex items-center gap-4 font-sans rounded-xl mb-1 last:mb-0
+                      ${isHighlighted ? 'bg-emerald-50/80 border-emerald-100 shadow-sm' : 'bg-transparent border-transparent'}
+                      border
+                      ${isSelected ? 'bg-emerald-600 text-white shadow-emerald-200' : ''}
                     `}
                   >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg shadow-sm border border-emerald-100/50 transition-colors ${highlightedIndex === index ? 'bg-white' : 'bg-emerald-50/50'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg shadow-sm border transition-colors ${isSelected ? 'bg-white/20 border-white/30' : (isHighlighted ? 'bg-white border-emerald-100' : 'bg-emerald-50/50 border-emerald-100/50')}`}>
                       {getTypeIcon(location.type)}
                     </div>
                     
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <div className="flex items-center justify-between gap-3">
-                        <p className={`text-base truncate transition-colors ${isSelected ? 'font-bold text-emerald-800' : 'font-medium text-gray-800'}`}>
+                        <p className={`text-sm truncate transition-colors ${isSelected ? 'font-bold text-white' : (isHighlighted ? 'font-bold text-emerald-900' : 'font-semibold text-gray-800')}`}>
                           {location.displayName}
                         </p>
                         {isSelected && (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 ml-auto" strokeWidth={2.5} />
+                          <CheckCircle2 className="w-4 h-4 text-white flex-shrink-0 ml-auto" strokeWidth={3} />
                         )}
                       </div>
-                      <p className={`text-[13px] mt-0.5 transition-colors uppercase tracking-wide font-semibold ${isSelected ? 'text-emerald-600/80' : 'text-gray-400'}`}>
+                      <p className={`text-[11px] mt-0.5 transition-colors uppercase tracking-widest font-bold ${isSelected ? 'text-emerald-50/80' : (isHighlighted ? 'text-emerald-600' : 'text-gray-400')}`}>
                         {getTypeLabel(location.type)}
                       </p>
                     </div>

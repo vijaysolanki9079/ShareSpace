@@ -28,6 +28,14 @@ const Hero = () => {
     }
   };
 
+  const handleRequestClick = (e: React.MouseEvent) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      toast.error('Please sign in to request items!');
+      router.push('/login');
+    }
+  };
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % CAROUSEL_TEXTS.length);
@@ -275,9 +283,9 @@ const Hero = () => {
             {/* Shine Sweep Effect */}
             <div className="absolute top-[-50%] left-[20%] w-[150%] h-[200%] bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[200%] group-hover:translate-x-[100%] skew-x-[-30deg] transition-transform duration-1000 ease-in-out z-0"></div>
 
-            {/* Content Let's keep it above shapes */}
+            {/* Content */}
             <span className="relative z-10 text-white flex items-center justify-center gap-2">
-              Start Donating
+              Donate Items
               <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
@@ -285,11 +293,17 @@ const Hero = () => {
           </Link>
           
           <Link
-            href="/signup"
-            className="px-8 py-3.5 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-100 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/20 min-w-[200px] text-center"
+            href="/requests"
+            onClick={handleRequestClick}
+            className="group relative px-8 py-3.5 font-semibold rounded-xl overflow-hidden min-w-[200px] transition-transform hover:scale-105 active:scale-95 bg-white/10 backdrop-blur-md border border-white/20 shadow-xl"
             style={{ fontWeight: 600 }}
           >
-            Create Free Account
+            <span className="relative z-10 text-white flex items-center justify-center gap-2">
+              Request an Item
+              <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+              </svg>
+            </span>
           </Link>
         </motion.div>
 

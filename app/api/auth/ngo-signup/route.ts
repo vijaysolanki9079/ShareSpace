@@ -18,10 +18,19 @@ export async function POST(request: NextRequest) {
     const registrationNumber = formData.get("registrationNumber") as string;
     const website = (formData.get("website") as string) || null;
     const missionArea = formData.get("missionArea") as string;
+    const categoriesRaw = formData.get("categories") as string | null;
+    const categories = categoriesRaw
+      ? categoriesRaw
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : missionArea
+        ? [missionArea]
+        : [];
     const verificationDocument = formData.get("verificationDocument") as File | null;
 
     // Validation
-    if (!email || !password || !organizationName || !registrationNumber || !missionArea) {
+    if (!email || !password || !organizationName || !registrationNumber || categories.length === 0) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -119,7 +128,8 @@ export async function POST(request: NextRequest) {
         organizationName,
         registrationNumber,
         website,
-        missionArea,
+        missionArea: categories[0],
+        categories,
         verificationDocument: verificationDocumentPath,
       },
     });

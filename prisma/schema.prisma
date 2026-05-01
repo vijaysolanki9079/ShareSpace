@@ -49,6 +49,7 @@ model NGO {
   registrationNumber    String
   website               String?
   missionArea           String
+  categories            String[]   @default([])
   verificationDocument  String?
   isVerified            Boolean    @default(false)
   verificationStatus    String     @default("pending") // pending, approved, rejected
@@ -59,6 +60,7 @@ model NGO {
   latitude              Float?
   longitude             Float?
   locationName          String?
+  location_geom         Unsupported("geometry(Point, 4326)")?
   
   // MFA Fields
   mfaSetupComplete      Boolean    @default(false)
@@ -265,6 +267,7 @@ model ItemRequest {
   longitude     Float
   locationName  String?       // e.g., "Delhi, 500m radius"
   radius        Int           @default(5000) // Search radius in meters (default 5km)
+  location_geom Unsupported("geometry(Point, 4326)")?
   
   // Status tracking
   status        String        @default("open") // 'open', 'fulfilled', 'closed'
@@ -340,6 +343,8 @@ model Conversation {
   itemResponses ItemResponse[] @relation("ItemResponseConv")
   
   messages  Message[]
+  
+  status    String   @default("PENDING") // 'PENDING', 'ACCEPTED', 'REJECTED'
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

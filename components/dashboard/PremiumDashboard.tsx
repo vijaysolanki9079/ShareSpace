@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import {
   Home,
   Gift,
@@ -18,12 +19,12 @@ import {
   Users,
   Star,
   Leaf,
-  Globe, Search,
+  Globe, Search, Plus,
 } from 'lucide-react';
 import MyDonations from './MyDonations';
 import MyRequests from './MyRequests';
 import MessagesInbox from './Messages';
-import NearbyNGOs from './NearbyNGOs';
+
 import EventsDrives from './EventsDrives';
 import SettingsView from './Settings';
 /** Dark canvas + black glass (blur) panels; emerald accents */
@@ -34,7 +35,7 @@ const glassDark =
 const easeOut = [0.22, 1, 0.36, 1] as const;
 const tPage = { duration: 0.3, ease: easeOut };
 
-type SectionId = 'dashboard' | 'donations' | 'requests' | 'messages' | 'ngos' | 'events' | 'settings';
+type SectionId = 'dashboard' | 'donations' | 'requests' | 'messages' | 'events' | 'settings';
 
 function Blob({
   delay = 0,
@@ -71,7 +72,7 @@ function Sidebar({
     { id: 'donations', label: 'Donations', icon: Gift },
     { id: 'requests', label: 'Requests', icon: ShoppingBag },
     { id: 'messages', label: 'Messages', icon: MessageCircle },
-    { id: 'ngos', label: 'NGOs', icon: MapPin },
+
     { id: 'events', label: 'Events', icon: Calendar },
   ];
 
@@ -227,6 +228,13 @@ function TopBar() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <Link
+            href="/requests"
+            className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-600 px-4 h-10 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-700 hover:scale-105 active:scale-95"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            Post Request
+          </Link>
           
           <Link
             href="/explore"
@@ -524,8 +532,23 @@ function SectionFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
+
 export default function PremiumDashboard() {
+  const searchParams = useSearchParams();
   const [active, setActive] = useState<SectionId>('dashboard');
+  const [initialChatId, setInitialChatId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const section = searchParams.get('section') as SectionId;
+    const chatId = searchParams.get('chatId');
+    
+    if (section) {
+      setActive(section);
+    }
+    if (chatId) {
+      setInitialChatId(chatId);
+    }
+  }, [searchParams]);
 
   return (
     <div className={pageBg}>
@@ -551,14 +574,10 @@ export default function PremiumDashboard() {
           )}
           {active === 'messages' && (
             <SectionFrame key="messages">
-              <MessagesInbox />
+              <MessagesInbox initialSelectedChat={initialChatId} />
             </SectionFrame>
           )}
-          {active === 'ngos' && (
-            <SectionFrame key="ngos">
-              <NearbyNGOs />
-            </SectionFrame>
-          )}
+
           {active === 'events' && (
             <SectionFrame key="events">
               <EventsDrives />

@@ -1,14 +1,22 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, CheckCircle2, Zap } from 'lucide-react';
-import { MOCK_NGOS } from '@/lib/mock-data';
+
+export interface NGOSuggestion {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+}
 
 interface NGONameAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
   onNGOSelect?: (ngoId: string, ngoName: string) => void;
+  /** Pass live tRPC/DB results here — shown in the dropdown as the user types */
+  suggestions?: NGOSuggestion[];
   placeholder?: string;
   onFocus?: () => void;
   onBlur?: () => void;
@@ -19,6 +27,7 @@ export default function NGONameAutocomplete({
   value,
   onChange,
   onNGOSelect,
+  suggestions: externalSuggestions = [],
   placeholder = 'Search by NGO name...',
   onFocus,
   onBlur,
@@ -31,15 +40,8 @@ export default function NGONameAutocomplete({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const suggestions = useMemo(() => {
-    if (!value || value.length < 1) return [];
-    const lowercaseQuery = value.toLowerCase();
-    return MOCK_NGOS.filter(
-      (ngo) =>
-        ngo.name.toLowerCase().includes(lowercaseQuery) ||
-        ngo.description.toLowerCase().includes(lowercaseQuery)
-    ).slice(0, 8);
-  }, [value]);
+  // Use externally passed suggestions (from tRPC live query)
+  const suggestions = value.length >= 1 ? (externalSuggestions ?? []).slice(0, 8) : [];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -156,38 +158,40 @@ export default function NGONameAutocomplete({
       <AnimatePresence>
         {isOpen && suggestions.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.98 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl border border-gray-100 shadow-xl z-[9999] overflow-hidden p-2"
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-emerald-100 shadow-2xl z-[100] overflow-hidden p-1.5"
           >
-            <div className="max-h-[220px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300/50 scrollbar-track-transparent pr-1">
+            <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-200 scrollbar-track-transparent pr-1">
               {suggestions.map((ngo, index) => {
                 const isSelected = selectedNGO === ngo.id;
+                const isHighlighted = highlightedIndex === index;
                 return (
                   <motion.button
                     key={ngo.id}
                     onClick={() => handleSelectNGO(ngo.id, ngo.name)}
                     onMouseEnter={() => setHighlightedIndex(index)}
                     className={`
-                      w-full relative px-4 py-3 text-left transition-colors duration-200 flex items-center gap-3 font-sans rounded-xl mb-1 last:mb-0
-                      ${highlightedIndex === index ? 'bg-gray-100/80 cursor-pointer' : 'hover:bg-gray-50 cursor-pointer'}
-                      ${isSelected ? 'bg-emerald-50/80 text-emerald-900 font-medium' : 'text-gray-800'}
+                      w-full relative px-4 py-3.5 text-left transition-all duration-200 flex items-center gap-4 font-sans rounded-xl mb-1 last:mb-0
+                      ${isHighlighted ? 'bg-emerald-50/80 border-emerald-100 shadow-sm' : 'bg-transparent border-transparent'}
+                      border
+                      ${isSelected ? 'bg-emerald-600 text-white shadow-emerald-200' : ''}
                     `}
                   >
-                    <div className={`px-3 py-1.5 rounded-lg text-xs font-bold tracking-widest flex-shrink-0 border uppercase shadow-sm ${getCategoryColor(ngo.category)}`}>
+                    <div className={`px-2.5 py-1 rounded-md text-[10px] font-black tracking-widest flex-shrink-0 border uppercase shadow-sm ${isSelected ? 'bg-white/20 border-white/30 text-white' : getCategoryColor(ngo.category)}`}>
                       {ngo.category.slice(0, 3)}
                     </div>
                     
-                    <div className="flex-1 min-w-0 flex flex-col justify-center pl-1">
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <div className="flex items-center justify-between gap-3">
-                        <p className={`text-base truncate transition-colors ${isSelected ? 'font-bold text-emerald-800' : 'font-semibold text-gray-800'}`}>
+                        <p className={`text-sm truncate transition-colors ${isSelected ? 'font-bold text-white' : (isHighlighted ? 'font-bold text-emerald-900' : 'font-semibold text-gray-800')}`}>
                           {ngo.name}
                         </p>
-                        {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 ml-auto" strokeWidth={2.5} />}
+                        {isSelected && <CheckCircle2 className="w-4 h-4 text-white flex-shrink-0 ml-auto" strokeWidth={3} />}
                       </div>
-                      <p className={`text-sm mt-0.5 line-clamp-1 transition-colors leading-relaxed ${isSelected ? 'text-emerald-700/80 font-medium' : 'text-gray-500'}`}>
+                      <p className={`text-xs mt-0.5 line-clamp-1 transition-colors leading-relaxed ${isSelected ? 'text-emerald-50/80 font-medium' : (isHighlighted ? 'text-emerald-700/80' : 'text-gray-500')}`}>
                         {ngo.description}
                       </p>
                     </div>

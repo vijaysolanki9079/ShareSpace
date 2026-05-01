@@ -5,15 +5,25 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Users, Navigation, Search } from 'lucide-react';
 import LocationAutocomplete, { LocationResult } from './LocationAutocomplete';
-import NGONameAutocomplete from './NGONameAutocomplete';
+import NGONameAutocomplete, { type NGOSuggestion } from './NGONameAutocomplete';
 import { toast } from 'react-hot-toast';
+import { showIndiaOnlyToast } from '@/lib/toast-utils';
 
 interface SearchHeroProps {
   onSearch: (query: { ngoName: string; location: LocationResult | null }) => void;
   isSearching?: boolean;
+  /** Live autocomplete suggestions from the parent tRPC query */
+  autocompleteSuggestions?: NGOSuggestion[];
+  /** Called on every keystroke so parent can debounce-fetch suggestions */
+  onNgoNameChange?: (value: string) => void;
 }
 
-export default function SearchHero({ onSearch, isSearching = false }: SearchHeroProps) {
+export default function SearchHero({
+  onSearch,
+  isSearching = false,
+  autocompleteSuggestions = [],
+  onNgoNameChange,
+}: SearchHeroProps) {
   const [ngoSearchQuery, setNgoSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
@@ -35,25 +45,38 @@ export default function SearchHero({ onSearch, isSearching = false }: SearchHero
           );
           if (response.ok) {
             const data = await response.json();
+            const countryCode = data.address?.country_code;
+
+            if (countryCode && countryCode.toLowerCase() !== 'in') {
+              showIndiaOnlyToast();
+              setIsLocating(false);
+              return;
+            }
+
             const locationName = data.address?.city || data.address?.town || data.address?.village || 'Current Location';
-            const locationResult: LocationResult = { name: locationName, displayName: locationName, lat: latitude, lon: longitude, type: 'city' };
+            const locationResult: any = { 
+              name: locationName, 
+              displayName: locationName, 
+              lat: latitude, 
+              lon: longitude, 
+              type: 'city',
+              countryCode: countryCode
+            };
             setSelectedLocation(locationResult);
             setLocationQuery(locationName);
             toast.success('Location found successfully!');
+
+            // Trigger search automatically
+            onSearch({
+              ngoName: ngoSearchQuery,
+              location: locationResult
+            });
           }
         } catch (error) {
           console.error('Reverse geocoding failed:', error);
-          const locationResult: LocationResult = { name: 'Current Location', displayName: 'Current Location', lat: latitude, lon: longitude, type: 'city' };
-          setSelectedLocation(locationResult);
-          setLocationQuery('Current Location');
-          toast.success('Location found successfully (Name unknown)');
+          toast.error('Unable to get location name. Please try again.');
         } finally {
           setIsLocating(false);
-          // Trigger a search automatically after getting location
-          onSearch({
-            ngoName: ngoSearchQuery,
-            location: selectedLocation || { name: 'Current Location', displayName: 'Current Location', lat: latitude, lon: longitude, type: 'city' }
-          });
         }
       },
       () => {
@@ -99,7 +122,20 @@ export default function SearchHero({ onSearch, isSearching = false }: SearchHero
             <div className="bg-white p-4 md:p-6 rounded-[2rem] shadow-2xl flex flex-col gap-4 max-w-xl mx-auto lg:ml-auto w-full border border-emerald-500/10">
               
               <div className="w-full">
-                <NGONameAutocomplete value={ngoSearchQuery} onChange={setNgoSearchQuery} placeholder="Search by NGO name..." onKeyDown={handleKeyDown} />
+                <NGONameAutocomplete
+                  value={ngoSearchQuery}
+                  onChange={v => {
+                    setNgoSearchQuery(v);
+                    onNgoNameChange?.(v);
+                  }}
+                  suggestions={autocompleteSuggestions}
+                  onNGOSelect={(id, name) => {
+                    setNgoSearchQuery(name);
+                    onSearch({ ngoName: name, location: selectedLocation });
+                  }}
+                  placeholder="Search by NGO name..."
+                  onKeyDown={handleKeyDown}
+                />
               </div>
 
               <div className="w-full">

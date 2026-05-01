@@ -20,6 +20,7 @@ export type NearbyNGO = {
   id: string;
   organizationName: string;
   missionArea: string;
+  categories: string[];
   bio: string | null;
   image: string | null;
   isVerified: boolean;
@@ -76,15 +77,24 @@ export async function findNearbyNGOs({
   // Category filter
   if (hasCategory) {
     params.push(category!);
-    conditions.push(`"missionArea" ILIKE '%' || $${paramIdx++} || '%'`);
+    conditions.push(`COALESCE("categories", ARRAY[]::text[]) && ARRAY[$${paramIdx++}]::text[]`);
   }
 
-  // Free-text search — NGO name and bio only (not random shops, etc.)
+  // Free-text search across NGO name, bio, and categories.
   if (hasSearch) {
     params.push(`%${searchQuery!.trim()}%`);
     conditions.push(
-      `("organizationName" ILIKE $${paramIdx} OR "bio" ILIKE $${paramIdx++})`
+      `(
+        "organizationName" ILIKE $${paramIdx}
+        OR "bio" ILIKE $${paramIdx}
+        OR EXISTS (
+          SELECT 1
+          FROM unnest(COALESCE("categories", ARRAY[]::text[])) AS category_value
+          WHERE category_value ILIKE $${paramIdx}
+        )
+      )`
     );
+    paramIdx++;
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -116,6 +126,7 @@ export async function findNearbyNGOs({
       id,
       "organizationName",
       "missionArea",
+      categories,
       bio,
       image,
       "isVerified",

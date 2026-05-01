@@ -7,7 +7,7 @@ type DemoAccount = {
   password: string;
   name: string;
   registrationNumber: string;
-  missionArea: string;
+  categories: string[];
   locationName: string;
 };
 
@@ -39,7 +39,9 @@ function getDemoAccounts() {
         registrationNumber:
           getEnvValue(`NGO_DEMO_REGISTRATION_NUMBER${suffix}`) ??
           `DEMO${suffix ? '002' : '001'}`,
-        missionArea: getEnvValue(`NGO_DEMO_MISSION_AREA${suffix}`) ?? 'Community Support',
+        categories: [
+          getEnvValue(`NGO_DEMO_MISSION_AREA${suffix}`) ?? 'Community Support',
+        ],
         locationName: getEnvValue(`NGO_DEMO_LOCATION_NAME${suffix}`) ?? 'Delhi, India',
       } satisfies DemoAccount,
     ];
@@ -61,7 +63,8 @@ async function getOrCreateDemoNgoAccount(account: DemoAccount) {
       password: hashedPassword,
       organizationName: account.name,
       registrationNumber: account.registrationNumber,
-      missionArea: account.missionArea,
+      missionArea: account.categories[0],
+      categories: account.categories,
       verificationStatus: 'approved',
       isVerified: true,
       bio: 'Environment-configured demo NGO account',

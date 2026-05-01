@@ -14,6 +14,8 @@ export interface LocationSuggestion {
   lat: number;
   lon: number;
   type: 'city' | 'area' | 'street' | 'other';
+  country?: string;
+  countryCode?: string;
 }
 
 const NOMINATIM_API = 'https://nominatim.openstreetmap.org';
@@ -56,7 +58,6 @@ async function fetchLocationSuggestions(
             `format=json&` +
             `q=${encodeURIComponent(query)}&` +
             `limit=12&` + // Get more results for deduplication
-            `countrycodes=in&` +
             `featuretype=city,town,village,administrative&` +
             `addressdetails=1`,
             {
@@ -94,6 +95,8 @@ async function fetchLocationSuggestions(
         lat: parseFloat(item.lat),
         lon: parseFloat(item.lon),
         type: getLocationType(item.type),
+        country: item.address?.country,
+        countryCode: item.address?.country_code,
       }))
       .filter((item: LocationSuggestion) => {
         // Filter out invalid coordinates
@@ -188,6 +191,8 @@ async function reverseGeocode(
           result.address?.village ||
           'Unknown Location',
         displayName: parseAddress(result.display_name),
+        country: result.address?.country,
+        countryCode: result.address?.country_code,
       },
     };
   } catch (error) {

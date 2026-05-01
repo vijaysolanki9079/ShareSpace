@@ -24,7 +24,7 @@ export const NGOSignUpSchema = z.object({
   organizationName: z.string().min(2, 'Organization name is required'),
   registrationNumber: z.string().min(2, 'Registration number is required'),
   website: z.string().url('Invalid URL').optional().or(z.literal('')),
-  missionArea: z.string().min(2, 'Mission area is required'),
+  categories: z.array(z.string().min(2)).min(1, 'At least one category is required'),
   verificationDocument: z.instanceof(File).optional(),
 });
 

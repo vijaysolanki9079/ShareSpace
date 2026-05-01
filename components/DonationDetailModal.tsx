@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSession } from 'next-auth/react';
+import { trpc } from '@/lib/trpc';
 import {
   X,
   MessageCircle,
@@ -58,10 +60,48 @@ export default function DonationDetailModal({
   onClose,
   request,
 }: DonationDetailModalProps) {
+  const { data: session } = useSession();
   const [contactSent, setContactSent] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const startConversation = trpc.chat.startConversation.useMutation();
+
+  const handleStartChat = async () => {
+    if (!session?.user?.id) {
+      alert('Please log in to message');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // Get current location if possible for proximity share
+      let locationParams = '';
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        locationParams = `&shareLocation=true&lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`;
+      } catch (e) {
+        console.warn('Location access denied or timed out');
+      }
+
+      // Create conversation via tRPC chat router (Prisma-backed)
+      const conv = await startConversation.mutateAsync({
+        targetId: request.requester.id,
+        targetType: 'user', // ItemRequest requester is always a User
+      });
+
+      // Redirect to the dashboard messages section with this chat selected
+      window.location.href = `/dashboard?section=messages&chatId=${conv.id}${locationParams}`;
+    } catch (err) {
+      console.error(err);
+      alert('Failed to start conversation');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleContactClick = async () => {
     setSubmitting(true);
@@ -314,13 +354,14 @@ export default function DonationDetailModal({
             {/* Footer Actions */}
             <div className="border-t p-6 bg-gray-50 space-y-3">
               <div className="flex gap-3 flex-wrap">
-                <Link
-                  href={`/requests/${request.id}/chat`}
-                  className="flex-1 min-w-[200px] flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                <button
+                  onClick={handleStartChat}
+                  disabled={submitting}
+                  className="flex-1 min-w-[200px] flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
                 >
                   <MessageCircle size={20} />
-                  💬 Chat Now
-                </Link>
+                  Offer Help
+                </button>
 
                 <button
                   onClick={handleContactClick}

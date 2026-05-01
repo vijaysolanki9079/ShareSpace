@@ -43,6 +43,9 @@ function NavLinksGroup({
         <Link href="/donations" className={linkClass}>
           Donations
         </Link>
+        <Link href="/requests" className={linkClass}>
+          Requests
+        </Link>
         <Link href={howItWorksHref} className={linkClass}>
           How It Works
         </Link>
@@ -68,6 +71,9 @@ function NavLinksGroup({
       </Link>
       <Link href="/donations" className={linkClass}>
         Donations
+      </Link>
+      <Link href="/requests" className={linkClass}>
+        Requests
       </Link>
       <Link href={howItWorksHref} className={linkClass}>
         How It Works

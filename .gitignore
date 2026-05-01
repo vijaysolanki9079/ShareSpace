@@ -49,3 +49,14 @@ next-env.d.ts
 
 # Script folder
 scripts/
+
+# Seed data
+prisma/seed.mjs
+prisma/seed.js
+prisma/seed_*.mjs
+prisma/seed_*.js
+prisma/seed_*.ts
+seed.js
+seed.mjs
+seed_final.mjs
+seed_jalandhar.mjs

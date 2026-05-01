@@ -20,7 +20,7 @@ const ngoRegisterSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   website: z.string().url('Invalid website URL').optional().nullable(),
-  missionArea: z.string().min(3, 'Mission area is required'),
+  categories: z.array(z.string().min(1)).min(1, 'At least one category is required'),
 });
 
 // Document type definitions
@@ -106,7 +106,8 @@ export const ngoRouter = createTRPCRouter({
           email: input.email,
           password: hashedPassword,
           website: input.website || null,
-          missionArea: input.missionArea,
+          missionArea: input.categories[0],
+          categories: input.categories,
           verificationStatus: 'pending',
           knownIssues: knownIssues.length > 0 ? knownIssues.join('; ') : null,
         },
@@ -276,6 +277,23 @@ export const ngoRouter = createTRPCRouter({
         label: formatDocumentLabel(doc.documentType),
         statusBadge: getStatusBadge(doc.status),
       }));
+    }),
+
+  /**
+   * Get full details for a specific NGO by ID.
+   */
+  getById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      const ngo = await prisma.nGO.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!ngo) {
+        throw new Error('NGO not found');
+      }
+
+      return ngo;
     }),
 });
 

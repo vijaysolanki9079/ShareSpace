@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Package, MapPin, Search, Navigation } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { showIndiaOnlyToast } from '@/lib/toast-utils';
+import ItemAutocomplete from '@/components/ItemAutocomplete';
 import LocationAutocomplete, {
   LocationResult,
 } from '@/components/LocationAutocomplete';
@@ -45,8 +47,23 @@ export default function DonationSearchHero({
           );
           if (response.ok) {
             const data = await response.json();
+            const countryCode = data.address?.country_code;
+            
+            if (countryCode && countryCode.toLowerCase() !== 'in') {
+               showIndiaOnlyToast();
+               setIsLocating(false);
+               return;
+            }
+
             const locationName = data.address?.city || data.address?.town || data.address?.village || 'Current Location';
-            const locationResultData: LocationResult = { name: locationName, displayName: locationName, lat: latitude, lon: longitude, type: 'city' };
+            const locationResultData: any = { 
+              name: locationName, 
+              displayName: locationName, 
+              lat: latitude, 
+              lon: longitude, 
+              type: 'city',
+              countryCode: countryCode
+            };
             setLocationResult(locationResultData);
             setLocationQuery(locationName);
             toast.success('Location found successfully!');
@@ -116,19 +133,12 @@ export default function DonationSearchHero({
             className="w-full max-w-md mx-auto md:mx-0"
           >
             <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-2xl shadow-2xl space-y-4">
-              <div className="relative">
-                <Package
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-300"
-                  size={20}
-                />
-                <input
-                  type="text"
+                <ItemAutocomplete
                   value={itemQuery}
-                  onChange={(e) => setItemQuery(e.target.value)}
+                  onChange={setItemQuery}
                   placeholder="What are you donating? (e.g., clothes)"
-                  className="w-full bg-white/10 border border-white/20 text-white placeholder-emerald-100/60 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-lg pl-12 pr-4 py-3 transition-all"
+                  inputClassName="w-full bg-white/10 border border-white/20 text-white placeholder-emerald-100/60 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-lg pl-12 pr-4 py-3 transition-all"
                 />
-              </div>
               <div className="relative">
                 <MapPin
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-300"

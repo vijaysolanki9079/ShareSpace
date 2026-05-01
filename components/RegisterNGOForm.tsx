@@ -3,7 +3,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  ChevronDown,
   UploadCloud,
   ShieldCheck,
   CheckCircle2,
@@ -22,7 +21,16 @@ interface FormData {
   email: string;
   password: string;
   website: string;
-  missionArea: string;
+  categories: string[];
+}
+
+interface FormErrors {
+  organizationName?: string;
+  registrationNumber?: string;
+  email?: string;
+  password?: string;
+  website?: string;
+  categories?: string;
 }
 
 interface DocumentUpload {
@@ -78,7 +86,7 @@ export default function RegisterNGOForm() {
     email: '',
     password: '',
     website: '',
-    missionArea: '',
+    categories: [],
   });
 
   // Document state
@@ -95,12 +103,12 @@ export default function RegisterNGOForm() {
     })),
   ]);
 
-  const [formErrors, setFormErrors] = useState<Partial<FormData>>({});
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [documentErrors, setDocumentErrors] = useState<Record<string, string>>({});
 
   // Form validation
   const validateForm = useCallback((): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: FormErrors = {};
 
     if (!formData.organizationName.trim()) {
       newErrors.organizationName = 'Organization name is required';
@@ -130,8 +138,8 @@ export default function RegisterNGOForm() {
       newErrors.website = 'Website must start with http:// or https://';
     }
 
-    if (!formData.missionArea) {
-      newErrors.missionArea = 'Mission area is required';
+    if (formData.categories.length === 0) {
+      newErrors.categories = 'At least one category is required';
     }
 
     setFormErrors(newErrors);
@@ -158,10 +166,23 @@ export default function RegisterNGOForm() {
   }, [documents]);
 
   // Handle form input change
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    setFormErrors(prev => ({ ...prev, [name]: '' }));
+    setFormErrors(prev => ({ ...prev, [name]: '' } as FormErrors));
+  };
+
+  const toggleCategory = (category: string) => {
+    setFormData(prev => {
+      const alreadySelected = prev.categories.includes(category);
+      return {
+        ...prev,
+        categories: alreadySelected
+          ? prev.categories.filter(item => item !== category)
+          : [...prev.categories, category],
+      };
+    });
+    setFormErrors(prev => ({ ...prev, categories: '' }));
   };
 
   // Handle document upload
@@ -485,30 +506,31 @@ export default function RegisterNGOForm() {
                       Organization Focus
                     </h2>
                     
-                    {/* Mission Area */}
+                    {/* Categories */}
                     <div className="mb-6">
-                      <label className="block text-sm font-semibold text-gray-800 mb-2">Primary Mission Area *</label>
-                      <div className="relative">
-                        <select
-                          name="missionArea"
-                          value={formData.missionArea}
-                          onChange={handleFormChange}
-                          className={`w-full h-10 pl-3 pr-8 text-base bg-white border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all appearance-none cursor-pointer ${
-                            formErrors.missionArea ? 'border-red-400' : 'border-gray-300'
-                          }`}
-                          disabled={loading}
-                        >
-                          <option value="">Select primary cause...</option>
-                          {MISSION_AREAS.map(area => (
-                            <option key={area} value={area}>
+                      <label className="block text-sm font-semibold text-gray-800 mb-3">Organization Categories *</label>
+                      <div className="flex flex-wrap gap-2">
+                        {MISSION_AREAS.map(area => {
+                          const isSelected = formData.categories.includes(area);
+                          return (
+                            <button
+                              key={area}
+                              type="button"
+                              onClick={() => toggleCategory(area)}
+                              disabled={loading}
+                              className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-all ${
+                                isSelected
+                                  ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                                  : 'border-gray-300 bg-white text-gray-700 hover:border-emerald-400'
+                              }`}
+                            >
                               {area}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" size={16} />
+                            </button>
+                          );
+                        })}
                       </div>
-                      {formErrors.missionArea && (
-                        <p className="text-sm text-red-600 mt-2">{formErrors.missionArea}</p>
+                      {formErrors.categories && (
+                        <p className="text-sm text-red-600 mt-2">{formErrors.categories}</p>
                       )}
                     </div>
                   </div>
