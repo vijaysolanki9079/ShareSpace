@@ -92,7 +92,7 @@ export async function findNearbyRequests(
 
     // Filter by distance using Haversine
     const nearbyRequests = allRequests
-      .map((req) => ({
+      .map((req: any) => ({
         ...req,
         distance: haversineDistance(
           userLatitude,
@@ -101,8 +101,8 @@ export async function findNearbyRequests(
           req.longitude
         ),
       }))
-      .filter((req) => req.distance <= radiusMeters)
-      .sort((a, b) => a.distance - b.distance)
+      .filter((req: any) => req.distance <= radiusMeters)
+      .sort((a: any, b: any) => a.distance - b.distance)
       .slice(0, limit);
 
     return nearbyRequests;

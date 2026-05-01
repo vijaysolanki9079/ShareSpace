@@ -193,7 +193,7 @@ async function reverseGeocode(
         displayName: parseAddress(result.display_name),
         country: result.address?.country,
         countryCode: result.address?.country_code,
-      },
+      } as any,
     };
   } catch (error) {
     console.error('❌ Reverse geocoding error:', error);

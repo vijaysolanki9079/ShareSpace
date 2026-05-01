@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Search, MoreVertical, ShieldAlert, Lock, Hash, MessageSquare, MapPin } from 'lucide-react';
+import { Send, Search, MoreVertical, ShieldAlert, Lock, Hash, MessageSquare, MapPin, Clock } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useSession } from 'next-auth/react';
 import { createClient } from '@supabase/supabase-js';

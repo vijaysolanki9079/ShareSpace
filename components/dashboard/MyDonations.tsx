@@ -52,7 +52,7 @@ const MyDonations = ({ mode = 'user' }: MyDonationsProps) => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {donations.map((item) => (
+          {donations.map((item: any) => (
             <article
               key={item.id}
               className="group overflow-hidden rounded-xl border border-white/10 bg-slate-900/40 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:shadow-md"

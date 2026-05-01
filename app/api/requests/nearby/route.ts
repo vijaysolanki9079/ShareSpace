@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     // Filter by distance using Haversine
     const nearbyRequests = allRequests
-      .map((req) => ({
+      .map((req: any) => ({
         ...req,
         distance: haversineDistance(
           latitude,
@@ -81,10 +81,10 @@ export async function GET(request: NextRequest) {
           req.longitude
         ),
       }))
-      .filter((req) => req.distance <= radiusMeters)
-      .sort((a, b) => a.distance - b.distance)
+      .filter((req: any) => req.distance <= radiusMeters)
+      .sort((a: any, b: any) => a.distance - b.distance)
       .slice(0, limit)
-      .map((req) => {
+      .map((req: any) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { distance, ...rest } = req;
         return {

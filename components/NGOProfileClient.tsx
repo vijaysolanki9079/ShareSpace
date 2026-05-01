@@ -172,7 +172,7 @@ export default function NGOProfileClient({ id }: NGOProfileClientProps) {
                         >
                             <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-4">
-                                    {ngo.categories.map(cat => (
+                                    {ngo.categories.map((cat: string) => (
                                         <span key={cat} className="bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
                                             {cat}
                                         </span>

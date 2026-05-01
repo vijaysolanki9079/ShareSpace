@@ -63,8 +63,8 @@ async function main() {
   console.log('Seeding 150 ItemRequests (The new P2P system)...');
   const itemRequests = [];
   for (let i = 0; i < 150; i++) {
-    const requester = faker.helpers.arrayElement(createdUsers);
-    const category = faker.helpers.arrayElement(allCategories);
+    const requester = faker.helpers.arrayElement(createdUsers as any[]);
+    const category = faker.helpers.arrayElement(allCategories as any[]);
     const isNgoLinked = faker.datatype.boolean({ probability: 0.3 });
     
     itemRequests.push({
@@ -78,15 +78,15 @@ async function main() {
       locationName: faker.location.city(),
       radius: faker.number.int({ min: 1000, max: 20000 }),
       status: faker.helpers.arrayElement(['open', 'open', 'fulfilled', 'closed']), // 50% open
-      ngoId: isNgoLinked ? faker.helpers.arrayElement(createdNGOs).id : null,
+      ngoId: isNgoLinked ? faker.helpers.arrayElement(createdNGOs as any[]).id : null,
     });
   }
   const createdItemRequests = await Promise.all(itemRequests.map(r => prisma.itemRequest.create({ data: r })));
 
   console.log('Seeding 200 ItemResponses (Donors responding to requests)...');
   for (let i = 0; i < 200; i++) {
-    const itemReq = faker.helpers.arrayElement(createdItemRequests);
-    const donor = faker.helpers.arrayElement(createdUsers);
+    const itemReq = faker.helpers.arrayElement(createdItemRequests as any[]);
+    const donor = faker.helpers.arrayElement(createdUsers as any[]);
     
     // Avoid user responding to own request
     if (itemReq.requesterId === donor.id) continue;

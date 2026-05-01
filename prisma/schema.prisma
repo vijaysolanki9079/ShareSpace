@@ -195,7 +195,8 @@ model Message {
   senderId       String
   senderType     String       // 'USER' or 'NGO'
   
-  content        String       // Encrypted cipher text
+  content        String       // Encrypted cipher text OR plain text if isSystem is true
+  isSystem       Boolean      @default(false)
   
   createdAt      DateTime     @default(now())
 

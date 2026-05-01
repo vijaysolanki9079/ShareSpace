@@ -24,7 +24,7 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
 
   const requests = fetchedRequests || [];
 
-  const filteredRequests = filter === 'all' ? requests : requests.filter((r) => r.status === filter);
+  const filteredRequests = filter === 'all' ? requests : requests.filter((r: any) => r.status === filter);
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, { text: string; bg: string; textColor: string; icon: any }> = {
@@ -82,7 +82,7 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filteredRequests.map((request) => {
+          {filteredRequests.map((request: any) => {
             const statusBadge = getStatusBadge(request.status);
             const StatusIcon = statusBadge.icon;
 

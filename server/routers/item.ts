@@ -20,7 +20,7 @@ export const itemRouter = createTRPCRouter({
         take: 20,
       });
 
-      return requests.map((r) => ({
+      return requests.map((r: any) => ({
         id: r.id,
         title: r.title,
         category: r.category.name,
@@ -48,7 +48,7 @@ export const itemRouter = createTRPCRouter({
         take: 20,
       });
 
-      return responses.map((r) => ({
+      return responses.map((r: any) => ({
         id: r.id,
         title: r.itemRequest.title,
         category: r.itemRequest.category.name,
