@@ -46,7 +46,6 @@
 - **React 19.2.4**: Modern UI components with hooks and concurrent features
 - **Next.js 16.2.2**: Full-stack React framework with SSR and API routes
 - **TypeScript**: Type-safe development (94.7% of codebase)
-- **Tailwind CSS**: Utility-first CSS framework for responsive design
 - **Framer Motion**: Smooth animations and transitions
 - **Leaflet & React-Leaflet**: Interactive maps and geolocation features
 - **Lucide React**: Beautiful, consistent icons
@@ -67,8 +66,6 @@
 ### Development Tools
 - **ESLint**: Code quality and consistency
 - **Playwright**: End-to-end testing
-- **Faker.js**: Test data generation
-- **Zod**: TypeScript-first schema validation
 - **Tailwind CSS 4**: Latest styling capabilities
 
 ## 🚀 Quick Start
