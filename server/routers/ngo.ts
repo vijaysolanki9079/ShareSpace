@@ -9,7 +9,7 @@
  */
 import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '@/server/trpc';
-import { findNearbyNGOs } from '@/lib/repositories/ngo';
+import { findNearbyNGOs, findNGOSuggestions } from '@/lib/repositories/ngo';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
@@ -63,6 +63,11 @@ export const ngoRouter = createTRPCRouter({
       });
       return ngos;
     }),
+
+  /** Typeahead suggestions for explore search (no geo filter). */
+  autocomplete: publicProcedure
+    .input(z.object({ query: z.string().min(1).max(100) }))
+    .query(async ({ input }) => findNGOSuggestions(input.query)),
 
   /**
    * Register a new NGO with form data and document uploads.

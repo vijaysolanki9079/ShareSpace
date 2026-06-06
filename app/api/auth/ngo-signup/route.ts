@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@supabase/supabase-js";
-
-// Initialize Supabase Client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+import getSupabaseAdmin from "@/lib/supabase-server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -82,6 +77,7 @@ export async function POST(request: NextRequest) {
       }
 
       try {
+        const supabase = getSupabaseAdmin();
         const fileExt = verificationDocument.name.split('.').pop();
         const uniqueName = `ngo-cert-${Date.now()}-${Math.round(Math.random() * 1000)}.${fileExt}`;
         

@@ -29,3 +29,17 @@ export const NGOSignUpSchema = z.object({
 });
 
 export type NGOSignUpInput = z.infer<typeof NGOSignUpSchema>;
+
+export const CreateItemRequestSchema = z.object({
+  title: z.string().trim().min(3, 'Title must be at least 3 characters').max(120),
+  description: z.string().trim().min(10, 'Description must be at least 10 characters').max(2000),
+  categoryId: z.string().trim().min(1, 'Category is required'),
+  images: z.array(z.string().url()).max(6).default([]),
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+  locationName: z.string().trim().max(160).optional().or(z.literal('')),
+  radius: z.coerce.number().int().min(1000).max(25000).default(5000),
+  ngoId: z.string().trim().min(1).optional().or(z.literal('')),
+});
+
+export type CreateItemRequestInput = z.infer<typeof CreateItemRequestSchema>;

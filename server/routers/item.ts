@@ -1,12 +1,17 @@
 import { z } from 'zod';
-import { createTRPCRouter, publicProcedure } from '@/server/trpc';
+import { TRPCError } from '@trpc/server';
+import { createTRPCRouter, protectedProcedure } from '@/server/trpc';
 import { prisma } from '@/lib/prisma';
 
 export const itemRouter = createTRPCRouter({
   // Queries for User's Requests (ItemRequests created by the user)
-  getMyRequests: publicProcedure
+  getMyRequests: protectedProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      if (ctx.session.user.id !== input.userId) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+
       const requests = await prisma.itemRequest.findMany({
         where: { requesterId: input.userId },
         include: {
@@ -20,7 +25,7 @@ export const itemRouter = createTRPCRouter({
         take: 20,
       });
 
-      return requests.map((r: any) => ({
+      return requests.map((r) => ({
         id: r.id,
         title: r.title,
         category: r.category.name,
@@ -34,9 +39,13 @@ export const itemRouter = createTRPCRouter({
     }),
 
   // Queries for User's Donations (ItemResponses where the user is the donor)
-  getMyDonations: publicProcedure
+  getMyDonations: protectedProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      if (ctx.session.user.id !== input.userId) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+
       const responses = await prisma.itemResponse.findMany({
         where: { donorId: input.userId },
         include: {
@@ -48,7 +57,7 @@ export const itemRouter = createTRPCRouter({
         take: 20,
       });
 
-      return responses.map((r: any) => ({
+      return responses.map((r) => ({
         id: r.id,
         title: r.itemRequest.title,
         category: r.itemRequest.category.name,

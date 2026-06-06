@@ -129,9 +129,22 @@ export default function SearchHero({
                     onNgoNameChange?.(v);
                   }}
                   suggestions={autocompleteSuggestions}
-                  onNGOSelect={(id, name) => {
+                  onNGOSelect={(id, name, lat, lng) => {
                     setNgoSearchQuery(name);
-                    onSearch({ ngoName: name, location: selectedLocation });
+                    // If the suggestion includes coordinates, use them to immediately fly the map
+                    if (lat != null && lng != null) {
+                      const locationResult: any = {
+                        name: name,
+                        displayName: name,
+                        lat: lat,
+                        lon: lng,
+                        type: 'city',
+                        countryCode: 'IN'
+                      };
+                      onSearch({ ngoName: name, location: locationResult });
+                    } else {
+                      onSearch({ ngoName: name, location: selectedLocation });
+                    }
                   }}
                   placeholder="Search by NGO name..."
                   onKeyDown={handleKeyDown}

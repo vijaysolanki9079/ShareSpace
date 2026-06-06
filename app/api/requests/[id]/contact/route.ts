@@ -1,5 +1,3 @@
-'use server';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -23,7 +21,16 @@ export async function POST(
       );
     }
 
+    if (session.user.type !== 'user') {
+      return NextResponse.json(
+        { error: 'Only user accounts can offer help on item requests' },
+        { status: 403 }
+      );
+    }
+
     const { id: requestId } = await params;
+    const body = await request.json().catch(() => ({}));
+    const message = typeof body?.message === 'string' ? body.message.slice(0, 500) : undefined;
 
     // Verify the request exists
     const itemRequest = await prisma.itemRequest.findUnique({
@@ -48,17 +55,31 @@ export async function POST(
       );
     }
 
-    // Log the contact attempt (in production, send actual notification)
-    console.log('[requests/contact] New contact:', {
+    await prisma.itemResponse.upsert({
+      where: {
+        donorId_itemRequestId: {
+          donorId: session.user.id,
+          itemRequestId: requestId,
+        },
+      },
+      update: {
+        status: 'interested',
+        ...(message ? { message } : {}),
+      },
+      create: {
+        donorId: session.user.id,
+        itemRequestId: requestId,
+        status: 'interested',
+        message,
+      },
+    });
+
+    console.log('[requests/contact] Interest registered:', {
       requestId,
       contactFrom: session.user.id,
       contactTo: itemRequest.requester.id,
-      requesterEmail: itemRequest.requester.email,
       timestamp: new Date().toISOString(),
     });
-
-    // TODO: Send email/notification to requester
-    // TODO: Create ContactNotification model for tracking
 
     return NextResponse.json(
       {
@@ -71,10 +92,7 @@ export async function POST(
     console.error('[requests/contact] Error:', error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Failed to send notification',
+        error: 'Failed to send notification',
       },
       { status: 500 }
     );

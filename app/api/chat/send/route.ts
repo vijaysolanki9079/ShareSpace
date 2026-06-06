@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import supabaseAdmin from '@/lib/supabase-server';
+import getSupabaseAdmin from '@/lib/supabase-server';
 
 type Body = { conversation_id: string; encrypted_content: string; nonce: string };
 
@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = (session.user as any).id;
+    const supabaseAdmin = getSupabaseAdmin();
 
     // Verify membership
     const { data: members, error: memberErr } = await supabaseAdmin

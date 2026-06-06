@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import SiteChrome from '@/components/SiteChrome';
 import { motion } from 'framer-motion';
 import {
   MapPin,
@@ -18,23 +17,48 @@ import Image from 'next/image';
 import { trpc } from '@/lib/trpc';
 import { useRouter } from 'next/navigation';
 
+interface RequestDetail {
+  id: string;
+  title: string;
+  description: string;
+  images: string[];
+  latitude: number;
+  longitude: number;
+  locationName: string | null;
+  status: string;
+  createdAt: string;
+  category: {
+    name: string;
+  };
+  requester: {
+    id: string;
+    fullName: string;
+    image: string | null;
+    bio: string | null;
+  };
+  responses: Array<{
+    id: string;
+    createdAt: string;
+    donor: {
+      fullName: string;
+      image: string | null;
+    };
+  }>;
+}
+
 export default function RequestDetailPage() {
   const params = useParams();
   const requestId = params.id as string;
   const { data: session } = useSession();
   const router = useRouter();
-  const [request, setRequest] = useState<any>(null);
+  const [request, setRequest] = useState<RequestDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [messaging, setMessaging] = useState(false);
 
   const startConversation = trpc.chat.startConversation.useMutation();
 
-  useEffect(() => {
-    fetchRequestDetail();
-  }, [requestId]);
-
-  const fetchRequestDetail = async () => {
+  const fetchRequestDetail = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/requests/${requestId}`);
@@ -50,13 +74,19 @@ export default function RequestDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [requestId]);
+
+  useEffect(() => {
+    fetchRequestDetail();
+  }, [fetchRequestDetail]);
 
   const handleStartChat = async () => {
     if (!session?.user?.id) {
       alert('Please log in to message');
       return;
     }
+
+    if (!request) return;
 
     setMessaging(true);
     try {
@@ -67,7 +97,7 @@ export default function RequestDetailPage() {
           navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
         });
         locationParams = `&shareLocation=true&lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`;
-      } catch (e) {
+      } catch {
         console.warn('Location access denied or timed out');
       }
 
@@ -75,6 +105,8 @@ export default function RequestDetailPage() {
       const conv = await startConversation.mutateAsync({
         targetId: request.requester.id,
         targetType: 'user', // ItemRequest requester is always a User
+        itemRequestId: request.id,
+        initialMessage: `I can help with: ${request.title}`,
       });
 
       // Redirect to the dashboard messages section with this chat selected
@@ -88,32 +120,27 @@ export default function RequestDetailPage() {
 
   if (loading) {
     return (
-      <SiteChrome>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader className="animate-spin text-blue-500" size={40} />
-        </div>
-      </SiteChrome>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader className="animate-spin text-blue-500" size={40} />
+      </div>
     );
   }
 
   if (error || !request) {
     return (
-      <SiteChrome>
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <div className="p-6 bg-red-50 border border-red-200 rounded-lg flex items-center gap-4">
-            <AlertCircle className="text-red-600" size={24} />
-            <div>
-              <p className="font-medium text-red-900">{error}</p>
-            </div>
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg flex items-center gap-4">
+          <AlertCircle className="text-red-600" size={24} />
+          <div>
+            <p className="font-medium text-red-900">{error}</p>
           </div>
         </div>
-      </SiteChrome>
+      </div>
     );
   }
 
   return (
-    <SiteChrome>
-      <motion.div
+    <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="bg-gray-50 min-h-screen py-8"
@@ -254,7 +281,7 @@ export default function RequestDetailPage() {
               </h2>
 
               <div className="space-y-4">
-                {request.responses.map((response: any) => (
+                {request.responses.map((response) => (
                   <div key={response.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
                     {response.donor.image && (
                       <Image
@@ -281,6 +308,5 @@ export default function RequestDetailPage() {
           )}
         </div>
       </motion.div>
-    </SiteChrome>
   );
 }

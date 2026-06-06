@@ -1,7 +1,12 @@
 import ChatWindow from '@/components/chat/ChatWindow';
 
-export default function Page({ searchParams }: { searchParams?: { conversation?: string; ngo?: string } }) {
-  const conversationId = searchParams?.conversation ?? null;
+export default async function Page({
+  searchParams,
+}: {
+  searchParams?: Promise<{ conversation?: string; ngo?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const conversationId = resolvedSearchParams?.conversation ?? null;
 
   return (
     <main className="p-6">

@@ -3,6 +3,23 @@ import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { prisma } from '@/lib/prisma';
 import { TRPCError } from '@trpc/server';
 
+function isConversationParticipant(
+  conversation: {
+    user1Id: string | null;
+    user2Id: string | null;
+    ngo1Id: string | null;
+    ngo2Id: string | null;
+  },
+  userId: string
+) {
+  return (
+    conversation.user1Id === userId ||
+    conversation.user2Id === userId ||
+    conversation.ngo1Id === userId ||
+    conversation.ngo2Id === userId
+  );
+}
+
 export const chatRouter = createTRPCRouter({
   
   // Registration: Store generated e2ee keys to User or NGO profile
@@ -57,6 +74,8 @@ export const chatRouter = createTRPCRouter({
     .input(z.object({
       targetId: z.string(),
       targetType: z.enum(['user', 'ngo']),
+      itemRequestId: z.string().optional(),
+      initialMessage: z.string().trim().max(500).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx.session;
@@ -72,8 +91,50 @@ export const chatRouter = createTRPCRouter({
         });
       }
 
+      let itemRequestTitle: string | null = null;
+
+      if (input.itemRequestId) {
+        if (myType !== 'user') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Only user accounts can offer help on item requests.',
+          });
+        }
+
+        const itemRequest = await prisma.itemRequest.findUnique({
+          where: { id: input.itemRequestId },
+          select: {
+            id: true,
+            requesterId: true,
+            title: true,
+            status: true,
+          },
+        });
+
+        if (!itemRequest) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Request not found.' });
+        }
+
+        if (itemRequest.status !== 'open') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'This request is no longer open.',
+          });
+        }
+
+        if (itemRequest.requesterId !== targetId || targetType !== 'user') {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Conversation target does not match the request owner.',
+          });
+        }
+
+        itemRequestTitle = itemRequest.title;
+      }
+
       let conversation = await prisma.conversation.findFirst({
         where: {
+          itemRequestId: input.itemRequestId ?? null,
           OR: [
             {
               user1Id: myType === 'user' ? myId : null,
@@ -94,6 +155,7 @@ export const chatRouter = createTRPCRouter({
           user2: { select: { id: true, fullName: true, publicKey: true } },
           ngo1: { select: { id: true, organizationName: true, publicKey: true } },
           ngo2: { select: { id: true, organizationName: true, publicKey: true } },
+          itemRequest: { select: { id: true, title: true, status: true } },
         },
       });
 
@@ -104,6 +166,7 @@ export const chatRouter = createTRPCRouter({
             user2Id: targetType === 'user' ? targetId : null,
             ngo1Id: myType === 'ngo' ? myId : null,
             ngo2Id: targetType === 'ngo' ? targetId : null,
+            itemRequestId: input.itemRequestId,
             status: 'PENDING',
           },
           include: {
@@ -111,6 +174,7 @@ export const chatRouter = createTRPCRouter({
             user2: { select: { id: true, fullName: true, publicKey: true } },
             ngo1: { select: { id: true, organizationName: true, publicKey: true } },
             ngo2: { select: { id: true, organizationName: true, publicKey: true } },
+            itemRequest: { select: { id: true, title: true, status: true } },
           },
         });
 
@@ -120,9 +184,34 @@ export const chatRouter = createTRPCRouter({
             conversationId: conversation.id,
             senderId: myId,
             senderType: myType,
-            content: `👋 Chat Request: ${user.name} would like to connect regarding a community request.`,
+            content: input.itemRequestId && itemRequestTitle
+              ? `Chat request: ${user.name} offered help for "${itemRequestTitle}".`
+              : `Chat request: ${user.name} would like to connect regarding a community request.`,
             isSystem: true,
           }
+        });
+      }
+
+      if (input.itemRequestId && myType === 'user') {
+        await prisma.itemResponse.upsert({
+          where: {
+            donorId_itemRequestId: {
+              donorId: myId,
+              itemRequestId: input.itemRequestId,
+            },
+          },
+          update: {
+            status: 'interested',
+            conversationId: conversation.id,
+            ...(input.initialMessage ? { message: input.initialMessage } : {}),
+          },
+          create: {
+            donorId: myId,
+            itemRequestId: input.itemRequestId,
+            conversationId: conversation.id,
+            status: 'interested',
+            message: input.initialMessage,
+          },
         });
       }
 
@@ -144,7 +233,7 @@ export const chatRouter = createTRPCRouter({
 
       // Verify the user is the receiver (not the one who started it)
       // For simplicity, we just check if they are part of it
-      const isParticipant = conv.user1Id === user.id || conv.user2Id === user.id || conv.ngo1Id === user.id || conv.ngo2Id === user.id;
+      const isParticipant = isConversationParticipant(conv, user.id);
       if (!isParticipant) throw new TRPCError({ code: 'FORBIDDEN' });
 
       return await prisma.conversation.update({
@@ -171,6 +260,7 @@ export const chatRouter = createTRPCRouter({
           user2: { select: { id: true, fullName: true, publicKey: true } },
           ngo1: { select: { id: true, organizationName: true, publicKey: true } },
           ngo2: { select: { id: true, organizationName: true, publicKey: true } },
+          itemRequest: { select: { id: true, title: true, status: true } },
           messages: {
             orderBy: { createdAt: 'desc' },
             take: 1
@@ -187,6 +277,16 @@ export const chatRouter = createTRPCRouter({
       conversationId: z.string(),
     }))
     .query(async ({ ctx, input }) => {
+      const conversation = await prisma.conversation.findUnique({
+        where: { id: input.conversationId },
+        select: { user1Id: true, user2Id: true, ngo1Id: true, ngo2Id: true },
+      });
+
+      if (!conversation) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (!isConversationParticipant(conversation, ctx.session.user.id)) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+
       const messages = await prisma.message.findMany({
         where: { conversationId: input.conversationId },
         orderBy: { createdAt: 'asc' }
@@ -207,6 +307,11 @@ export const chatRouter = createTRPCRouter({
       const conv = await prisma.conversation.findUnique({
         where: { id: input.conversationId }
       });
+
+      if (!conv) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (!isConversationParticipant(conv, user.id)) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
 
       if (!input.isSystem && conv?.status === 'PENDING') {
         throw new TRPCError({

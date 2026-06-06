@@ -1,5 +1,3 @@
-'use server';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
@@ -29,13 +27,24 @@ function haversineDistance(
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const latitude = parseFloat(searchParams.get('latitude') || '0');
-    const longitude = parseFloat(searchParams.get('longitude') || '0');
-    const radiusKm = parseInt(searchParams.get('radius_km') || '5');
+    const latitudeParam = searchParams.get('latitude');
+    const longitudeParam = searchParams.get('longitude');
+    const latitude = Number(latitudeParam);
+    const longitude = Number(longitudeParam);
+    const radiusKm = Math.min(Math.max(Number(searchParams.get('radius_km') || '5'), 1), 25);
     const category = searchParams.get('category');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200);
+    const limit = Math.min(Math.max(Number(searchParams.get('limit') || '50'), 1), 100);
 
-    if (!latitude || !longitude || latitude < -90 || latitude > 90) {
+    if (
+      latitudeParam === null ||
+      longitudeParam === null ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
       return NextResponse.json(
         { error: 'Invalid latitude/longitude parameters' },
         { status: 400 }
@@ -58,6 +67,14 @@ export async function GET(request: NextRequest) {
             image: true,
           },
         },
+        ngo: {
+          select: {
+            id: true,
+            organizationName: true,
+            image: true,
+            isVerified: true,
+          },
+        },
         category: {
           select: {
             id: true,
@@ -72,7 +89,7 @@ export async function GET(request: NextRequest) {
 
     // Filter by distance using Haversine
     const nearbyRequests = allRequests
-      .map((req: any) => ({
+      .map((req) => ({
         ...req,
         distance: haversineDistance(
           latitude,
@@ -81,11 +98,10 @@ export async function GET(request: NextRequest) {
           req.longitude
         ),
       }))
-      .filter((req: any) => req.distance <= radiusMeters)
-      .sort((a: any, b: any) => a.distance - b.distance)
+      .filter((req) => req.distance <= radiusMeters)
+      .sort((a, b) => a.distance - b.distance)
       .slice(0, limit)
-      .map((req: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .map((req) => {
         const { distance, ...rest } = req;
         return {
           ...rest,
@@ -110,10 +126,7 @@ export async function GET(request: NextRequest) {
     console.error('[requests/nearby] Error:', error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Failed to fetch nearby requests',
+        error: 'Failed to fetch nearby requests',
       },
       { status: 500 }
     );

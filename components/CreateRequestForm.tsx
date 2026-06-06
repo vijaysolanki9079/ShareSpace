@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, MapPin, AlertCircle, Check, Info, ArrowRight } from 'lucide-react';
 import ItemAutocomplete from './ItemAutocomplete';
+import LocationAutocomplete, { LocationResult } from './LocationAutocomplete';
 import { useSession } from 'next-auth/react';
 
 interface ItemCategory {
@@ -27,8 +28,8 @@ export default function CreateRequestForm({
     description: '',
     categoryId: '',
     locationName: '',
-    latitude: 0,
-    longitude: 0,
+    latitude: null as number | null,
+    longitude: null as number | null,
     radius: 5000,
     images: [] as string[],
   });
@@ -68,12 +69,23 @@ export default function CreateRequestForm({
           }));
           setGettingLocation(false);
         },
-        (error) => {
+        () => {
           console.warn('Location access denied');
           setGettingLocation(false);
         }
       );
+    } else {
+      setGettingLocation(false);
     }
+  };
+
+  const handleLocationSelect = (location: LocationResult) => {
+    setFormState((prev) => ({
+      ...prev,
+      locationName: location.displayName,
+      latitude: location.lat,
+      longitude: location.lon,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,6 +99,12 @@ export default function CreateRequestForm({
       return;
     }
 
+    if (formState.latitude === null || formState.longitude === null) {
+      setError('Please choose a location from the suggestions or allow location access.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/requests/create', {
         method: 'POST',
@@ -96,7 +114,10 @@ export default function CreateRequestForm({
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to create request');
+        const firstError = data.fieldErrors
+          ? Object.values(data.fieldErrors).flat().find(Boolean)
+          : null;
+        throw new Error(String(firstError || data.error || 'Failed to create request'));
       }
 
       const data = await response.json();
@@ -104,8 +125,8 @@ export default function CreateRequestForm({
       setTimeout(() => {
         if (onSuccess) onSuccess(data.requestId);
       }, 1500);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create request');
       setLoading(false);
     }
   };
@@ -179,16 +200,27 @@ export default function CreateRequestForm({
             <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4 block">4. Location & Reach</label>
                <div className="space-y-4">
-                  <div className="relative">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                      type="text"
-                      value={formState.locationName}
-                      onChange={(e) => setFormState(p => ({ ...p, locationName: e.target.value }))}
-                      placeholder="Your neighborhood (e.g., Koramangala)"
-                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
+                  <LocationAutocomplete
+                    value={formState.locationName}
+                    onChange={(value) => setFormState(p => ({ ...p, locationName: value }))}
+                    onLocationSelect={handleLocationSelect}
+                    placeholder="Your neighborhood (e.g., Koramangala)"
+                    inputClassName="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleGetLocation}
+                    disabled={gettingLocation}
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100 transition-colors hover:bg-emerald-50 disabled:opacity-60"
+                  >
+                    <MapPin size={14} />
+                    {gettingLocation ? 'Detecting location...' : 'Use my current location'}
+                  </button>
+                  {formState.latitude !== null && formState.longitude !== null && (
+                    <p className="text-[11px] font-medium text-emerald-700">
+                      Location set: {formState.latitude.toFixed(4)}, {formState.longitude.toFixed(4)}
+                    </p>
+                  )}
                   
                   <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                     <div className="flex justify-between items-center mb-2">

@@ -43,6 +43,19 @@ type FindNearbyNGOsOptions = {
   searchQuery?: string;
 };
 
+/** NGOs visible on explore / search (matches approval workflow). */
+const DISCOVERABLE_NGO_SQL = `("isVerified" = TRUE OR "verificationStatus" = 'approved')`;
+
+/** PostGIS point from geom column or lat/lng fallback. */
+const NGO_LOCATION_POINT_SQL = `COALESCE(
+  "location_geom"::geometry,
+  CASE
+    WHEN longitude IS NOT NULL AND latitude IS NOT NULL
+    THEN ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
+    ELSE NULL
+  END
+)`;
+
 /**
  * Query NGOs from Supabase Postgres using PostGIS ST_DistanceSphere.
  * Raw SQL is isolated here; no ad-hoc SQL spreads into routers or UI.
@@ -59,16 +72,16 @@ export async function findNearbyNGOs({
   const hasSearch   = searchQuery && searchQuery.trim() !== '';
 
   // Build dynamic WHERE clauses with numbered params
-  const conditions: string[] = ['"isVerified" = TRUE'];
+  const conditions: string[] = [DISCOVERABLE_NGO_SQL];
   const params: (string | number)[] = [];
   let paramIdx = 1;
 
-  // Geo radius filter — only when user shares location
-  if (hasLocation) {
+  // Geo radius — only for "near me" browsing, not when user is searching by name
+  if (hasLocation && !hasSearch) {
     params.push(lng!, lat!, radiusKm * 1000); // PostGIS needs metres
     conditions.push(
-      `"location_geom" IS NOT NULL AND ST_DistanceSphere(
-         "location_geom"::geometry,
+      `${NGO_LOCATION_POINT_SQL} IS NOT NULL AND ST_DistanceSphere(
+         ${NGO_LOCATION_POINT_SQL},
          ST_MakePoint($${paramIdx++}, $${paramIdx++})::geometry
        ) <= $${paramIdx++}`
     );
@@ -112,7 +125,7 @@ export async function findNearbyNGOs({
   const latParamIdx = hasLocation ? 2 : null;
   const distExpr = hasLocation
     ? `ROUND((ST_DistanceSphere(
-         "location_geom"::geometry,
+         ${NGO_LOCATION_POINT_SQL},
          ST_MakePoint($${lonParamIdx}, $${latParamIdx})::geometry
        ) / 1000.0)::numeric, 2)::float`
     : 'NULL::float';
@@ -141,5 +154,52 @@ export async function findNearbyNGOs({
   `;
 
   const result = await query<NearbyNGO>(sql, params);
+  return result.rows;
+}
+
+/**
+ * Name/typeahead suggestions for the explore search box.
+ * No geo radius — typing "Pahal" should find NGOs anywhere in India.
+ */
+export async function findNGOSuggestions(searchQuery: string): Promise<NearbyNGO[]> {
+  const q = searchQuery.trim();
+  if (q.length < 1) return [];
+
+  const pattern = `%${q}%`;
+  const prefix = `${q}%`;
+
+  // DISTINCT ON: one suggestion per org name (seed/import often creates duplicate rows)
+  const sql = `
+    SELECT DISTINCT ON (LOWER(TRIM("organizationName")))
+      id,
+      "organizationName",
+      "missionArea",
+      categories,
+      bio,
+      image,
+      "isVerified",
+      latitude,
+      longitude,
+      "locationName",
+      NULL::float AS "distanceKm"
+    FROM "NGO"
+    WHERE ${DISCOVERABLE_NGO_SQL}
+      AND (
+        "organizationName" ILIKE $1
+        OR "bio" ILIKE $1
+        OR EXISTS (
+          SELECT 1
+          FROM unnest(COALESCE("categories", ARRAY[]::text[])) AS category_value
+          WHERE category_value ILIKE $1
+        )
+      )
+    ORDER BY
+      LOWER(TRIM("organizationName")),
+      CASE WHEN "organizationName" ILIKE $2 THEN 0 ELSE 1 END,
+      "createdAt" DESC
+    LIMIT 8
+  `;
+
+  const result = await query<NearbyNGO>(sql, [pattern, prefix]);
   return result.rows;
 }

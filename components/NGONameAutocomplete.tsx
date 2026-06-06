@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, CheckCircle2, Zap } from 'lucide-react';
 
@@ -9,12 +9,14 @@ export interface NGOSuggestion {
   name: string;
   description: string;
   category: string;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 interface NGONameAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
-  onNGOSelect?: (ngoId: string, ngoName: string) => void;
+  onNGOSelect?: (ngoId: string, ngoName: string, lat?: number | null, lng?: number | null) => void;
   /** Pass live tRPC/DB results here — shown in the dropdown as the user types */
   suggestions?: NGOSuggestion[];
   placeholder?: string;
@@ -40,8 +42,20 @@ export default function NGONameAutocomplete({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Use externally passed suggestions (from tRPC live query)
-  const suggestions = value.length >= 1 ? (externalSuggestions ?? []).slice(0, 8) : [];
+  // One row per org name (DB may contain duplicate registrations)
+  const suggestions = useMemo(() => {
+    if (value.length < 1) return [];
+    const seen = new Set<string>();
+    const unique: NGOSuggestion[] = [];
+    for (const ngo of externalSuggestions ?? []) {
+      const key = ngo.name.trim().toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(ngo);
+      if (unique.length >= 8) break;
+    }
+    return unique;
+  }, [value, externalSuggestions]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -52,10 +66,10 @@ export default function NGONameAutocomplete({
     else setIsOpen(false);
   };
 
-  const handleSelectNGO = (ngoId: string, ngoName: string) => {
+  const handleSelectNGO = (ngoId: string, ngoName: string, lat?: number | null, lng?: number | null) => {
     setSelectedNGO(ngoId);
     onChange(ngoName);
-    onNGOSelect?.(ngoId, ngoName);
+    onNGOSelect?.(ngoId, ngoName, lat, lng);
     setIsOpen(false);
   };
 
@@ -171,27 +185,26 @@ export default function NGONameAutocomplete({
                 return (
                   <motion.button
                     key={ngo.id}
-                    onClick={() => handleSelectNGO(ngo.id, ngo.name)}
+                    onClick={() => handleSelectNGO(ngo.id, ngo.name, ngo.lat ?? null, ngo.lng ?? null)}
                     onMouseEnter={() => setHighlightedIndex(index)}
                     className={`
                       w-full relative px-4 py-3.5 text-left transition-all duration-200 flex items-center gap-4 font-sans rounded-xl mb-1 last:mb-0
-                      ${isHighlighted ? 'bg-emerald-50/80 border-emerald-100 shadow-sm' : 'bg-transparent border-transparent'}
+                      ${isHighlighted || isSelected ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-transparent border-transparent'}
                       border
-                      ${isSelected ? 'bg-emerald-600 text-white shadow-emerald-200' : ''}
                     `}
                   >
-                    <div className={`px-2.5 py-1 rounded-md text-[10px] font-black tracking-widest flex-shrink-0 border uppercase shadow-sm ${isSelected ? 'bg-white/20 border-white/30 text-white' : getCategoryColor(ngo.category)}`}>
+                    <div className={`px-2.5 py-1 rounded-md text-[10px] font-black tracking-widest flex-shrink-0 border uppercase shadow-sm ${isHighlighted || isSelected ? 'bg-white/20 border-white/30 text-white' : getCategoryColor(ngo.category)}`}>
                       {ngo.category.slice(0, 3)}
                     </div>
                     
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <div className="flex items-center justify-between gap-3">
-                        <p className={`text-sm truncate transition-colors ${isSelected ? 'font-bold text-white' : (isHighlighted ? 'font-bold text-emerald-900' : 'font-semibold text-gray-800')}`}>
+                        <p className={`text-sm truncate transition-colors ${isHighlighted || isSelected ? 'font-bold text-white' : 'font-semibold text-gray-800'}`}>
                           {ngo.name}
                         </p>
                         {isSelected && <CheckCircle2 className="w-4 h-4 text-white flex-shrink-0 ml-auto" strokeWidth={3} />}
                       </div>
-                      <p className={`text-xs mt-0.5 line-clamp-1 transition-colors leading-relaxed ${isSelected ? 'text-emerald-50/80 font-medium' : (isHighlighted ? 'text-emerald-700/80' : 'text-gray-500')}`}>
+                      <p className={`text-xs mt-0.5 line-clamp-1 transition-colors leading-relaxed ${isHighlighted || isSelected ? 'text-emerald-50/90 font-medium' : 'text-gray-500'}`}>
                         {ngo.description}
                       </p>
                     </div>

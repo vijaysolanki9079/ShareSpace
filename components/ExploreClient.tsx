@@ -31,6 +31,7 @@ export default function ExploreClient() {
     const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
     const [isSearching, setIsSearching] = useState(false);
     const [sortBy, setSortBy] = useState('Recommended');
+    const [activeNgoId, setActiveNgoId] = useState<string | null>(null);
     const [visibleCount, setVisibleCount] = useState(6);
     const { data: session } = useSession();
     const startConversation = trpc.chat.startConversation.useMutation();
@@ -62,6 +63,11 @@ export default function ExploreClient() {
         searchQuery: debouncedSearch,
     });
 
+    const { data: suggestionData } = trpc.ngo.autocomplete.useQuery(
+        { query: debouncedSearch },
+        { enabled: debouncedSearch.trim().length >= 1 }
+    );
+
     // ─── Search handler (called by SearchHero submit / "Near Me") ────────────
     const handleSearch = async (query: { ngoName: string; location: LocationResult | null }) => {
         setIsSearching(true);
@@ -86,7 +92,14 @@ export default function ExploreClient() {
     // ─── Map tRPC results → card display shape ────────────────────────────────
     const ngos = useMemo(() => {
         if (!ngoData) return [];
-        return ngoData.map(ngo => ({
+        const seen = new Set<string>();
+        const deduped = ngoData.filter(ngo => {
+            const key = ngo.organizationName.trim().toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+        return deduped.map(ngo => ({
             id:          ngo.id,
             name:        ngo.organizationName,
             description: ngo.bio ?? '',
@@ -128,16 +141,18 @@ export default function ExploreClient() {
         [sortedNgos]
     );
 
-    // ─── Autocomplete suggestions derived from live query ────────────────────
+    // ─── Autocomplete — dedicated query (no geo radius) ─────────────────────
     const autocompleteSuggestions: NGOSuggestion[] = useMemo(
         () =>
-            (ngoData ?? []).map(n => ({
+            (suggestionData ?? []).map(n => ({
                 id:          n.id,
                 name:        n.organizationName,
                 description: n.bio ?? '',
                 category:    n.categories?.[0] ?? n.missionArea ?? 'Other',
+                lat:         n.latitude,
+                lng:         n.longitude,
             })),
-        [ngoData]
+        [suggestionData]
     );
 
     return (
@@ -230,7 +245,7 @@ export default function ExploreClient() {
                         sortedNgos.slice(0, visibleCount).map(ngo => (
                             <div
                                 key={ngo.id}
-                                className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group"
+                                className={`rounded-2xl overflow-hidden transition-all duration-300 flex flex-col group ${activeNgoId === ngo.id ? 'bg-emerald-700 text-white shadow-2xl border-emerald-700' : 'bg-white border border-gray-100 hover:shadow-xl hover:-translate-y-1'}`}
                             >
                                 {/* Card Image */}
                                 <div className="h-48 relative overflow-hidden bg-gray-100">
@@ -263,21 +278,35 @@ export default function ExploreClient() {
                                             ))}
                                     </div>
 
-                                    <h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight">
+                                    <h3
+                                        className={`text-xl font-bold mb-2 leading-tight ${activeNgoId === ngo.id ? 'text-white' : 'text-gray-900'} cursor-pointer`}
+                                        onClick={() => {
+                                            // Fly map to this NGO and scroll map into view
+                                            if (ngo.lat != null && ngo.lng != null) {
+                                                setUserLocation([ngo.lat, ngo.lng]);
+                                            } else {
+                                                setUserLocation(null);
+                                            }
+                                            setActiveNgoId(ngo.id);
+                                            setTimeout(() => {
+                                                mapContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                            }, 50);
+                                        }}
+                                    >
                                         {ngo.name}
                                     </h3>
-                                    <p className="text-gray-500 text-sm mb-4 line-clamp-2 flex-1">
+                                    <p className={`${activeNgoId === ngo.id ? 'text-emerald-100' : 'text-gray-500'} text-sm mb-4 line-clamp-2 flex-1`}>
                                         {ngo.description || 'No description available.'}
                                     </p>
 
                                     <div className="flex items-center gap-4 text-xs font-medium text-gray-500 mb-5 pb-4 border-b border-gray-100">
                                         <div className="flex items-center gap-1.5">
-                                            <MapPin className="w-3.5 h-3.5" />
-                                            {ngo.distance}
+                                            <MapPin className={`w-3.5 h-3.5 ${activeNgoId === ngo.id ? 'text-emerald-100' : ''}`} />
+                                            <span className={activeNgoId === ngo.id ? 'text-emerald-100' : ''}>{ngo.distance}</span>
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                                            {ngo.rating}
+                                            <span className={activeNgoId === ngo.id ? 'text-emerald-100' : ''}>{ngo.rating}</span>
                                         </div>
                                     </div>
 
@@ -285,13 +314,13 @@ export default function ExploreClient() {
                                         <div className="flex gap-2">
                                             <Link
                                                 href={`/ngo/${ngo.id}`}
-                                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors text-center inline-block"
+                                                className={`flex-1 ${activeNgoId === ngo.id ? 'bg-white text-emerald-700 hover:bg-white/90' : 'bg-emerald-600 hover:bg-emerald-700 text-white'} text-sm font-semibold py-2.5 rounded-lg transition-colors text-center inline-block`}
                                             >
                                                 Donate
                                             </Link>
                                             <Link
                                                 href={`/ngo/${ngo.id}`}
-                                                className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold py-2.5 rounded-lg transition-colors text-center inline-block"
+                                                className={`flex-1 ${activeNgoId === ngo.id ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-700'} text-sm font-semibold py-2.5 rounded-lg transition-colors text-center inline-block`}
                                             >
                                                 Details
                                             </Link>

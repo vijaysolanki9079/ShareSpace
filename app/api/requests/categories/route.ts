@@ -1,5 +1,3 @@
-'use server';
-
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
@@ -38,7 +36,11 @@ export async function GET() {
 
       await Promise.all(
         defaultCategories.map((cat) =>
-          prisma.itemCategory.create({ data: cat })
+          prisma.itemCategory.upsert({
+            where: { name: cat.name },
+            update: {},
+            create: cat,
+          })
         )
       );
 
@@ -58,8 +60,7 @@ export async function GET() {
     console.error('[categories] Error:', error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : 'Failed to fetch categories',
+        error: 'Failed to fetch categories',
       },
       { status: 500 }
     );

@@ -1,10 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Search, MoreVertical, ShieldAlert, Lock, Hash, MessageSquare, MapPin, Clock } from 'lucide-react';
+import { Send, Search, MoreVertical, ShieldAlert, Lock, MessageSquare, MapPin, Clock } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useSession } from 'next-auth/react';
-import { createClient } from '@supabase/supabase-js';
 import * as encryption from '@/lib/encryption';
 import { useChatSecurity } from '@/context/ChatSecurityContext';
 import { ChatSecurityShield } from '../chat/ChatSecurityShield';
@@ -15,17 +15,14 @@ interface MessagesProps {
   initialSelectedChat?: string | null;
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock.supabase.co';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock';
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const MessagesContent = ({ mode = 'user', initialSelectedChat }: MessagesProps) => {
-  const { data: session } = useSession();
+const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: MessagesProps) => {
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const { sessionPrivateKey, isUnlocked } = useChatSecurity();
   const userId = session?.user?.id;
   
-  const [selectedChat, setSelectedChat] = useState<string | null>(initialSelectedChat || null);
+  const [userSelectedChat, setUserSelectedChat] = useState<string | null>(null);
+  const selectedChat = userSelectedChat || initialSelectedChat || null;
   const [messageContent, setMessageContent] = useState('');
   const [hasSharedLocation, setHasSharedLocation] = useState(false);
   
@@ -37,18 +34,16 @@ const MessagesContent = ({ mode = 'user', initialSelectedChat }: MessagesProps) 
   const conversationsQuery = trpc.chat.getConversations.useQuery(undefined, { enabled: status === 'authenticated' });
   const messagesQuery = trpc.chat.getMessages.useQuery(
     { conversationId: selectedChat! },
-    { enabled: !!selectedChat }
+    {
+      enabled: status === 'authenticated' && !!selectedChat,
+      refetchInterval: selectedChat ? 3000 : false,
+      refetchOnWindowFocus: true,
+    }
   );
   const sendMessageMutation = trpc.chat.sendMessage.useMutation();
   const acceptConversationMutation = trpc.chat.acceptConversation.useMutation();
 
   const [decryptedMessages, setDecryptedMessages] = useState<Array<{id: string, content: string, senderId: string, createdAt: Date}>>([]);
-
-  useEffect(() => {
-    if (initialSelectedChat) {
-      setSelectedChat(initialSelectedChat);
-    }
-  }, [initialSelectedChat]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -87,26 +82,7 @@ const MessagesContent = ({ mode = 'user', initialSelectedChat }: MessagesProps) 
       };
       sendProximityMsg();
     }
-  }, [searchParams, selectedChat, isUnlocked, sessionPrivateKey, conversationsQuery.data, hasSharedLocation]);
-
-  useEffect(() => {
-    if (!selectedChat || !isUnlocked || !sessionPrivateKey) return;
-
-    const channel = supabase
-      .channel(`chat-${selectedChat}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'Message', filter: `conversationId=eq.${selectedChat}` },
-        (payload) => {
-          utils.chat.getMessages.invalidate({ conversationId: selectedChat });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedChat, isUnlocked, sessionPrivateKey]);
+  }, [searchParams, selectedChat, isUnlocked, sessionPrivateKey, conversationsQuery.data, hasSharedLocation, sendMessageMutation, userId, utils.chat.getMessages]);
 
   useEffect(() => {
     async function processMessages() {
@@ -131,7 +107,7 @@ const MessagesContent = ({ mode = 'user', initialSelectedChat }: MessagesProps) 
           try {
             const plainText = await encryption.decryptMessage(msg.content, sessionPrivateKey, targetPublicKey);
             return { ...msg, content: plainText };
-          } catch (e) {
+          } catch {
             return { ...msg, content: "<Encrypted Message. Could not decrypt>" };
           }
         })
@@ -140,7 +116,7 @@ const MessagesContent = ({ mode = 'user', initialSelectedChat }: MessagesProps) 
       setDecryptedMessages(decrypted);
     }
     processMessages();
-  }, [messagesQuery.data, sessionPrivateKey, selectedChat, conversationsQuery.data, isUnlocked]);
+  }, [messagesQuery.data, sessionPrivateKey, selectedChat, conversationsQuery.data, isUnlocked, userId]);
 
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -148,6 +124,8 @@ const MessagesContent = ({ mode = 'user', initialSelectedChat }: MessagesProps) 
     if (!messageContent.trim() || !selectedChat || !sessionPrivateKey) return;
 
     const conv = conversationsQuery.data?.find((c: any) => c.id === selectedChat);
+    if (!conv) return;
+
     if (conv?.status === 'PENDING') {
       return alert("You must wait for the recipient to accept your chat request.");
     }
@@ -172,6 +150,11 @@ const MessagesContent = ({ mode = 'user', initialSelectedChat }: MessagesProps) 
     }
   };
 
+  const selectedConversation = conversationsQuery.data?.find((c: any) => c.id === selectedChat);
+  const selectedParticipants = [selectedConversation?.user1, selectedConversation?.user2, selectedConversation?.ngo1, selectedConversation?.ngo2].filter(Boolean) as any[];
+  const selectedOther = selectedParticipants.find(p => p.id !== userId);
+  const selectedOtherName = selectedOther?.organizationName || selectedOther?.fullName || 'Chat';
+
   return (
     <div className="flex h-[600px] bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100">
       {/* Sidebar */}
@@ -192,18 +175,22 @@ const MessagesContent = ({ mode = 'user', initialSelectedChat }: MessagesProps) 
           {conversationsQuery.data?.map((conv: any) => {
              const participants = [conv.user1, conv.user2, conv.ngo1, conv.ngo2].filter(Boolean) as any[];
              const other = participants.find(p => p.id !== userId);
+             const otherName = other?.organizationName || other?.fullName || 'User';
+             const latestMessage = conv.messages?.[0]?.content;
              return (
                <button
                  key={conv.id}
-                 onClick={() => setSelectedChat(conv.id)}
+                 onClick={() => setUserSelectedChat(conv.id)}
                  className={`w-full p-4 flex items-center gap-4 hover:bg-emerald-50 transition-colors ${selectedChat === conv.id ? 'bg-emerald-50' : ''}`}
                >
                  <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 font-bold">
-                   {other?.name?.charAt(0) || other?.organizationName?.charAt(0) || 'U'}
+                   {otherName.charAt(0)}
                  </div>
                  <div className="flex-1 text-left">
-                   <p className="font-bold text-gray-900 text-sm">{other?.organizationName || other?.name || 'User'}</p>
-                   <p className="text-xs text-gray-400 truncate">Tap to see messages</p>
+                   <p className="font-bold text-gray-900 text-sm">{otherName}</p>
+                   <p className="text-xs text-gray-400 truncate">
+                     {conv.itemRequest?.title || (latestMessage ? 'Latest message available' : 'Tap to see messages')}
+                   </p>
                  </div>
                </button>
              );
@@ -218,18 +205,17 @@ const MessagesContent = ({ mode = 'user', initialSelectedChat }: MessagesProps) 
             <div className="p-4 bg-white border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-xs font-bold">
-                   {conversationsQuery.data?.find((c:any) => c.id === selectedChat)?.user1?.fullName?.charAt(0) || 
-                    conversationsQuery.data?.find((c:any) => c.id === selectedChat)?.ngo1?.organizationName?.charAt(0) || 'C'}
+                   {selectedOtherName.charAt(0)}
                 </div>
                 <div>
                    <p className="font-black text-gray-900 text-sm">
-                      {(() => {
-                        const conv = conversationsQuery.data?.find((c:any) => c.id === selectedChat);
-                        const participants = [conv?.user1, conv?.user2, conv?.ngo1, conv?.ngo2].filter(Boolean) as any[];
-                        const other = participants.find(p => p.id !== userId);
-                        return other?.organizationName || other?.fullName || other?.name || 'Chat';
-                      })()}
+                      {selectedOtherName}
                    </p>
+                   {selectedConversation?.itemRequest?.title && (
+                     <p className="text-[11px] text-gray-400 font-semibold">
+                       {selectedConversation.itemRequest.title}
+                     </p>
+                   )}
                    <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
                      <Lock size={10} />
                      End-to-end Encrypted
@@ -327,19 +313,31 @@ const MessagesContent = ({ mode = 'user', initialSelectedChat }: MessagesProps) 
                 {(() => {
                   const conv = conversationsQuery.data?.find((c: any) => c.id === selectedChat);
                   const isPending = conv?.status === 'PENDING';
+                  const participants = [conv?.user1, conv?.user2, conv?.ngo1, conv?.ngo2].filter(Boolean) as any[];
+                  const targetParticipant = participants.find(p => p.id !== userId);
+                  const targetMissingKeys = !!conv && !targetParticipant?.publicKey;
+                  const disabled = isPending || targetMissingKeys || !isUnlocked;
                   return (
                     <>
                       <input 
                         type="text"
                         value={messageContent}
                         onChange={(e) => setMessageContent(e.target.value)}
-                        disabled={isPending}
-                        placeholder={isPending ? "Waiting for acceptance..." : "Type a secure message..."}
-                        className={`w-full bg-gray-50 border-none rounded-2xl pl-4 pr-12 py-4 text-sm focus:ring-2 focus:ring-emerald-500 transition-all ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={disabled}
+                        placeholder={
+                          isPending
+                            ? 'Waiting for acceptance...'
+                            : targetMissingKeys
+                              ? 'Waiting for the other person to activate secure chat...'
+                              : !isUnlocked
+                                ? 'Unlock secure chat to send...'
+                                : 'Type a secure message...'
+                        }
+                        className={`w-full bg-gray-50 border-none rounded-2xl pl-4 pr-12 py-4 text-sm focus:ring-2 focus:ring-emerald-500 transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                       />
                       <button 
                         type="submit"
-                        disabled={isPending || !messageContent.trim()}
+                        disabled={disabled || !messageContent.trim()}
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/20 disabled:bg-gray-300 disabled:shadow-none"
                       >
                         <Send size={18} />

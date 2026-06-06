@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import supabaseAdmin from '@/lib/supabase-server';
+import getSupabaseAdmin from '@/lib/supabase-server';
 
 type Body = { participants: string[]; title?: string };
 
@@ -18,6 +18,8 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const supabaseAdmin = getSupabaseAdmin();
 
     // Create conversation with service role (admin) client
     const { data: conv, error: convErr } = await supabaseAdmin

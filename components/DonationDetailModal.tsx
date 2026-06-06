@@ -11,12 +11,10 @@ import {
   Flag,
   MapPin,
   Calendar,
-  User,
   AlertCircle,
   Loader,
 } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import ImageCarousel from './ImageCarousel';
 import VerifiedBadge from './VerifiedBadge';
 
@@ -83,7 +81,7 @@ export default function DonationDetailModal({
           navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
         });
         locationParams = `&shareLocation=true&lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`;
-      } catch (e) {
+      } catch {
         console.warn('Location access denied or timed out');
       }
 
@@ -91,6 +89,8 @@ export default function DonationDetailModal({
       const conv = await startConversation.mutateAsync({
         targetId: request.requester.id,
         targetType: 'user', // ItemRequest requester is always a User
+        itemRequestId: request.id,
+        initialMessage: `I can help with: ${request.title}`,
       });
 
       // Redirect to the dashboard messages section with this chat selected
@@ -106,10 +106,19 @@ export default function DonationDetailModal({
   const handleContactClick = async () => {
     setSubmitting(true);
     try {
-      // TODO: Implement send contact notification
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`/api/requests/${request.id}/contact`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to send notification');
+      }
+
       setContactSent(true);
       setTimeout(() => setContactSent(false), 3000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to send notification');
     } finally {
       setSubmitting(false);
     }
@@ -134,7 +143,7 @@ export default function DonationDetailModal({
       alert('Thank you for reporting. Our team will review this.');
       setReportOpen(false);
       setReportReason('');
-    } catch (err) {
+    } catch {
       alert('Failed to submit report');
     } finally {
       setSubmitting(false);

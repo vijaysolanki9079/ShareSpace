@@ -77,6 +77,14 @@ export async function findNearbyRequests(
             image: true,
           },
         },
+        ngo: {
+          select: {
+            id: true,
+            organizationName: true,
+            image: true,
+            isVerified: true,
+          },
+        },
         category: {
           select: {
             id: true,
@@ -92,7 +100,7 @@ export async function findNearbyRequests(
 
     // Filter by distance using Haversine
     const nearbyRequests = allRequests
-      .map((req: any) => ({
+      .map((req) => ({
         ...req,
         distance: haversineDistance(
           userLatitude,
@@ -101,8 +109,8 @@ export async function findNearbyRequests(
           req.longitude
         ),
       }))
-      .filter((req: any) => req.distance <= radiusMeters)
-      .sort((a: any, b: any) => a.distance - b.distance)
+      .filter((req) => req.distance <= radiusMeters)
+      .sort((a, b) => a.distance - b.distance)
       .slice(0, limit);
 
     return nearbyRequests;

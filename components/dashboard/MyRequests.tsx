@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { ShoppingBag, CheckCircle2, Clock, XCircle, MapPin, User, MessageCircle } from 'lucide-react';
+import Link from 'next/link';
 
 interface MyRequestsProps {
   mode?: 'user' | 'ngo';
@@ -28,12 +29,11 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, { text: string; bg: string; textColor: string; icon: any }> = {
-      approved: { text: 'Approved', bg: 'bg-emerald-50', textColor: 'text-emerald-800', icon: CheckCircle2 },
-      pending: { text: 'Pending', bg: 'bg-amber-50', textColor: 'text-amber-800', icon: Clock },
-      completed: { text: 'Completed', bg: 'bg-slate-800', textColor: 'text-slate-200', icon: CheckCircle2 },
-      rejected: { text: 'Rejected', bg: 'bg-red-50', textColor: 'text-red-700', icon: XCircle },
+      open: { text: 'Open', bg: 'bg-emerald-50', textColor: 'text-emerald-800', icon: Clock },
+      fulfilled: { text: 'Fulfilled', bg: 'bg-slate-800', textColor: 'text-slate-200', icon: CheckCircle2 },
+      closed: { text: 'Closed', bg: 'bg-red-50', textColor: 'text-red-700', icon: XCircle },
     };
-    return badges[status as keyof typeof badges] || badges.pending;
+    return badges[status as keyof typeof badges] || badges.open;
   };
 
   return (
@@ -49,16 +49,16 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
               : 'Items you have asked for from donors nearby'}
           </p>
         </div>
-        <button
-          type="button"
+        <Link
+          href="/requests"
           className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
         >
-          {mode === 'ngo' ? 'Review intake' : 'Browse items'}
-        </button>
+          {mode === 'ngo' ? 'Review intake' : 'Browse requests'}
+        </Link>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {['all', 'pending', 'approved', 'completed', 'rejected'].map((filterOption) => (
+        {['all', 'open', 'fulfilled', 'closed'].map((filterOption) => (
           <button
             key={filterOption}
             type="button"
@@ -139,14 +139,14 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
                     </div>
                   </div>
 
-                  {request.status === 'pending' && (
+                  {request.status === 'open' && (
                     <div className="mt-3 flex gap-2">
-                      <button
-                        type="button"
+                      <Link
+                        href={`/requests/${request.id}`}
                         className="flex-1 rounded-lg bg-emerald-500/20 py-1.5 text-[13px] font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/30 ring-1 ring-emerald-500/30"
                       >
                         {mode === 'ngo' ? 'Open request' : 'View details'}
-                      </button>
+                      </Link>
                       <button
                         type="button"
                         className="rounded-lg border border-white/10 px-3 py-2 text-zinc-400 transition-colors hover:border-emerald-400/50 hover:bg-emerald-500/10 hover:text-emerald-300"
@@ -156,13 +156,13 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
                       </button>
                     </div>
                   )}
-                  {request.status === 'approved' && (
-                    <button
-                      type="button"
+                  {request.status === 'fulfilled' && (
+                    <Link
+                      href={`/requests/${request.id}`}
                       className="mt-3 w-full rounded-lg bg-emerald-600/20 py-1.5 text-[13px] font-semibold text-emerald-300 ring-1 ring-emerald-500/40 transition-colors hover:bg-emerald-500/30"
                     >
-                      {mode === 'ngo' ? 'Assign delivery' : 'Arrange pickup'}
-                    </button>
+                      View fulfilled request
+                    </Link>
                   )}
                 </div>
               </article>
