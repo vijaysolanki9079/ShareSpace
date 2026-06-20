@@ -21,6 +21,9 @@
 
 ---
 
+<img width="2878" height="1446" alt="image" src="https://github.com/user-attachments/assets/8672f558-d581-49e1-8d5f-2f9b6be90c01" />
+
+---
 **ShareSpace** is a non-commercial, social-impact web application designed to promote sustainable sharing, transparency, and efficient resource distribution. Our platform empowers communities by enabling individuals to donate usable items and connecting them with verified NGOs that need these resources.
 
 ### 🎯 Key Mission
