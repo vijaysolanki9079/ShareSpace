@@ -44,6 +44,6 @@
   ],
   "exclude": [
     "node_modules",
-    "ngo-auth-workflow"
+    "docs/mfa/ngo-auth-workflow"
   ]
 }

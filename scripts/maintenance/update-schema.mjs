@@ -20,7 +20,7 @@ const updatedUser = `model User {
 
   donationsDonated Donation[] @relation("DonationDonor")
   requestsMade     Request[]  @relation("RequestRequester")
-  
+
   // Chat relations
   conversationsAsUser1 Conversation[] @relation("User1Conv")
   conversationsAsUser2 Conversation[] @relation("User2Conv")
@@ -47,7 +47,7 @@ const updatedNGO = `model NGO {
   latitude              Float?
   longitude             Float?
   locationName          String?
-  
+
   // MFA Fields
   mfaSetupComplete      Boolean    @default(false)
   mfaMethod             String?    // 'authenticator' | 'webauthn'
@@ -58,7 +58,7 @@ const updatedNGO = `model NGO {
   lastLoginAt           DateTime?
   mfaFailedAttempts     Int        @default(0)
   mfaLockedUntil        DateTime?
-  
+
   // E2EE Chat Fields
   publicKey             String?
   encryptedPrivateKey   String?
@@ -71,7 +71,7 @@ const updatedNGO = `model NGO {
   eventDrives           EventDrive[]
   verificationDocs      NGOVerificationDocument[]
   mfaAuditLogs          MFAAuditLog[]
-  
+
   // Chat relations
   conversationsAsNgo1   Conversation[] @relation("NGO1Conv")
   conversationsAsNgo2   Conversation[] @relation("NGO2Conv")
@@ -84,20 +84,20 @@ schema = schema.replace(/model NGO \{[\s\S]*?@@index\(\[verificationStatus\]\)\n
 
 const updatedMessage = `model Conversation {
   id        String   @id @default(cuid())
-  
+
   // Participants (Flexible to allow User-User, User-NGO, or NGO-NGO)
   user1Id   String?
   user1     User?    @relation("User1Conv", fields: [user1Id], references: [id], onDelete: Cascade)
   user2Id   String?
   user2     User?    @relation("User2Conv", fields: [user2Id], references: [id], onDelete: Cascade)
-  
+
   ngo1Id    String?
   ngo1      NGO?     @relation("NGO1Conv", fields: [ngo1Id], references: [id], onDelete: Cascade)
   ngo2Id    String?
   ngo2      NGO?     @relation("NGO2Conv", fields: [ngo2Id], references: [id], onDelete: Cascade)
-  
+
   messages  Message[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -111,12 +111,12 @@ model Message {
   id             String       @id @default(cuid())
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  
+
   senderId       String
   senderType     String       // 'USER' or 'NGO'
-  
+
   content        String       // Encrypted cipher text
-  
+
   createdAt      DateTime     @default(now())
 
   @@index([conversationId])

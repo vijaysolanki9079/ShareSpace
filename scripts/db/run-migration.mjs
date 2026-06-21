@@ -6,6 +6,7 @@ import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const projectRoot = join(__dirname, '..', '..');
 
 function parseEnvFile(content) {
   const out = {};
@@ -31,7 +32,7 @@ function parseEnvFile(content) {
 function applyRepoEnvFiles() {
   const merged = {};
   for (const name of ['.env', '.env.local']) {
-    const p = join(__dirname, name);
+    const p = join(projectRoot, name);
     if (fs.existsSync(p)) {
       Object.assign(merged, parseEnvFile(fs.readFileSync(p, 'utf8')));
     }
@@ -67,7 +68,7 @@ async function runMigration() {
     console.log('✅ Connected!');
 
     console.log('📖 Reading migration SQL...');
-    const sqlPath = `${__dirname}/prisma/migrations/init/migration.sql`;
+    const sqlPath = join(projectRoot, 'prisma', 'migrations', 'init', 'migration.sql');
     const sql = fs.readFileSync(sqlPath, 'utf-8');
 
     const statements = sql.split(';').filter((stmt) => stmt.trim());

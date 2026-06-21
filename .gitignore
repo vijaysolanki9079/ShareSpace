@@ -34,18 +34,9 @@ yarn-error.log*
 .env
 .env.*
 
-# Markdown
-*.md
-
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# guide
-/.guide/
-
-# Script folder
-scripts/

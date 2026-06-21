@@ -19,7 +19,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "scripts/**",
-    "ngo-auth-workflow/**",
+    "docs/mfa/ngo-auth-workflow/**",
   ]),
 ]);
 

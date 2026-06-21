@@ -1,6 +1,6 @@
 /**
- * Generates ShareSpace-Work-Updates.docx in this folder.
- * Run: node .guide/build-work-updates-docx.mjs
+ * Generates ShareSpace-Work-Updates.docx in docs/work-updates.
+ * Run: npm run guide:docx
  * Requires: npm package `docx` (present in node_modules from project install).
  */
 import fs from "fs";
@@ -21,6 +21,8 @@ import {
 } from "docx";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.join(__dirname, '..', '..');
+const docsDir = path.join(projectRoot, 'docs', 'work-updates');
 
 const DATE_STR = "Saturday, April 4, 2026";
 
@@ -187,7 +189,9 @@ function parseMarkdownishBody(raw) {
   return out;
 }
 
-const bodyPath = path.join(__dirname, "work-updates-body.txt");
+const preferredBodyPath = path.join(docsDir, "work-updates-body.txt");
+const fallbackBodyPath = path.join(docsDir, "REPO_AUDIT_SUMMARY.md");
+const bodyPath = fs.existsSync(preferredBodyPath) ? preferredBodyPath : fallbackBodyPath;
 const raw = fs.readFileSync(bodyPath, "utf8");
 const bodyChildren = parseMarkdownishBody(raw);
 
@@ -204,7 +208,7 @@ const doc = new Document({
   ],
 });
 
-const outPath = path.join(__dirname, "ShareSpace-Work-Updates.docx");
+const outPath = path.join(docsDir, "ShareSpace-Work-Updates.docx");
 const buffer = await Packer.toBuffer(doc);
 fs.writeFileSync(outPath, buffer);
 console.log("Wrote", outPath);

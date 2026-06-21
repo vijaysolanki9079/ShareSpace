@@ -11,9 +11,13 @@
     "test": "npm run test:unit",
     "test:unit": "node tests/crypto.test.mjs && tsx tests/rate-limit.test.ts && tsx tests/security-hardening.test.ts",
     "test:e2e": "playwright test",
-    "guide:docx": "node .guide/build-work-updates-docx.mjs",
+    "guide:docx": "node scripts/docs/build-work-updates-docx.mjs",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed:requests": "tsx prisma/seed_realistic_requests.ts"
+    "db:seed:requests": "tsx prisma/seed_realistic_requests.ts",
+    "db:add-geom": "node scripts/db/add-geom.mjs",
+    "db:check": "tsx scripts/db/check-db.ts",
+    "db:migrate:init": "node scripts/db/run-migration.mjs",
+    "verify:mfa": "node scripts/verification/verify-mfa-setup.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.6.0",

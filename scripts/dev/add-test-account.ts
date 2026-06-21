@@ -13,7 +13,7 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const passwordHash = await bcryptjs.hash('password123', 10);
-  
+
   await prisma.user.upsert({
     where: { email: 'testuser@sharespace.com' },
     update: { password: passwordHash },

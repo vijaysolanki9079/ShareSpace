@@ -24,7 +24,7 @@ async function main() {
   console.log(`Item Requests: ${itemReqs}`);
   console.log(`Item Responses: ${itemResps}`);
   console.log(`Messages: ${messages}`);
-  
+
   // Let's also check if we can fetch Nearby NGOs using the raw SQL query
   const res = await pool.query(`SELECT COUNT(*) FROM "NGO" WHERE "location_geom" IS NOT NULL`);
   console.log(`NGOs with valid Map Coordinates (PostGIS): ${res.rows[0].count}`);

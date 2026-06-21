@@ -4,7 +4,7 @@ dotenv.config({ path: '.env.local' });
 
 async function main() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  
+
   console.log('Enabling PostGIS...');
   await pool.query('CREATE EXTENSION IF NOT EXISTS postgis;');
 

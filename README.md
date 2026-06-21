@@ -125,7 +125,7 @@
    ```bash
    # Run migrations
    npx prisma migrate dev
-   
+
    # Seed with test data (optional)
    npm run db:seed
    ```
@@ -148,10 +148,11 @@ ShareSpace/
 ├── prisma/              # Database schema and migrations
 ├── server/              # Backend API routes and tRPC routers
 ├── public/              # Static assets (images, fonts, etc.)
+├── docs/                # Project guides, MFA notes, audit docs, references
+├── scripts/             # DB, verification, docs, and maintenance scripts
 ├── supabase/            # Supabase configuration
 ├── types/               # TypeScript type definitions
 ├── tests/               # Test files (Playwright)
-├── ngo-auth-workflow/   # NGO verification workflow
 ├── .github/             # GitHub Actions CI/CD
 └── package.json         # Project dependencies
 ```
@@ -172,9 +173,14 @@ npm run typecheck        # TypeScript type checking and generation
 
 # Database
 npm run db:seed          # Populate database with seed data
+npm run db:check         # Verify database connectivity and geo columns
+npm run db:add-geom      # Sync PostGIS geometry columns
 
 # Documentation
 npm run guide:docx       # Generate work updates documentation
+
+# Verification
+npm run verify:mfa       # Check MFA implementation wiring
 ```
 
 ## 🔐 Authentication Flow
