@@ -64,14 +64,19 @@ export default function DonationModal({ target, isOpen, onClose }: DonationModal
   const recipientName = isItem ? target.donor.fullName : target.organizationName;
   const recipientType = isItem ? 'Donor' : 'NGO';
   const image = isItem ? target.image : target.image || null;
+  const requireSignIn = (action: string) => {
+    if (status === 'authenticated' && session?.user?.id) return false;
+    setShowLoginPrompt(true);
+    toast.error(`Please sign in to ${action}.`);
+    return true;
+  };
 
   const handleChat = async () => {
-    if (status !== 'authenticated' || !session?.user?.id) {
-      setShowLoginPrompt(true);
-      return;
-    }
+    if (requireSignIn('start a chat')) return;
+    const currentUserId = session?.user?.id;
+    if (!currentUserId) return;
 
-    if (recipientId === session.user.id) {
+    if (recipientId === currentUserId) {
       toast('This belongs to your account.');
       return;
     }
@@ -232,6 +237,11 @@ export default function DonationModal({ target, isOpen, onClose }: DonationModal
                     {isItem && target.donor.email && (
                       <a
                         href={`mailto:${target.donor.email}`}
+                        onClick={(event) => {
+                          if (requireSignIn('email the donor')) {
+                            event.preventDefault();
+                          }
+                        }}
                         className="inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-black text-gray-700 hover:bg-gray-50"
                       >
                         <Mail size={18} />
@@ -240,7 +250,10 @@ export default function DonationModal({ target, isOpen, onClose }: DonationModal
                     )}
                     <button
                       type="button"
-                      onClick={() => toast.success('Contact request noted. Use chat for secure coordination.')}
+                      onClick={() => {
+                        if (requireSignIn(`contact this ${recipientType.toLowerCase()}`)) return;
+                        toast.success('Contact request noted. Use chat for secure coordination.');
+                      }}
                       className="inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-black text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                     >
                       <Phone size={18} />

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { checkRequestRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRequestRateLimitShared, rateLimitResponse } from '@/lib/rate-limit';
 
 type Body = { participants: string[]; title?: string };
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rateLimit = checkRequestRateLimit(request, 'chat-create', 30, 60 * 1000, session.user.id);
+    const rateLimit = await checkRequestRateLimitShared(request, 'chat-create', 30, 60 * 1000, session.user.id);
     if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
     const target = await resolveParticipant(participants[0]);

@@ -3,7 +3,7 @@ import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { prisma } from '@/lib/prisma';
 import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRateLimitShared, getClientIp } from '@/lib/rate-limit';
 
 const recoveryQuestionSchema = z.enum([
   'favorite_pen',
@@ -34,7 +34,7 @@ function isConversationParticipant(
   );
 }
 
-function enforceRateLimit(
+async function enforceRateLimit(
   headers: Headers,
   scope: string,
   limit: number,
@@ -42,7 +42,7 @@ function enforceRateLimit(
   identifier?: string
 ) {
   const key = `${scope}:${identifier ?? getClientIp(headers)}`;
-  const result = checkRateLimit(key, limit, windowMs);
+  const result = await checkRateLimitShared(key, limit, windowMs);
 
   if (!result.allowed) {
     throw new TRPCError({
@@ -65,7 +65,7 @@ export const chatRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx.session;
-      enforceRateLimit(ctx.headers, 'chat-register-keys', 5, 15 * 60 * 1000, user.id);
+      await enforceRateLimit(ctx.headers, 'chat-register-keys', 5, 15 * 60 * 1000, user.id);
       const recoveryAnswerHash = await bcrypt.hash(normalizeRecoveryAnswer(input.recoveryAnswer), 10);
       
       if (user.type === 'ngo') {
@@ -130,7 +130,7 @@ export const chatRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx.session;
-      enforceRateLimit(ctx.headers, 'chat-reset-keys', 5, 15 * 60 * 1000, user.id);
+      await enforceRateLimit(ctx.headers, 'chat-reset-keys', 5, 15 * 60 * 1000, user.id);
       const select = { chatRecoveryAnswerHash: true } as const;
       const account = user.type === 'ngo'
         ? await prisma.nGO.findUnique({ where: { id: user.id }, select })
@@ -176,7 +176,7 @@ export const chatRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx.session;
-      enforceRateLimit(ctx.headers, 'chat-start', 30, 60 * 1000, user.id);
+      await enforceRateLimit(ctx.headers, 'chat-start', 30, 60 * 1000, user.id);
       const myId = user.id;
       const myType = user.type; // 'user' or 'ngo'
       const targetId = input.targetId;
@@ -323,7 +323,7 @@ export const chatRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx.session;
-      enforceRateLimit(ctx.headers, 'chat-accept', 30, 60 * 1000, user.id);
+      await enforceRateLimit(ctx.headers, 'chat-accept', 30, 60 * 1000, user.id);
       
       const conv = await prisma.conversation.findUnique({
         where: { id: input.conversationId }
@@ -406,7 +406,7 @@ export const chatRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx.session;
-      enforceRateLimit(ctx.headers, 'chat-send', 60, 60 * 1000, user.id);
+      await enforceRateLimit(ctx.headers, 'chat-send', 60, 60 * 1000, user.id);
 
       // Check if conversation is accepted if not a system message
       const conv = await prisma.conversation.findUnique({

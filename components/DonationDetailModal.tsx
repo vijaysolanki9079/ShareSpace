@@ -69,6 +69,11 @@ export default function DonationDetailModal({
 
   const startConversation = trpc.chat.startConversation.useMutation();
   const isOwnRequest = request.requester.id === session?.user?.id;
+  const requireSignIn = (action: string) => {
+    if (session?.user?.id) return false;
+    toast.error(`Please sign in first to ${action}.`);
+    return true;
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -89,10 +94,7 @@ export default function DonationDetailModal({
   }, [isOpen]);
 
   const handleStartChat = async () => {
-    if (!session?.user?.id) {
-      toast.error('Please log in to message');
-      return;
-    }
+    if (requireSignIn('message the requester')) return;
     if (isOwnRequest) {
       toast('This is your own request. You can manage it from your dashboard.');
       return;
@@ -117,6 +119,8 @@ export default function DonationDetailModal({
   };
 
   const handleContactClick = async () => {
+    if (requireSignIn('notify the requester')) return;
+
     setSubmitting(true);
     try {
       const response = await fetch(`/api/requests/${request.id}/contact`, {
@@ -138,6 +142,8 @@ export default function DonationDetailModal({
   };
 
   const handleReport = async () => {
+    if (requireSignIn('report this request')) return;
+
     if (!reportReason.trim()) {
       toast.error('Please enter a reason for reporting');
       return;
@@ -381,7 +387,10 @@ export default function DonationDetailModal({
                       )}
                     </button>
                     <button
-                      onClick={() => setReportOpen(!reportOpen)}
+                      onClick={() => {
+                        if (requireSignIn('report this request')) return;
+                        setReportOpen(!reportOpen);
+                      }}
                       className="inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-3 text-sm font-black text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
                     >
                       <Flag size={18} />

@@ -6,6 +6,7 @@ import { Search, MapPin, Building2, Package, ArrowRight, Navigation, Heart, Load
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/context/AuthContext';
 import ItemAutocomplete from '@/components/ItemAutocomplete';
 import LocationAutocomplete, { LocationResult } from '@/components/LocationAutocomplete';
 import { showIndiaOnlyToast } from '@/lib/toast-utils';
@@ -96,6 +97,7 @@ const DONOR_NAMES = [
 // --- Component ---
 
 export default function DonationsClient() {
+  const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<'items' | 'ngos'>('items');
   const [visibleDonationCount, setVisibleDonationCount] = useState(GRID_PAGE_SIZE);
   const [visibleNgoCount, setVisibleNgoCount] = useState(GRID_PAGE_SIZE);
@@ -119,7 +121,7 @@ export default function DonationsClient() {
       category: categoryFilter === 'All Categories' ? 'All Causes' : categoryFilter,
       searchQuery: itemQuery,
     },
-    { enabled: activeTab === 'ngos' }
+    { enabled: activeTab === 'ngos' && isAuthenticated }
   );
 
   const [isLocating, setIsLocating] = useState(false);
@@ -252,6 +254,11 @@ export default function DonationsClient() {
   const isLoadingNgos = ngoSearchQuery.isLoading;
   const ngos = ngoSearchQuery.data || [];
   const contactModalOpen = selectedContact !== null;
+  const requireSignIn = (action: string) => {
+    if (isAuthenticated) return false;
+    toast.error(`Please sign in to ${action}.`);
+    return true;
+  };
   const displayDonationItems = useMemo(() => {
     const listedEnd = new Date();
     const listedStart = new Date(listedEnd);
@@ -337,6 +344,7 @@ export default function DonationsClient() {
                   <button
                     type="button"
                     onClick={() => {
+                      if (requireSignIn('view organizations')) return;
                       setActiveTab('ngos');
                       setVisibleNgoCount(GRID_PAGE_SIZE);
                     }}
@@ -474,7 +482,10 @@ export default function DonationsClient() {
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3, delay: idx * 0.03 }}
                       key={item.id}
-                      onClick={() => setSelectedContact({ type: 'item', ...item, donor: { ...item.donor, fullName: item.displayDonorName } })}
+                      onClick={() => {
+                        if (requireSignIn('contact the donor')) return;
+                        setSelectedContact({ type: 'item', ...item, donor: { ...item.donor, fullName: item.displayDonorName } });
+                      }}
                       className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col group hover:border-emerald-200 hover:scale-[1.015] cursor-pointer"
                     >
                       {/* Image Header */}
@@ -525,6 +536,7 @@ export default function DonationsClient() {
                           type="button"
                           onClick={(event) => {
                             event.stopPropagation();
+                            if (requireSignIn('contact the donor')) return;
                             setSelectedContact({ type: 'item', ...item, donor: { ...item.donor, fullName: item.displayDonorName } });
                           }}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full hover:bg-emerald-100"
@@ -577,7 +589,7 @@ export default function DonationsClient() {
         )}
 
         {/* NGOs Grid */}
-        {!isLoadingNgos && activeTab === 'ngos' && (
+        {!isLoadingNgos && activeTab === 'ngos' && isAuthenticated && (
           <>
             <div className="relative mb-10 overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 p-6 md:p-8 shadow-lg">
               <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -translate-y-1/2 translate-x-1/4 blur-2xl" />
@@ -733,6 +745,15 @@ export default function DonationsClient() {
               </div>
             )}
           </>
+        )}
+        {activeTab === 'ngos' && !isAuthenticated && (
+          <div className="rounded-3xl border border-amber-100 bg-amber-50 p-8 text-center shadow-sm">
+            <Building2 className="mx-auto mb-4 text-amber-500" size={44} />
+            <h3 className="text-xl font-bold text-gray-900">Sign in to view organizations</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm font-medium text-gray-600">
+              Organization listings are available after sign-in.
+            </p>
+          </div>
         )}
       </div>
       <DonationModal

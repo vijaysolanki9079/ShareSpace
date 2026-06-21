@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkRequestRateLimitShared, rateLimitResponse } from '@/lib/rate-limit';
 
 /**
  * Report a donation request for inappropriate content, spam, etc.
@@ -14,13 +15,25 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimit = await checkRequestRateLimitShared(
+      request,
+      'request-report',
+      10,
+      60 * 60 * 1000,
+      session.user.id
+    );
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
     const { id: requestId } = await params;
 
     const body = await request.json();
-    const { reason } = body;
+    const reason = typeof body?.reason === 'string' ? body.reason.trim().slice(0, 1000) : '';
 
-    if (!reason || !reason.trim()) {
+    if (!reason) {
       return NextResponse.json(
         { error: 'Please provide a reason for reporting' },
         { status: 400 }
@@ -39,21 +52,48 @@ export async function POST(
       );
     }
 
-    // Store report (in production, this would go to a moderation queue)
-    // For now, just log it
-    console.log('[requests/report] New report:', {
-      requestId,
-      reason,
-      reportedBy: session?.user?.id || 'anonymous',
-      reportedAt: new Date().toISOString(),
+    if (itemRequest.requesterId === session.user.id) {
+      return NextResponse.json(
+        { error: 'You cannot report your own request' },
+        { status: 400 }
+      );
+    }
+
+    const report = await prisma.report.upsert({
+      where: {
+        itemRequestId_reporterId: {
+          itemRequestId: requestId,
+          reporterId: session.user.id,
+        },
+      },
+      update: {
+        reason,
+        status: 'pending',
+      },
+      create: {
+        itemRequestId: requestId,
+        reporterId: session.user.id,
+        reporterType: session.user.type,
+        reason,
+      },
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+      },
     });
 
-    // TODO: Create a Report model in Prisma and store reports
-    // For now, we just acknowledge receipt
+    console.log('[requests/report] Report stored:', {
+      reportId: report.id,
+      itemRequestId: requestId,
+      reason,
+      reportedBy: session.user.id,
+    });
 
     return NextResponse.json(
       {
         success: true,
+        report,
         message: 'Report submitted successfully. Thank you for helping keep the community safe.',
       },
       { status: 201 }

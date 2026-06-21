@@ -10,7 +10,7 @@ const About = () => {
   };
 
   const handleContactUs = () => {
-    window.location.href = 'mailto:hello@sharespace.org?subject=ShareSpace%20contact';
+    window.location.href = 'mailto:sharespace@community.co.in?subject=ShareSpace%20contact';
   };
 
   const VALUES = [

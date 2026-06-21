@@ -283,6 +283,7 @@ model ItemRequest {
   
   // Responses from donors
   responses     ItemResponse[]
+  reports       Report[]
   
   // Chat conversations
   conversations Conversation[]  @relation("ItemRequestConv")
@@ -295,6 +296,32 @@ model ItemRequest {
   @@index([status])
   @@index([ngoId])
   @@index([createdAt])
+}
+
+model Report {
+  id            String      @id @default(cuid())
+  itemRequestId String
+  itemRequest   ItemRequest @relation(fields: [itemRequestId], references: [id], onDelete: Cascade)
+  reporterId    String
+  reporterType  String      // 'user' | 'ngo'
+  reason        String
+  status        String      @default("pending") // pending, reviewed, dismissed
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([itemRequestId])
+  @@index([reporterId])
+  @@index([status])
+  @@unique([itemRequestId, reporterId])
+}
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
 }
 
 model ItemResponse {

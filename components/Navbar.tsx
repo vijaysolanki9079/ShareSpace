@@ -33,7 +33,7 @@ function NavLinksGroup({
     { href: '/explore', label: 'Explore NGOs' },
     { href: '/donations', label: 'Donations' },
     { href: '/requests', label: 'Requests' },
-    { href: howItWorksHref, label: 'How It Works', activePath: '/' },
+    { href: howItWorksHref, label: 'How It Works' },
     { href: '/about', label: 'About' },
   ];
 

@@ -85,7 +85,7 @@ export default function RequestDetailPage() {
 
   const handleStartChat = async () => {
     if (!session?.user?.id) {
-      toast.error('Please log in to message');
+      toast.error('Please sign in first to message the requester.');
       return;
     }
 
@@ -251,7 +251,7 @@ export default function RequestDetailPage() {
           <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-slate-100 p-4">
             <button
               onClick={handleStartChat}
-              disabled={!session?.user?.id || messaging || isOwnRequest}
+              disabled={messaging || isOwnRequest}
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-colors hover:bg-emerald-700 disabled:bg-slate-300"
             >
               {messaging ? <Loader className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}

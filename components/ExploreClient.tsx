@@ -37,7 +37,8 @@ export default function ExploreClient() {
     const [sortBy, setSortBy] = useState('Recommended');
     const [activeNgoId, setActiveNgoId] = useState<string | null>(null);
     const [visibleCount, setVisibleCount] = useState(GRID_PAGE_SIZE);
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
+    const isAuthenticated = status === 'authenticated' && !!session?.user?.id;
     const startConversation = trpc.chat.startConversation.useMutation();
     const mapContainerRef = useRef<HTMLDivElement>(null);
 
@@ -65,15 +66,20 @@ export default function ExploreClient() {
         radiusKm:    50,
         category:    activeCategory,
         searchQuery: debouncedSearch,
-    });
+    }, { enabled: isAuthenticated });
 
     const { data: suggestionData } = trpc.ngo.autocomplete.useQuery(
         { query: debouncedSearch },
-        { enabled: debouncedSearch.trim().length >= 1 }
+        { enabled: isAuthenticated && debouncedSearch.trim().length >= 1 }
     );
 
     // ─── Search handler (called by SearchHero submit / "Near Me") ────────────
     const handleSearch = async (query: { ngoName: string; location: LocationResult | null }) => {
+        if (!isAuthenticated) {
+            toast.error('Please sign in to view organizations.');
+            return;
+        }
+
         setIsSearching(true);
         setVisibleCount(GRID_PAGE_SIZE);
         setSearchInput(query.ngoName);
@@ -207,7 +213,14 @@ export default function ExploreClient() {
                         {categories.map(cat => (
                             <button
                                 key={cat.name}
-                                onClick={() => { setActiveCategory(cat.name); setVisibleCount(GRID_PAGE_SIZE); }}
+                                onClick={() => {
+                                    if (!isAuthenticated) {
+                                        toast.error('Please sign in to view organizations.');
+                                        return;
+                                    }
+                                    setActiveCategory(cat.name);
+                                    setVisibleCount(GRID_PAGE_SIZE);
+                                }}
                                 className={`
                                     flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all border
                                     ${activeCategory === cat.name
@@ -228,7 +241,9 @@ export default function ExploreClient() {
                     <p className="font-semibold text-gray-900 flex items-center gap-2">
                         {isLoadingNGOs
                             ? <><Loader2 className="w-4 h-4 animate-spin text-emerald-600" /> Searching...</>
-                            : <>Showing <span className="text-emerald-700">{sortedNgos.length} organizations</span></>
+                            : isAuthenticated
+                                ? <>Showing <span className="text-emerald-700">{sortedNgos.length} organizations</span></>
+                                : <>Sign in to view <span className="text-emerald-700">organizations</span></>
                         }
                     </p>
                     <div className="flex items-center gap-2">
@@ -250,7 +265,15 @@ export default function ExploreClient() {
 
                 {/* NGO Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 max-w-7xl mx-auto">
-                    {isLoadingNGOs ? (
+                    {!isAuthenticated ? (
+                        <div className="col-span-full rounded-3xl border border-amber-100 bg-amber-50 px-6 py-16 text-center text-gray-600">
+                            <MapPin className="w-12 h-12 text-amber-400 mx-auto mb-4" />
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Sign in to view organizations</h3>
+                            <p className="text-gray-500">
+                                NGO listings and search results are available after sign-in.
+                            </p>
+                        </div>
+                    ) : isLoadingNGOs ? (
                         // Loading skeletons
                         Array.from({ length: GRID_PAGE_SIZE }).map((_, i) => (
                             <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">

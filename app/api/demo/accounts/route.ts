@@ -5,6 +5,10 @@ import { NextResponse } from 'next/server';
  * These are environment-driven test accounts.
  */
 export async function GET() {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 403 });
+  }
+
   const demo1Email = process.env.NGO_DEMO_EMAIL || 'demo@sharespace.dev';
   const demo1Password = process.env.NGO_DEMO_PASSWORD || 'DemoMFA@2024!';
   const demo1Name = process.env.NGO_DEMO_NAME || 'Demo NGO MFA';

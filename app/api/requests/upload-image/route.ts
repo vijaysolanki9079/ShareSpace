@@ -5,7 +5,7 @@ import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 import { authOptions } from '@/lib/auth';
 import getSupabaseAdmin from '@/lib/supabase-server';
-import { checkRequestRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRequestRateLimitShared, rateLimitResponse } from '@/lib/rate-limit';
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rateLimit = checkRequestRateLimit(request, 'request-image-upload', 30, 60 * 60 * 1000, session.user.id);
+    const rateLimit = await checkRequestRateLimitShared(request, 'request-image-upload', 30, 60 * 60 * 1000, session.user.id);
     if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
     const formData = await request.formData();

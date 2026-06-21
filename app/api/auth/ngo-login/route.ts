@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRequestRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRequestRateLimitShared, rateLimitResponse } from '@/lib/rate-limit';
 
 type DemoAccount = {
   email: string;
@@ -10,6 +10,11 @@ type DemoAccount = {
   registrationNumber: string;
   categories: string[];
   locationName: string;
+};
+
+const isDev = process.env.NODE_ENV === 'development';
+const debugLog = (...args: unknown[]) => {
+  if (isDev) console.log(...args);
 };
 
 function getEnvValue(key: string) {
@@ -88,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const rateLimit = checkRequestRateLimit(
+    const rateLimit = await checkRequestRateLimitShared(
       request,
       'ngo-login',
       10,
@@ -97,49 +102,49 @@ export async function POST(request: NextRequest) {
     );
     if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
-    console.log('[ngo-login] Attempting login for:', normalizedEmail);
+    debugLog('[ngo-login] Attempting login for:', normalizedEmail);
 
     let ngo = await prisma.nGO.findUnique({
       where: { email: normalizedEmail },
     });
 
     if (!ngo) {
-      console.log('[ngo-login] NGO not found in DB, checking demo accounts...');
+      debugLog('[ngo-login] NGO not found in DB, checking demo accounts...');
       const demoAccounts = getDemoAccounts();
-      console.log('[ngo-login] Available demo accounts:', demoAccounts.map(a => a.email));
+      debugLog('[ngo-login] Available demo accounts:', demoAccounts.map(a => a.email));
       
       const demoAccount = demoAccounts.find((account) => account.email === normalizedEmail);
 
       if (demoAccount) {
-        console.log('[ngo-login] Demo account found for:', normalizedEmail);
+        debugLog('[ngo-login] Demo account found for:', normalizedEmail);
         if (password === demoAccount.password) {
-          console.log('[ngo-login] Password match! Creating/updating demo NGO...');
+          debugLog('[ngo-login] Password match! Creating/updating demo NGO...');
           try {
             ngo = await getOrCreateDemoNgoAccount(demoAccount);
-            console.log('[ngo-login] Demo NGO created/updated:', ngo.id, ngo.email);
+            debugLog('[ngo-login] Demo NGO created/updated:', ngo.id, ngo.email);
           } catch (dbErr) {
             console.error('[ngo-login] Failed to create demo account:', dbErr);
             throw dbErr;
           }
         } else {
-          console.log('[ngo-login] Password mismatch for demo account');
+          debugLog('[ngo-login] Password mismatch for demo account');
         }
       } else {
-        console.log('[ngo-login] No demo account found for email:', normalizedEmail);
+        debugLog('[ngo-login] No demo account found for email:', normalizedEmail);
       }
     }
 
     if (!ngo) {
-      console.log('[ngo-login] No NGO found after demo check');
+      debugLog('[ngo-login] No NGO found after demo check');
       return NextResponse.json(
         { error: 'Invalid NGO credentials' },
         { status: 401 }
       );
     }
 
-    console.log('[ngo-login] Comparing password for:', ngo.email);
+    debugLog('[ngo-login] Comparing password for:', ngo.email);
     const passwordMatch = await bcrypt.compare(password, ngo.password);
-    console.log('[ngo-login] Password match result:', passwordMatch);
+    debugLog('[ngo-login] Password match result:', passwordMatch);
 
     if (!passwordMatch) {
       return NextResponse.json(
@@ -149,14 +154,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (ngo.verificationStatus !== 'approved' || !ngo.isVerified) {
-      console.log('[ngo-login] NGO not approved:', { status: ngo.verificationStatus, verified: ngo.isVerified });
+      debugLog('[ngo-login] NGO not approved:', { status: ngo.verificationStatus, verified: ngo.isVerified });
       return NextResponse.json(
         { error: 'Your NGO account is pending approval' },
         { status: 403 }
       );
     }
 
-    console.log('[ngo-login] Login successful for:', ngo.email);
+    debugLog('[ngo-login] Login successful for:', ngo.email);
     return NextResponse.json({
       id: ngo.id,
       email: ngo.email,

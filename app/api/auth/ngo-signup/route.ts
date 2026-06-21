@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import getSupabaseAdmin from "@/lib/supabase-server";
-import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { checkRequestRateLimitShared, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
-    const rateLimit = checkRequestRateLimit(request, "ngo-signup", 4, 60 * 60 * 1000);
+    const rateLimit = await checkRequestRateLimitShared(request, "ngo-signup", 4, 60 * 60 * 1000);
     if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
     const formData = await request.formData();

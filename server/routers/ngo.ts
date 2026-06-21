@@ -8,10 +8,11 @@
  * NGO Registration handles comprehensive document verification and KYC workflow.
  */
 import { z } from 'zod';
-import { createTRPCRouter, publicProcedure } from '@/server/trpc';
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/trpc';
 import { findNearbyNGOs, findNGOSuggestions } from '@/lib/repositories/ngo';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { TRPCError } from '@trpc/server';
 
 // Validation schema for NGO registration form
 const ngoRegisterSchema = z.object({
@@ -48,7 +49,7 @@ type SubmittedDocument = {
 };
 
 export const ngoRouter = createTRPCRouter({
-  search: publicProcedure
+  search: protectedProcedure
     .input(
       z.object({
         lat:         z.number().min(-90).max(90).nullable().optional(),
@@ -70,7 +71,7 @@ export const ngoRouter = createTRPCRouter({
     }),
 
   /** Typeahead suggestions for explore search (no geo filter). */
-  autocomplete: publicProcedure
+  autocomplete: protectedProcedure
     .input(z.object({ query: z.string().min(1).max(100) }))
     .query(async ({ input }) => findNGOSuggestions(input.query)),
 
@@ -274,9 +275,13 @@ export const ngoRouter = createTRPCRouter({
   /**
    * Get all documents submitted by an NGO (for admin dashboard).
    */
-  getSubmittedDocuments: publicProcedure
+  getSubmittedDocuments: protectedProcedure
     .input(z.object({ ngoId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      if (ctx.session.user.type !== 'ngo' || ctx.session.user.id !== input.ngoId) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+
       const docs = await prisma.nGOVerificationDocument.findMany({
         where: { ngoId: input.ngoId },
         orderBy: { uploadedAt: 'desc' },
@@ -292,11 +297,28 @@ export const ngoRouter = createTRPCRouter({
   /**
    * Get full details for a specific NGO by ID.
    */
-  getById: publicProcedure
+  getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       const ngo = await prisma.nGO.findUnique({
         where: { id: input.id },
+        select: {
+          id: true,
+          organizationName: true,
+          registrationNumber: true,
+          website: true,
+          missionArea: true,
+          categories: true,
+          isVerified: true,
+          verificationStatus: true,
+          bio: true,
+          image: true,
+          latitude: true,
+          longitude: true,
+          locationName: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       });
 
       if (!ngo) {
