@@ -5,17 +5,17 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { 
-    MapPin, BadgeCheck, Star, Globe, Mail, Phone, 
-    ArrowLeft, Calendar, Users, Heart, Share2, 
+import {
+    MapPin, BadgeCheck, Star, Globe, Phone,
+    ArrowLeft, Calendar, Users, Heart, Share2,
     MessageSquare, AlertCircle, Loader2, Clock, Navigation
 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
+import { toast } from 'react-hot-toast';
 
-const MapComponent = dynamic(() => import('@/components/MapComponent'), { 
-    ssr: false, 
-    loading: () => <div className="w-full h-[300px] bg-emerald-50 rounded-2xl animate-pulse flex items-center justify-center text-emerald-600 font-medium">Loading HQ Location...</div> 
+const MapComponent = dynamic(() => import('@/components/MapComponent'), {
+    ssr: false,
+    loading: () => <div className="w-full h-[300px] bg-emerald-50 rounded-2xl animate-pulse flex items-center justify-center text-emerald-600 font-medium">Loading HQ Location...</div>
 });
 
 interface NGOProfileClientProps {
@@ -27,24 +27,24 @@ interface NGOProfileClientProps {
  */
 function getNGODisplayData(id: string) {
     const seed = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    
+
     const openingTime = 8 + (seed % 3); // 8, 9, or 10
     const closingTime = 6 + (seed % 4); // 6, 7, 8, or 9 PM
-    
+
     const morningStart = openingTime + 1;
     const morningEnd = morningStart + 3;
-    
+
     const eveningStart = closingTime - 4;
     const eveningEnd = closingTime - 1;
-    
+
     const impactScore = 88 + (seed % 11); // 88 to 99
     const drivesDone = 15 + (seed % 150);
     const volunteers = 120 + (seed % 2500);
-    
+
     // Generate unique Indian phone number
     const phoneSuffix = (1000000000 + (seed * 12345) % 900000000).toString();
     const phone = `+91 ${phoneSuffix.slice(0, 5)} ${phoneSuffix.slice(5)}`;
-    
+
     return {
         opening: `${openingTime}:00 AM`,
         closing: `${closingTime}:00 PM`,
@@ -60,53 +60,65 @@ function getNGODisplayData(id: string) {
 }
 
 export default function NGOProfileClient({ id }: NGOProfileClientProps) {
-    const { data: ngo, isLoading, error } = trpc.ngo.getById.useQuery({ id });
-    const { data: session } = useSession();
-    const router = useRouter();
+    const { data: session, status } = useSession();
+    const isAuthenticated = status === 'authenticated' && !!session?.user?.id;
+    const { data: ngo, isLoading, error } = trpc.ngo.getById.useQuery(
+        { id },
+        { enabled: isAuthenticated }
+    );
     const [submitting, setSubmitting] = React.useState(false);
 
     const startConversation = trpc.chat.startConversation.useMutation();
 
     const handleStartChat = async () => {
         if (!session?.user?.id) {
-            alert('Please log in to message');
+            toast.error('Please sign in first to message this organization.');
             return;
         }
 
         setSubmitting(true);
         try {
-            // Get current location if possible for proximity share
-            let locationParams = '';
-            try {
-                const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-                });
-                locationParams = `&shareLocation=true&lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`;
-            } catch (e) {
-                console.warn('Location access denied or timed out');
-            }
-
             const conv = await startConversation.mutateAsync({
                 targetId: id,
                 targetType: 'ngo',
             });
-            window.location.href = `/dashboard?section=messages&chatId=${conv.id}${locationParams}`;
-        } catch (err: any) {
+            window.location.href = `/dashboard?section=messages&chatId=${conv.id}`;
+        } catch (err: unknown) {
             console.error(err);
-            const msg = err.message || 'Failed to start conversation';
-            alert(`Chat Error: ${msg}`);
+            const msg = err instanceof Error ? err.message : 'Failed to start conversation';
+            toast.error(`Chat Error: ${msg}`);
             setSubmitting(false);
         }
     };
-    
+
     const displayData = React.useMemo(() => getNGODisplayData(id), [id]);
 
-    if (isLoading) {
+    if (status === 'loading' || isLoading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <Loader2 className="w-12 h-12 text-emerald-600 animate-spin mx-auto mb-4" />
                     <p className="text-gray-500 font-medium">Loading organization profile...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+                <div className="max-w-md rounded-3xl border border-amber-100 bg-amber-50 p-8 text-center shadow-sm">
+                    <AlertCircle className="mx-auto mb-4 h-14 w-14 text-amber-500" />
+                    <h2 className="text-2xl font-bold text-gray-900">Sign in to view organizations</h2>
+                    <p className="mt-3 text-sm font-medium leading-6 text-gray-600">
+                        Organization profiles are available after sign-in.
+                    </p>
+                    <Link
+                        href="/login"
+                        className="mt-6 inline-flex rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+                    >
+                        Sign in
+                    </Link>
                 </div>
             </div>
         );
@@ -118,7 +130,7 @@ export default function NGOProfileClient({ id }: NGOProfileClientProps) {
                 <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center border border-red-100">
                     <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">NGO Not Found</h2>
-                    <p className="text-gray-500 mb-8">The organization you're looking for might have moved or doesn't exist.</p>
+                    <p className="text-gray-500 mb-8">The organization you&apos;re looking for might have moved or doesn&apos;t exist.</p>
                     <Link href="/explore" className="inline-flex items-center gap-2 text-emerald-600 font-bold hover:text-emerald-700">
                         <ArrowLeft size={18} /> Back to Explore
                     </Link>
@@ -147,16 +159,16 @@ export default function NGOProfileClient({ id }: NGOProfileClientProps) {
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20">
             {/* Hero Section */}
             <div className="relative h-[400px] w-full overflow-hidden">
-                <img 
-                    src={ngo.image || 'https://images.unsplash.com/photo-1593113616828-6f22bca04804?w=1200'} 
+                <img
+                    src={ngo.image || 'https://images.unsplash.com/photo-1593113616828-6f22bca04804?w=1200'}
                     alt={ngo.organizationName}
                     className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
-                
+
                 <div className="absolute top-8 left-8">
-                    <Link 
-                        href="/explore" 
+                    <Link
+                        href="/explore"
                         className="flex items-center gap-2 bg-white/20 backdrop-blur-md text-white px-5 py-2.5 rounded-full font-semibold border border-white/30 hover:bg-white/30 transition-all shadow-lg"
                     >
                         <ArrowLeft size={18} /> Back
@@ -165,7 +177,7 @@ export default function NGOProfileClient({ id }: NGOProfileClientProps) {
 
                 <div className="absolute bottom-10 left-0 right-0">
                     <div className="container mx-auto px-6 max-w-6xl">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="flex flex-col md:flex-row md:items-end justify-between gap-6"
@@ -209,17 +221,17 @@ export default function NGOProfileClient({ id }: NGOProfileClientProps) {
             {/* Main Content */}
             <main className="container mx-auto px-6 -mt-8 relative z-20 max-w-6xl">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
+
                     {/* Left Column: Details */}
                     <div className="lg:col-span-2 space-y-8">
                         {/* Stats Row */}
                         <div className="grid grid-cols-3 gap-4">
                             {stats.map((stat, i) => (
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.1 * i }}
-                                    key={stat.label} 
+                                    key={stat.label}
                                     className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col items-center text-center group hover:border-emerald-200 transition-colors"
                                 >
                                     <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -265,7 +277,7 @@ export default function NGOProfileClient({ id }: NGOProfileClientProps) {
                                 <Clock className="text-emerald-600" size={20} />
                                 Donation Schedule
                             </h3>
-                            
+
                             <div className="space-y-4 mb-8">
                                 <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
                                     <div className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2">Morning Slot</div>
@@ -288,7 +300,7 @@ export default function NGOProfileClient({ id }: NGOProfileClientProps) {
                                         <span className="text-gray-500 font-medium">Operating Days</span>
                                         <span className="text-gray-900 font-bold">{displayData.days}</span>
                                     </div>
-                                    
+
                                     <div className="pt-4 border-t border-gray-100 grid grid-cols-2 gap-3">
                                         <a href={displayData.website} target="_blank" className="flex items-center gap-2 p-3 rounded-xl bg-gray-50 hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 transition-colors border border-transparent hover:border-emerald-100">
                                             <Globe size={16} />
@@ -303,7 +315,7 @@ export default function NGOProfileClient({ id }: NGOProfileClientProps) {
                             </div>
 
                             <div className="space-y-3">
-                                <a 
+                                <a
                                     href={`https://www.google.com/maps/search/?api=1&query=${ngo.latitude},${ngo.longitude}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -312,7 +324,7 @@ export default function NGOProfileClient({ id }: NGOProfileClientProps) {
                                     <Navigation className="w-5 h-5 group-hover:rotate-45 transition-transform" />
                                     Get Directions to HQ
                                 </a>
-                                <button 
+                                <button
                                     onClick={handleStartChat}
                                     disabled={submitting}
                                     className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 disabled:bg-gray-100 disabled:text-gray-400"

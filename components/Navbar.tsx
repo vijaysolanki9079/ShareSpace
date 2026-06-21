@@ -29,29 +29,67 @@ function NavLinksGroup({
 }) {
   const pathname = usePathname();
   const howItWorksHref = pathname === '/' ? '#how-it-works' : '/#how-it-works';
+  const navItems = [
+    { href: '/explore', label: 'Explore NGOs' },
+    { href: '/donations', label: 'Donations' },
+    { href: '/requests', label: 'Requests' },
+    { href: howItWorksHref, label: 'How It Works', activePath: '/' },
+    { href: '/about', label: 'About' },
+  ];
+
+  const isActive = (item: { href: string; activePath?: string }) => {
+    const activePath = item.activePath ?? item.href;
+    if (activePath === '/') return pathname === '/';
+    return pathname === activePath || pathname.startsWith(`${activePath}/`);
+  };
+
+  const getLinkClass = (active: boolean, darkMode: boolean) => {
+    const base =
+      'relative rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300';
+    const inactive = darkMode
+      ? 'text-white/78 hover:text-white'
+      : secondaryTextColor;
+    const activeClass = darkMode
+      ? 'text-white drop-shadow-[0_0_14px_rgba(16,185,129,0.65)]'
+      : 'text-gray-950';
+
+    return `${base} ${active ? activeClass : inactive}`;
+  };
+
+  const ActiveGlow = ({ active, darkMode }: { active: boolean; darkMode: boolean }) => (
+    <>
+      {active && (
+        <>
+          <span
+            className={`absolute inset-x-3 -bottom-0.5 h-[2px] rounded-full ${
+              darkMode ? 'bg-emerald-300' : 'bg-emerald-500'
+            } shadow-[0_0_14px_rgba(16,185,129,0.85)]`}
+          />
+          <span
+            className={`absolute inset-x-2 bottom-0 h-6 rounded-full blur-md ${
+              darkMode ? 'bg-emerald-300/20' : 'bg-emerald-400/20'
+            }`}
+          />
+        </>
+      )}
+    </>
+  );
 
   // For dark backgrounds (Explore NGOs, How it Works)
   if (isDarkBg) {
     const pill = `${navPillBase} border-white/20 bg-white/10`;
-    const linkClass = `rounded-full px-4 py-2 text-sm font-medium transition-colors text-white/80 hover:text-white`;
     
     return (
       <div className={pill}>
-        <Link href="/explore" className={linkClass}>
-          Explore NGOs
-        </Link>
-        <Link href="/donations" className={linkClass}>
-          Donations
-        </Link>
-        <Link href="/requests" className={linkClass}>
-          Requests
-        </Link>
-        <Link href={howItWorksHref} className={linkClass}>
-          How It Works
-        </Link>
-        <Link href="/about" className={linkClass}>
-          About
-        </Link>
+        {navItems.map((item) => {
+          const active = isActive(item);
+          return (
+            <Link key={item.label} href={item.href} className={getLinkClass(active, true)}>
+              <span className="relative z-10">{item.label}</span>
+              <ActiveGlow active={active} darkMode />
+            </Link>
+          );
+        })}
       </div>
     );
   }
@@ -62,25 +100,17 @@ function NavLinksGroup({
       ? `${navPillBase} border-white/20 bg-white/10`
       : `${navPillBase} border-slate-900/10 bg-slate-900/[0.04]`;
 
-  const linkClass = `rounded-full px-4 py-2 text-sm font-medium transition-colors ${secondaryTextColor}`;
-
   return (
     <div className={pill}>
-      <Link href="/explore" className={linkClass}>
-        Explore NGOs
-      </Link>
-      <Link href="/donations" className={linkClass}>
-        Donations
-      </Link>
-      <Link href="/requests" className={linkClass}>
-        Requests
-      </Link>
-      <Link href={howItWorksHref} className={linkClass}>
-        How It Works
-      </Link>
-      <Link href="/about" className={linkClass}>
-        About
-      </Link>
+      {navItems.map((item) => {
+        const active = isActive(item);
+        return (
+          <Link key={item.label} href={item.href} className={getLinkClass(active, isLight)}>
+            <span className="relative z-10">{item.label}</span>
+            <ActiveGlow active={active} darkMode={isLight} />
+          </Link>
+        );
+      })}
     </div>
   );
 }
@@ -176,12 +206,10 @@ function UserAuthMenu({
 
 function GuestAuthPills({
   isLight,
-  loginBtn,
   signupBtn,
   isDarkBg,
 }: {
   isLight: boolean;
-  loginBtn: string;
   signupBtn: string;
   isDarkBg?: boolean;
 }) {
@@ -232,8 +260,6 @@ const Navbar = ({
   
   const textColor = isDarkBg || isLight ? 'text-white' : 'text-gray-900';
   const secondaryTextColor = isDarkBg || isLight ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900';
-  const logoBg = isDarkBg || isLight ? 'bg-white/10 border-white/20' : 'bg-gray-100 border-gray-200';
-  const loginBtn = isDarkBg || isLight ? 'text-white/80 border-white/40 hover:text-white hover:bg-white/10' : 'text-gray-900 border-gray-300 hover:bg-gray-50';
   const signupBtn = isDarkBg || isLight ? 'text-white bg-emerald-600 hover:bg-emerald-700' : 'text-white bg-emerald-600 hover:bg-emerald-700';
 
   const { user, isAuthenticated } = useAuth();
@@ -268,7 +294,7 @@ const Navbar = ({
 
         <div className="flex shrink-0 items-center gap-3 md:min-w-0">
           {!isAuthenticated || !user ? (
-            <GuestAuthPills isLight={isLight} loginBtn={loginBtn} signupBtn={signupBtn} isDarkBg={isDarkBg} />
+            <GuestAuthPills isLight={isLight} signupBtn={signupBtn} isDarkBg={isDarkBg} />
           ) : (
             <UserAuthMenu
               isLight={isLight}

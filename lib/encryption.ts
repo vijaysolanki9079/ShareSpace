@@ -82,19 +82,23 @@ export async function unwrapPrivateKey(encryptedKeyBase64: string, ivBase64: str
   const encryptedBuffer = base64ToArrayBuffer(encryptedKeyBase64);
   const ivBuffer = base64ToArrayBuffer(ivBase64);
 
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: new Uint8Array(ivBuffer) },
-    kek,
-    encryptedBuffer
-  );
+  try {
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: new Uint8Array(ivBuffer) },
+      kek,
+      encryptedBuffer
+    );
 
-  return await crypto.subtle.importKey(
-    "pkcs8",
-    decrypted,
-    { name: "ECDH", namedCurve: "P-256" },
-    true,
-    ["deriveKey", "deriveBits"]
-  );
+    return await crypto.subtle.importKey(
+      "pkcs8",
+      decrypted,
+      { name: "ECDH", namedCurve: "P-256" },
+      true,
+      ["deriveKey", "deriveBits"]
+    );
+  } catch {
+    throw new Error("Unable to unlock chat key. Check the passphrase or reset secure chat.");
+  }
 }
 
 // Derive Shared Secret between my Private Key and Recipient's Public Key

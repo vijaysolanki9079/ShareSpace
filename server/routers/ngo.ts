@@ -42,6 +42,11 @@ const OPTIONAL_DOCUMENTS = [
   'non_blacklisting',
 ];
 
+type SubmittedDocument = {
+  documentType: string;
+  status: string;
+};
+
 export const ngoRouter = createTRPCRouter({
   search: publicProcedure
     .input(
@@ -256,8 +261,8 @@ export const ngoRouter = createTRPCRouter({
         select: { documentType: true },
       });
 
-      const submittedTypes = new Set((submittedDocs as any[]).map((d: any) => d.documentType));
-      const allMandatorySubmitted = MANDATORY_DOCUMENTS.every((doc: any) => submittedTypes.has(doc));
+      const submittedTypes = new Set(submittedDocs.map((d) => d.documentType));
+      const allMandatorySubmitted = MANDATORY_DOCUMENTS.every((doc) => submittedTypes.has(doc));
 
       return {
         document: doc,
@@ -277,7 +282,7 @@ export const ngoRouter = createTRPCRouter({
         orderBy: { uploadedAt: 'desc' },
       });
 
-      return (docs as any[]).map((doc: any) => ({
+      return (docs as SubmittedDocument[]).map((doc) => ({
         ...doc,
         label: formatDocumentLabel(doc.documentType),
         statusBadge: getStatusBadge(doc.status),

@@ -40,6 +40,7 @@ function LoginForm() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const success = searchParams.get('success');
+    const returnTo = searchParams.get('returnTo') || '/dashboard';
 
     useEffect(() => {
         setError(getAuthErrorMessage(callbackError));
@@ -63,8 +64,7 @@ function LoginForm() {
             }
 
             if (result?.ok) {
-                // Redirect to dashboard
-                router.push('/dashboard');
+                router.push(returnTo);
             }
         } catch (err) {
             setError('An error occurred. Please try again.');
@@ -187,7 +187,7 @@ function LoginForm() {
                     {/* Social Login */}
                     <button
                         type="button"
-                        onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+                        onClick={() => signIn('google', { callbackUrl: returnTo })}
                         className="w-full h-11 bg-white border border-gray-200 text-gray-900 font-semibold text-sm rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 animate-slide-up disabled:opacity-50"
                         style={{ animationDelay: '0.2s' }}
                         disabled={loading}

@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { encryptMfaSecret, generateBackupCodes, verifyTotpToken } from '@/lib/mfa';
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRequestRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 /**
  * POST /api/auth/mfa/verify-setup
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const rateLimit = checkRequestRateLimit(request, 'mfa-verify-setup', 8, 15 * 60 * 1000, ngoId);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
     // ✅ Validation: Code must be exactly 6 digits
     if (!/^\d{6}$/.test(code)) {

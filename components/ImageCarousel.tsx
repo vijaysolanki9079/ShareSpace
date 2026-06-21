@@ -1,37 +1,37 @@
 'use client';
 
 import React from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import Image from 'next/image';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import NoImageFallback from './NoImageFallback';
+import { getRenderableImages } from '@/lib/image-src';
 
 interface ImageCarouselProps {
   images: string[];
   title: string;
-  onClose?: () => void;
 }
 
 export default function ImageCarousel({
   images,
   title,
-  onClose,
 }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const renderableImages = getRenderableImages(images);
 
-  if (!images || images.length === 0) {
+  if (renderableImages.length === 0) {
     return (
-      <div className="relative w-full h-96 bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center rounded-lg">
-        <span className="text-white text-lg">No images available</span>
+      <div className="relative w-full h-72 md:h-80 rounded-lg overflow-hidden">
+        <NoImageFallback label="No images uploaded" />
       </div>
     );
   }
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length);
+    setCurrentIndex((prev) => (prev + 1) % renderableImages.length);
   };
 
   const goToPrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    setCurrentIndex((prev) => (prev - 1 + renderableImages.length) % renderableImages.length);
   };
 
   const goToSlide = (index: number) => {
@@ -41,7 +41,7 @@ export default function ImageCarousel({
   return (
     <div className="space-y-4">
       {/* Main Image Container */}
-      <div className="relative w-full h-96 bg-gray-200 rounded-lg overflow-hidden group">
+      <div className="relative w-full h-72 md:h-80 bg-gray-200 rounded-lg overflow-hidden group">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
@@ -51,19 +51,16 @@ export default function ImageCarousel({
             transition={{ duration: 0.3 }}
             className="relative w-full h-full"
           >
-            <Image
-              src={images[currentIndex]}
+            <img
+              src={renderableImages[currentIndex]}
               alt={`${title} - Image ${currentIndex + 1}`}
-              fill
-              className="object-cover"
-              priority={currentIndex === 0}
-              sizes="100vw"
+              className="h-full w-full object-cover"
             />
           </motion.div>
         </AnimatePresence>
 
         {/* Navigation Buttons */}
-        {images.length > 1 && (
+        {renderableImages.length > 1 && (
           <>
             <button
               onClick={goToPrev}
@@ -83,16 +80,16 @@ export default function ImageCarousel({
 
             {/* Image Counter */}
             <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-              {currentIndex + 1} / {images.length}
+              {currentIndex + 1} / {renderableImages.length}
             </div>
           </>
         )}
       </div>
 
       {/* Thumbnail Strip */}
-      {images.length > 1 && (
+      {renderableImages.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {images.map((image, idx) => (
+          {renderableImages.map((image, idx) => (
             <button
               key={idx}
               onClick={() => goToSlide(idx)}
@@ -102,12 +99,10 @@ export default function ImageCarousel({
                   : 'border-gray-300 hover:border-gray-400'
               }`}
             >
-              <Image
+              <img
                 src={image}
                 alt={`Thumbnail ${idx + 1}`}
-                fill
-                className="object-cover"
-                sizes="80px"
+                className="h-full w-full object-cover"
               />
             </button>
           ))}

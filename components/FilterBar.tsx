@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Search, Sliders, X, MapPin, Filter } from 'lucide-react';
+import { Search, X, MapPin, Filter } from 'lucide-react';
 
 interface FilterBarProps {
   categories: Array<{ id: string; name: string }>;
@@ -33,18 +33,18 @@ export default function FilterBar({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-2 md:p-3 sticky top-6 z-30 backdrop-blur-xl bg-white/90"
+      className="bg-white rounded-3xl shadow-[0_22px_70px_-30px_rgba(15,23,42,0.55),0_10px_30px_-20px_rgba(15,23,42,0.28)] border border-slate-200/80 ring-1 ring-slate-300/50 p-2 md:p-3 sticky top-6 z-30 backdrop-blur-xl bg-white/95"
     >
       <div className="flex flex-col md:flex-row gap-2 items-stretch">
         {/* Main Search Input */}
         <div className="relative flex-1 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-slate-700 transition-colors" size={20} />
           <input
             type="text"
             placeholder="Search for items you can donate..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-gray-400"
+            className="w-full pl-12 pr-4 py-4 bg-slate-50/80 border border-slate-200/80 rounded-2xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-slate-700 transition-all placeholder:text-gray-400"
           />
         </div>
 
@@ -169,7 +169,7 @@ export default function FilterBar({
            <span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter mr-2">Applied:</span>
            {searchQuery && (
              <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold border border-emerald-100">
-               "{searchQuery}"
+               &quot;{searchQuery}&quot;
                <X size={12} className="cursor-pointer" onClick={() => onSearchChange('')} />
              </div>
            )}

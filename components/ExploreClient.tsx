@@ -14,6 +14,8 @@ import type { NGOSuggestion } from '@/components/NGONameAutocomplete';
 import type { MapNGO } from '@/components/MapComponent';
 import SearchHero from '@/components/SearchHero';
 import { LocationResult } from '@/components/LocationAutocomplete';
+import { toast } from 'react-hot-toast';
+import { getRandomFloat, getRandomInt } from '@/lib/random-display';
 
 const MapComponent = dynamic(() => import('@/components/MapComponent'), {
     ssr: false,
@@ -24,6 +26,8 @@ const MapComponent = dynamic(() => import('@/components/MapComponent'), {
     ),
 });
 
+const GRID_PAGE_SIZE = 16;
+
 export default function ExploreClient() {
     const [activeCategory, setActiveCategory] = useState('All Causes');
     const [searchInput, setSearchInput] = useState('');
@@ -32,7 +36,7 @@ export default function ExploreClient() {
     const [isSearching, setIsSearching] = useState(false);
     const [sortBy, setSortBy] = useState('Recommended');
     const [activeNgoId, setActiveNgoId] = useState<string | null>(null);
-    const [visibleCount, setVisibleCount] = useState(6);
+    const [visibleCount, setVisibleCount] = useState(GRID_PAGE_SIZE);
     const { data: session } = useSession();
     const startConversation = trpc.chat.startConversation.useMutation();
     const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -71,6 +75,7 @@ export default function ExploreClient() {
     // ─── Search handler (called by SearchHero submit / "Near Me") ────────────
     const handleSearch = async (query: { ngoName: string; location: LocationResult | null }) => {
         setIsSearching(true);
+        setVisibleCount(GRID_PAGE_SIZE);
         setSearchInput(query.ngoName);
         setDebouncedSearch(query.ngoName); // bypass debounce on explicit submit
 
@@ -99,21 +104,31 @@ export default function ExploreClient() {
             seen.add(key);
             return true;
         });
-        return deduped.map(ngo => ({
-            id:          ngo.id,
-            name:        ngo.organizationName,
-            description: ngo.bio ?? '',
-            category:    ngo.categories?.[0] ?? ngo.missionArea ?? 'Other',
-            categories:  ngo.categories ?? [],
-            location:    ngo.locationName ?? '',
-            distanceKm:  ngo.distanceKm,
-            distance:    ngo.distanceKm != null ? `${ngo.distanceKm.toFixed(1)} km away` : 'Nearby',
-            lat:         ngo.latitude,
-            lng:         ngo.longitude,
-            verified:    ngo.isVerified,
-            image:       ngo.image ?? 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=400',
-            rating:      '4.8',
-        }));
+        return deduped.map(ngo => {
+            const seed = ngo.id || ngo.organizationName;
+            const displayDistanceKm = getRandomFloat(0.5, 8, 1, `${seed}:distance`);
+
+            return {
+                id:            ngo.id,
+                name:          ngo.organizationName,
+                description:   ngo.bio ?? '',
+                category:      ngo.categories?.[0] ?? ngo.missionArea ?? 'Other',
+                categories:    ngo.categories ?? [],
+                location:      ngo.locationName ?? '',
+                distanceKm:    displayDistanceKm,
+                distance:      `${displayDistanceKm.toFixed(1)} km away`,
+                lat:           ngo.latitude,
+                lng:           ngo.longitude,
+                verified:      ngo.isVerified,
+                image:         ngo.image ?? 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=400',
+                rating:        getRandomFloat(3.5, 5, 1, `${seed}:stars`).toFixed(1),
+                impactScore:   getRandomInt(60, 98, `${seed}:impact`),
+                drivesDone:    getRandomInt(5, 150, `${seed}:drives`),
+                volunteers:    getRandomInt(10, 500, `${seed}:volunteers`),
+                morningSlots:  getRandomInt(0, 20, `${seed}:morning`),
+                eveningSlots:  getRandomInt(0, 20, `${seed}:evening`),
+            };
+        });
     }, [ngoData]);
 
     // ─── Client-side sort (API handles filter; we handle sort order) ──────────
@@ -168,7 +183,11 @@ export default function ExploreClient() {
                 onSearch={handleSearch}
                 isSearching={isSearching}
                 autocompleteSuggestions={autocompleteSuggestions}
-                onNgoNameChange={setSearchInput}
+                searchValue={searchInput}
+                onSearchValueChange={(value) => {
+                    setSearchInput(value);
+                    setVisibleCount(GRID_PAGE_SIZE);
+                }}
             />
 
             {/* Main Content */}
@@ -188,7 +207,7 @@ export default function ExploreClient() {
                         {categories.map(cat => (
                             <button
                                 key={cat.name}
-                                onClick={() => { setActiveCategory(cat.name); setVisibleCount(6); }}
+                                onClick={() => { setActiveCategory(cat.name); setVisibleCount(GRID_PAGE_SIZE); }}
                                 className={`
                                     flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all border
                                     ${activeCategory === cat.name
@@ -205,7 +224,7 @@ export default function ExploreClient() {
                 </div>
 
                 {/* Results Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 max-w-5xl mx-auto">
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 max-w-7xl mx-auto">
                     <p className="font-semibold text-gray-900 flex items-center gap-2">
                         {isLoadingNGOs
                             ? <><Loader2 className="w-4 h-4 animate-spin text-emerald-600" /> Searching...</>
@@ -216,7 +235,10 @@ export default function ExploreClient() {
                         <span className="text-sm text-gray-500 hidden sm:inline">Sort by:</span>
                         <select
                             value={sortBy}
-                            onChange={e => setSortBy(e.target.value)}
+                            onChange={e => {
+                                setSortBy(e.target.value);
+                                setVisibleCount(GRID_PAGE_SIZE);
+                            }}
                             className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg p-2.5 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer hover:border-gray-300"
                         >
                             <option>Recommended</option>
@@ -227,10 +249,10 @@ export default function ExploreClient() {
                 </div>
 
                 {/* NGO Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 max-w-7xl mx-auto">
                     {isLoadingNGOs ? (
                         // Loading skeletons
-                        Array.from({ length: 6 }).map((_, i) => (
+                        Array.from({ length: GRID_PAGE_SIZE }).map((_, i) => (
                             <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
                                 <div className="h-48 bg-gray-100" />
                                 <div className="p-6 space-y-3">
@@ -299,7 +321,7 @@ export default function ExploreClient() {
                                         {ngo.description || 'No description available.'}
                                     </p>
 
-                                    <div className="flex items-center gap-4 text-xs font-medium text-gray-500 mb-5 pb-4 border-b border-gray-100">
+                                    <div className="flex items-center gap-4 text-xs font-medium text-gray-500 mb-3">
                                         <div className="flex items-center gap-1.5">
                                             <MapPin className={`w-3.5 h-3.5 ${activeNgoId === ngo.id ? 'text-emerald-100' : ''}`} />
                                             <span className={activeNgoId === ngo.id ? 'text-emerald-100' : ''}>{ngo.distance}</span>
@@ -308,6 +330,13 @@ export default function ExploreClient() {
                                             <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                                             <span className={activeNgoId === ngo.id ? 'text-emerald-100' : ''}>{ngo.rating}</span>
                                         </div>
+                                    </div>
+
+                                    <div className={`mb-5 grid grid-cols-2 gap-2 border-b pb-4 text-[11px] font-bold ${activeNgoId === ngo.id ? 'border-white/20 text-emerald-50' : 'border-gray-100 text-gray-600'}`}>
+                                        <span className={`truncate rounded-lg px-2 py-1 ${activeNgoId === ngo.id ? 'bg-white/10' : 'bg-gray-50'}`}>Impact {ngo.impactScore}</span>
+                                        <span className={`truncate rounded-lg px-2 py-1 ${activeNgoId === ngo.id ? 'bg-white/10' : 'bg-gray-50'}`}>{ngo.drivesDone} Drives</span>
+                                        <span className={`truncate rounded-lg px-2 py-1 ${activeNgoId === ngo.id ? 'bg-white/10' : 'bg-gray-50'}`}>{ngo.volunteers} Volunteers</span>
+                                        <span className={`truncate rounded-lg px-2 py-1 ${activeNgoId === ngo.id ? 'bg-white/10' : 'bg-gray-50'}`}>{ngo.morningSlots}/{ngo.eveningSlots} Slots</span>
                                     </div>
 
                                     <div className="flex flex-col gap-2">
@@ -327,15 +356,18 @@ export default function ExploreClient() {
                                         </div>
                                         <button
                                             onClick={async () => {
-                                                if (!session?.user?.id) return alert('Please log in to message');
+                                                if (!session?.user?.id) {
+                                                    toast.error('Please log in to message');
+                                                    return;
+                                                }
                                                 try {
                                                     const conv = await startConversation.mutateAsync({
                                                         targetId: ngo.id,
                                                         targetType: 'ngo',
                                                     });
                                                     window.location.href = `/dashboard?section=messages&chatId=${conv.id}`;
-                                                } catch (err) {
-                                                    alert('Failed to start conversation');
+                                                } catch {
+                                                    toast.error('Failed to start conversation');
                                                 }
                                             }}
                                             className="w-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
@@ -362,7 +394,7 @@ export default function ExploreClient() {
                 {!isLoadingNGOs && sortedNgos.length > visibleCount && (
                     <div className="mt-16 text-center">
                         <button
-                            onClick={() => setVisibleCount(prev => prev + 6)}
+                            onClick={() => setVisibleCount(prev => prev + GRID_PAGE_SIZE)}
                             className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-3 px-8 rounded-xl transition-all hover:px-10 shadow-sm"
                         >
                             Load More Organizations

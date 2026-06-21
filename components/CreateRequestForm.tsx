@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, MapPin, AlertCircle, Check, Info, ArrowRight } from 'lucide-react';
+import { Upload, MapPin, AlertCircle, Check, Info, ArrowRight, X, ImagePlus } from 'lucide-react';
 import ItemAutocomplete from './ItemAutocomplete';
 import LocationAutocomplete, { LocationResult } from './LocationAutocomplete';
 import { useSession } from 'next-auth/react';
@@ -22,7 +22,7 @@ export default function CreateRequestForm({
   onSuccess,
   onCancel,
 }: CreateRequestFormProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [formState, setFormState] = useState({
     title: '',
     description: '',
@@ -39,6 +39,7 @@ export default function CreateRequestForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -88,6 +89,61 @@ export default function CreateRequestForm({
     }));
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    const remainingSlots = 6 - formState.images.length;
+    const selectedFiles = files.slice(0, remainingSlots);
+
+    if (remainingSlots <= 0) {
+      setError('You can upload up to 6 images.');
+      event.target.value = '';
+      return;
+    }
+
+    setError(null);
+    setUploadingImages(true);
+
+    try {
+      const uploadedUrls: string[] = [];
+
+      for (const file of selectedFiles) {
+        const body = new FormData();
+        body.append('file', file);
+
+        const response = await fetch('/api/requests/upload-image', {
+          method: 'POST',
+          body,
+        });
+
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(data?.error || 'Failed to upload image');
+        }
+
+        uploadedUrls.push(data.url);
+      }
+
+      setFormState((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls],
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload image');
+    } finally {
+      setUploadingImages(false);
+      event.target.value = '';
+    }
+  };
+
+  const removeImage = (url: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      images: prev.images.filter((image) => image !== url),
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -131,7 +187,23 @@ export default function CreateRequestForm({
     }
   };
 
-  if (!session?.user) return null;
+  if (status === 'loading') {
+    return (
+      <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-100 border-t-emerald-500" />
+        <p className="mt-4 text-sm font-bold text-gray-500">Preparing request form...</p>
+      </div>
+    );
+  }
+
+  if (!session?.user) {
+    return (
+      <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
+        <AlertCircle className="h-10 w-10 text-amber-500" />
+        <p className="mt-4 text-sm font-bold text-gray-700">Please sign in to post a request.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -224,7 +296,7 @@ export default function CreateRequestForm({
                   
                   <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-black text-emerald-800 uppercase tracking-tight">Visibility Radius</span>
+                      <span className="text-xs font-black text-emerald-800 uppercase tracking-tight">Who can discover this?</span>
                       <span className="text-xs font-bold text-emerald-600 bg-white px-2 py-1 rounded-lg border border-emerald-200">{formState.radius/1000} km</span>
                     </div>
                     <input
@@ -235,19 +307,50 @@ export default function CreateRequestForm({
                       onChange={(e) => setFormState(p => ({ ...p, radius: parseInt(e.target.value)*1000 }))}
                       className="w-full accent-emerald-600"
                     />
+                    <p className="mt-2 text-[11px] font-medium text-emerald-700/80">
+                      Your request appears to people searching within this distance from your chosen location.
+                    </p>
                   </div>
                </div>
             </div>
 
             <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4 block">5. Media (Optional)</label>
-               <div className="border-2 border-dashed border-gray-100 rounded-3xl p-10 text-center flex flex-col items-center justify-center bg-gray-50/50 hover:bg-emerald-50 transition-colors group cursor-pointer">
+               <label className="border-2 border-dashed border-gray-200 rounded-3xl p-8 text-center flex flex-col items-center justify-center bg-gray-50/50 hover:bg-emerald-50 transition-colors group cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="sr-only"
+                    disabled={uploadingImages || formState.images.length >= 6}
+                  />
                   <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-emerald-500 shadow-sm mb-3 transition-colors">
-                    <Upload size={24} />
+                    {uploadingImages ? <Upload className="animate-pulse" size={24} /> : <ImagePlus size={24} />}
                   </div>
-                  <p className="text-xs font-bold text-gray-500 group-hover:text-emerald-700">Add an example image</p>
-                  <p className="text-[10px] text-gray-400 mt-1">Help donors identify the item faster</p>
-               </div>
+                  <p className="text-xs font-bold text-gray-500 group-hover:text-emerald-700">
+                    {uploadingImages ? 'Uploading image...' : 'Upload item images'}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-1">JPG, PNG, WebP or GIF. Up to 6 images, 5MB each.</p>
+               </label>
+
+               {formState.images.length > 0 && (
+                 <div className="mt-4 grid grid-cols-3 gap-3">
+                   {formState.images.map((image) => (
+                     <div key={image} className="relative aspect-square overflow-hidden rounded-2xl border border-gray-100 bg-gray-50">
+                       <img src={image} alt="Uploaded request item" className="h-full w-full object-cover" />
+                       <button
+                         type="button"
+                         onClick={() => removeImage(image)}
+                         className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/65 text-white transition-colors hover:bg-red-600"
+                         aria-label="Remove image"
+                       >
+                         <X size={14} />
+                       </button>
+                     </div>
+                   ))}
+                 </div>
+               )}
             </div>
 
             {error && (

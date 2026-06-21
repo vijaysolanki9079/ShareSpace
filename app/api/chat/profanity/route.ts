@@ -11,7 +11,7 @@ function sanitize(text: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = (await getServerSession(authOptions as any)) as any;
+    const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { text } = await request.json();
@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
     const clean = sanitize(text);
     return NextResponse.json({ text: clean });
   } catch (err: unknown) {
-    // eslint-disable-next-line no-console
     console.error('profanity check error', err);
     return NextResponse.json({ error: 'server error' }, { status: 500 });
   }

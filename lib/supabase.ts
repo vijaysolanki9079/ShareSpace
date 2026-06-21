@@ -12,10 +12,9 @@ if (supabaseUrl && supabaseAnonKey) {
 } else {
   // In dev, warn and export a lightweight noop client so runtime doesn't crash.
   // This allows the UI to render in environments without Supabase configured.
-  // eslint-disable-next-line no-console
   console.warn('[supabase] missing NEXT_PUBLIC_SUPABASE_* env vars — exporting noop client');
 
-  const noop: any = {
+  const noop = {
     auth: {
       getUser: async () => ({ data: { user: null } }),
       onAuthStateChange: () => ({ data: null }),
@@ -35,7 +34,7 @@ if (supabaseUrl && supabaseAnonKey) {
     removeChannel: () => {},
   };
 
-  _supabase = noop as SupabaseClient;
+  _supabase = noop as unknown as SupabaseClient;
 }
 
 export const supabase: SupabaseClient = _supabase;

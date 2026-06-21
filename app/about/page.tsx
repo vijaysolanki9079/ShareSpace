@@ -5,6 +5,14 @@ import { motion } from 'framer-motion';
 import { Leaf, ShieldCheck, Users } from 'lucide-react';
 
 const About = () => {
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleContactUs = () => {
+    window.location.href = 'mailto:hello@sharespace.org?subject=ShareSpace%20contact';
+  };
+
   const VALUES = [
     {
       icon: <Leaf size={28} />,
@@ -74,7 +82,7 @@ const About = () => {
       {/* Hero Section */}
       <div className="relative bg-[#022c22] pt-20 pb-24 md:pt-32 md:pb-32 overflow-hidden min-h-screen flex flex-col justify-center">
         {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 pointer-events-none">
           <img
             src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?q=80&w=2074&auto=format&fit=crop"
             alt="Background"
@@ -116,21 +124,25 @@ const About = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.3, ease: "easeOut" }}
-            className="flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto"
+            className="relative z-20 flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto"
           >
             <motion.button 
+              type="button"
+              onClick={() => scrollToSection('team')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/30 text-white font-bold py-4 px-8 rounded-full transition-all duration-300 text-base"
+              className="min-h-[44px] bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/30 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 text-base"
             >
-              Get Started
+              Meet the Team
             </motion.button>
-            <motion.button 
+            <motion.button
+              type="button"
+              onClick={handleContactUs}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 font-bold py-4 px-8 rounded-full transition-all duration-300 text-base relative overflow-hidden group"
+              className="min-h-[44px] bg-slate-950/50 backdrop-blur-sm border border-emerald-300/40 text-white hover:bg-slate-950/70 font-bold py-3 px-8 rounded-full transition-all duration-300 text-base"
             >
-              Learn More
+              Contact Us
             </motion.button>
           </motion.div>
         </div>
@@ -154,12 +166,12 @@ const About = () => {
         <div className="absolute inset-0 z-0 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white via-emerald-50/30 to-white"></div>
           
-          <div className="absolute top-20 left-[-10%] w-[500px] h-[500px] bg-emerald-200/20 rounded-full blur-[100px] animate-pulse"></div>
-          <div className="absolute top-[40%] right-[-10%] w-[600px] h-[600px] bg-sky-200/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }}></div>
-          <div className="absolute bottom-20 left-[10%] w-[400px] h-[400px] bg-amber-200/20 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '4s' }}></div>
+          <div className="absolute top-20 left-[-10%] w-[500px] h-[500px] bg-emerald-200/16 rounded-full blur-[100px]"></div>
+          <div className="absolute top-[40%] right-[-10%] w-[600px] h-[600px] bg-sky-200/16 rounded-full blur-[100px]"></div>
+          <div className="absolute bottom-20 left-[10%] w-[400px] h-[400px] bg-amber-200/16 rounded-full blur-[80px]"></div>
           
           <svg className="absolute top-0 left-0 w-full h-full opacity-30" preserveAspectRatio="none">
-            <path d="M0,100 C300,200 600,0 900,100 C1200,200 1500,0 1800,100 L1800,0 L0,0 Z" fill="url(#grad1)" className="animate-pulse" />
+            <path d="M0,100 C300,200 600,0 900,100 C1200,200 1500,0 1800,100 L1800,0 L0,0 Z" fill="url(#grad1)" />
             <defs>
               <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" style={{ stopColor: '#10b981', stopOpacity: 0.1 }} />
@@ -174,26 +186,16 @@ const About = () => {
           <section className="pt-16 md:pt-24 pb-8 md:pb-12 px-6 bg-transparent">
             <div className="container mx-auto max-w-6xl">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
-                  viewport={{ once: true }}
-                  className="rounded-2xl overflow-hidden shadow-2xl"
-                >
+                <div className="rounded-2xl overflow-hidden shadow-xl">
                   <img
                     src="https://images.unsplash.com/photo-1593113598332-cd288d649433?q=80&w=1000&auto=format&fit=crop"
                     alt="Volunteers"
-                    className="w-full h-[400px] md:h-[500px] object-cover hover:scale-105 transition-transform duration-500"
+                    loading="eager"
+                    className="w-full h-[360px] md:h-[460px] object-cover hover:scale-[1.02] transition-transform duration-200"
                   />
-                </motion.div>
+                </div>
 
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
-                  viewport={{ once: true }}
-                >
+                <div>
                   <h2 className="text-3xl md:text-4xl font-bold mb-6 text-slate-900">
                     Why We <span className="text-emerald-600">Started</span>
                   </h2>
@@ -218,7 +220,7 @@ const About = () => {
                       <p className="text-xs md:text-sm text-emerald-600 font-semibold uppercase mt-2">Not-for-profit</p>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               </div>
             </div>
           </section>
@@ -266,11 +268,12 @@ const About = () => {
               </div>
             </div>
           </section>
+
         </div>
       </div>
 
       {/* Team Section - With Original Effects */}
-      <section className="py-16 md:py-24 px-6 bg-slate-950 text-white relative overflow-hidden">
+      <section id="team" className="scroll-mt-28 py-16 md:py-24 px-6 bg-slate-950 text-white relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/2 -right-24 w-96 h-96 bg-emerald-600/10 rounded-full mix-blend-screen filter blur-[120px] animate-pulse"></div>
@@ -375,13 +378,14 @@ const About = () => {
               transition={{ duration: 0.4, delay: 0.3 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6"
             >
-              <button className="w-full sm:w-auto px-8 py-3.5 bg-emerald-500 text-white font-medium text-base rounded-full hover:bg-emerald-400 border border-emerald-500 transition-all shadow-lg hover:shadow-emerald-500/30 hover:-translate-y-1 transform duration-300">
-                Join Now
+              <button
+                type="button"
+                onClick={handleContactUs}
+                className="min-h-[44px] w-full sm:w-auto px-8 py-3.5 bg-emerald-500 text-white font-medium text-base rounded-full hover:bg-emerald-400 border border-emerald-500 transition-all shadow-lg hover:shadow-emerald-500/30 hover:-translate-y-1 transform duration-300"
+              >
+                Contact Us
               </button>
 
-              <button className="w-full sm:w-auto px-8 py-3.5 bg-transparent border-2 border-white/30 text-white font-medium text-base rounded-full hover:bg-white/10 transition-colors hover:-translate-y-1 transform duration-300">
-                Learn More
-              </button>
             </motion.div>
           </motion.div>
         </div>

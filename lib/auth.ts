@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+import { checkRateLimit } from "./rate-limit";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -31,6 +32,11 @@ export const authOptions: AuthOptions = {
           const normalizedEmail = credentials.email.toLowerCase().trim();
           const mfaVerified = credentials.mfaVerified;
           const loginType = credentials.type;
+          const rateLimit = checkRateLimit(`nextauth-login:${normalizedEmail}`, 10, 15 * 60 * 1000);
+
+          if (!rateLimit.allowed) {
+            throw new Error("Too many login attempts. Please try again shortly.");
+          }
 
           // Try to find user in User table if not explicitly NGO
           if (loginType !== 'ngo') {

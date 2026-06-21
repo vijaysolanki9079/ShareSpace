@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getRenderableImages } from '@/lib/image-src';
 
 export async function GET(
   request: NextRequest,
@@ -51,7 +52,10 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(itemRequest);
+    return NextResponse.json({
+      ...itemRequest,
+      images: getRenderableImages(itemRequest.images),
+    });
   } catch (error) {
     console.error('[requests/[id]] Error:', error);
     return NextResponse.json(

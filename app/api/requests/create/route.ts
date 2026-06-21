@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { createItemRequest } from '@/lib/item-requests';
 import { prisma } from '@/lib/prisma';
 import { CreateItemRequestSchema } from '@/lib/validation';
+import { checkRequestRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +16,9 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    const rateLimit = checkRequestRateLimit(request, 'request-create', 20, 60 * 60 * 1000, session.user.id);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
     const parsed = CreateItemRequestSchema.safeParse(await request.json());
     if (!parsed.success) {

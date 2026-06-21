@@ -48,7 +48,7 @@ export default function DonationSearchHero({
           if (response.ok) {
             const data = await response.json();
             const countryCode = data.address?.country_code;
-            
+
             if (countryCode && countryCode.toLowerCase() !== 'in') {
                showIndiaOnlyToast();
                setIsLocating(false);
@@ -56,11 +56,11 @@ export default function DonationSearchHero({
             }
 
             const locationName = data.address?.city || data.address?.town || data.address?.village || 'Current Location';
-            const locationResultData: any = { 
-              name: locationName, 
-              displayName: locationName, 
-              lat: latitude, 
-              lon: longitude, 
+            const locationResultData: LocationResult = {
+              name: locationName,
+              displayName: locationName,
+              lat: latitude,
+              lon: longitude,
               type: 'city',
               countryCode: countryCode
             };
@@ -95,7 +95,7 @@ export default function DonationSearchHero({
   };
 
   return (
-    <div className="relative bg-emerald-900 text-white pt-32 pb-24 overflow-hidden">
+    <div className="relative bg-emerald-900 text-white pt-20 pb-16 overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center opacity-20"
         style={{
@@ -106,7 +106,7 @@ export default function DonationSearchHero({
       <div className="absolute inset-0 bg-gradient-to-b from-emerald-900 via-emerald-900/80 to-transparent"></div>
 
       <div className="container mx-auto px-6 relative z-10">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
           {/* Left: Text Content */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -114,11 +114,11 @@ export default function DonationSearchHero({
             transition={{ duration: 0.8, ease: 'easeOut' }}
             className="text-center md:text-left"
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold tracking-tight mb-3 leading-tight">
               Give Items, <br />
               <span className="text-emerald-400">Change Lives</span>
             </h1>
-            <p className="text-lg md:text-xl text-emerald-100/80 max-w-xl">
+            <p className="text-base md:text-lg text-emerald-100/80 max-w-xl">
               Find the perfect NGO to receive your donations. From clothes to
               electronics, your items can make a real difference.
             </p>
@@ -130,44 +130,57 @@ export default function DonationSearchHero({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 1, 0.5, 1] }}
             onSubmit={handleSearch}
-            className="w-full max-w-md mx-auto md:mx-0"
+            className="w-full max-w-md mx-auto md:ml-auto md:mr-0"
           >
-            <div className="bg-white/10 border border-white/20 backdrop-blur-lg p-6 rounded-2xl shadow-2xl space-y-4">
+            <div className="rounded-3xl border border-white/15 bg-white/[0.13] p-4 shadow-2xl shadow-emerald-950/30 backdrop-blur-xl sm:p-5">
+              <div className="grid grid-cols-2 gap-1 rounded-2xl bg-emerald-950/35 p-1">
+                <div className="flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-bold text-emerald-950 shadow-sm">
+                  <Package size={16} />
+                  Donation Items
+                </div>
+                <div className="flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold text-emerald-50/75">
+                  NGOs
+                </div>
+              </div>
+              <div className="mt-3 space-y-2.5">
                 <ItemAutocomplete
                   value={itemQuery}
                   onChange={setItemQuery}
-                  placeholder="What are you donating? (e.g., clothes)"
-                  inputClassName="w-full bg-white/10 border border-white/20 text-white placeholder-emerald-100/60 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-lg pl-12 pr-4 py-3 transition-all"
+                  placeholder="Search donation items"
+                  inputClassName="h-11 w-full rounded-2xl border border-white/60 bg-white/95 pl-12 pr-4 text-sm font-medium text-slate-950 placeholder-slate-500 shadow-sm outline-none transition-all focus:border-emerald-300 focus:ring-2 focus:ring-emerald-300"
                 />
               <div className="relative">
                 <MapPin
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-300"
-                  size={20}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-emerald-600"
+                  size={18}
                 />
                 <LocationAutocomplete
                   value={locationQuery}
                   onChange={setLocationQuery}
                   onLocationSelect={setLocationResult}
-                  inputClassName="w-full bg-white/10 border border-white/20 text-white placeholder-emerald-100/60 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-lg pl-12 pr-4 py-3 transition-all"
+                  inputClassName="h-11 w-full rounded-2xl border border-white/60 bg-white/95 pl-12 pr-4 text-sm font-medium text-slate-950 placeholder-slate-500 shadow-sm outline-none transition-all focus:border-emerald-300 focus:ring-2 focus:ring-emerald-300"
                 />
               </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
               <button
                 type="submit"
                 disabled={isSearching || isLocating}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-700 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-emerald-500/30 transform hover:scale-105"
+                className="flex h-11 items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-5 text-sm font-extrabold text-emerald-950 shadow-lg shadow-emerald-950/20 transition-all hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-emerald-700 disabled:text-white/70"
               >
-                <Search size={18} />
+                <Search size={17} />
                 <span>{isSearching ? 'Searching...' : 'Find NGOs'}</span>
               </button>
               <button
                 type="button"
                 onClick={handleGetLocation}
                 disabled={isLocating || isSearching}
-                className="w-full bg-emerald-50 hover:bg-emerald-100 disabled:opacity-60 disabled:hover:bg-emerald-50 text-emerald-700 font-semibold py-3.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow-md border border-emerald-200/50"
+                className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-white/18 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <Navigation size={18} className={isLocating ? 'animate-pulse' : ''} />
+                <Navigation size={17} className={isLocating ? 'animate-pulse' : ''} />
                 <span>{isLocating ? 'Locating...' : 'Near Me'}</span>
               </button>
+              </div>
+              </div>
             </div>
           </motion.form>
         </div>

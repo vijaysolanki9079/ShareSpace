@@ -1,9 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import getSupabaseAdmin from '@/lib/supabase-server';
+import { prisma } from '@/lib/prisma';
+import { checkRequestRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 type Body = { conversation_id: string; encrypted_content: string; nonce: string };
+
+function isConversationParticipant(
+  conversation: {
+    user1Id: string | null;
+    user2Id: string | null;
+    ngo1Id: string | null;
+    ngo2Id: string | null;
+  },
+  userId: string
+) {
+  return (
+    conversation.user1Id === userId ||
+    conversation.user2Id === userId ||
+    conversation.ngo1Id === userId ||
+    conversation.ngo2Id === userId
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,38 +31,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'conversation_id, encrypted_content and nonce are required' }, { status: 400 });
     }
 
-    const session = (await getServerSession(authOptions as any)) as any;
+    const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = (session.user as any).id;
-    const supabaseAdmin = getSupabaseAdmin();
+    const rateLimit = checkRequestRateLimit(request, 'chat-send', 60, 60 * 1000, session.user.id);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
-    // Verify membership
-    const { data: members, error: memberErr } = await supabaseAdmin
-      .from('conversation_members')
-      .select('id')
-      .eq('conversation_id', conversation_id)
-      .eq('user_id', userId)
-      .limit(1);
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversation_id },
+    });
 
-    if (memberErr) throw memberErr;
-    if (!members || members.length === 0) {
+    if (!conversation) {
+      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+    }
+
+    if (!isConversationParticipant(conversation, session.user.id)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { data: msg, error: insertErr } = await supabaseAdmin
-      .from('messages')
-      .insert([{ conversation_id, sender_id: userId, encrypted_content, nonce }])
-      .select()
-      .single();
+    if (conversation.status === 'PENDING') {
+      return NextResponse.json(
+        { error: 'You must wait for the recipient to accept your chat request.' },
+        { status: 403 }
+      );
+    }
 
-    if (insertErr) throw insertErr;
+    const message = await prisma.message.create({
+      data: {
+        conversationId: conversation_id,
+        senderId: session.user.id,
+        senderType: session.user.type,
+        content: JSON.stringify({ encrypted_content, nonce }),
+      },
+    });
 
-    return NextResponse.json({ success: true, message: msg }, { status: 201 });
+    await prisma.conversation.update({
+      where: { id: conversation_id },
+      data: { updatedAt: new Date() },
+    });
+
+    return NextResponse.json({ success: true, message }, { status: 201 });
   } catch (err: unknown) {
-    // eslint-disable-next-line no-console
     console.error('chat send error', err);
     const msg = err instanceof Error ? err.message : 'unknown error';
     return NextResponse.json({ error: msg }, { status: 500 });

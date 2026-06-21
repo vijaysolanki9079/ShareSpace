@@ -1,6 +1,3 @@
-// Prisma types vary between versions; allow a defensive import to avoid
-// TypeScript errors in environments with different @prisma/client exports.
-// @ts-ignore
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
@@ -26,12 +23,11 @@ if (!globalForPrisma.prisma) {
   const adapter = new PrismaPg(pool);
 
   globalForPrisma.prismaPool = pool;
+  const enableQueryLog = process.env.PRISMA_QUERY_LOG === "true";
+
   globalForPrisma.prisma = new PrismaClient({
     adapter,
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
-        : ["error"],
+    log: enableQueryLog ? ["query", "error", "warn"] : ["error", "warn"],
   });
 }
 

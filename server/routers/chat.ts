@@ -2,6 +2,20 @@ import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { prisma } from '@/lib/prisma';
 import { TRPCError } from '@trpc/server';
+import bcrypt from 'bcryptjs';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+
+const recoveryQuestionSchema = z.enum([
+  'favorite_pen',
+  'childhood_location',
+  'favorite_teacher',
+  'pet_name',
+  'first_school',
+]);
+
+function normalizeRecoveryAnswer(answer: string) {
+  return answer.trim().toLowerCase().replace(/\s+/g, ' ');
+}
 
 function isConversationParticipant(
   conversation: {
@@ -20,6 +34,24 @@ function isConversationParticipant(
   );
 }
 
+function enforceRateLimit(
+  headers: Headers,
+  scope: string,
+  limit: number,
+  windowMs: number,
+  identifier?: string
+) {
+  const key = `${scope}:${identifier ?? getClientIp(headers)}`;
+  const result = checkRateLimit(key, limit, windowMs);
+
+  if (!result.allowed) {
+    throw new TRPCError({
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests. Please try again shortly.',
+    });
+  }
+}
+
 export const chatRouter = createTRPCRouter({
   
   // Registration: Store generated e2ee keys to User or NGO profile
@@ -28,9 +60,13 @@ export const chatRouter = createTRPCRouter({
       publicKey: z.string(),
       encryptedPrivateKey: z.string(),
       keyDerivationSalt: z.string(),
+      recoveryQuestion: recoveryQuestionSchema,
+      recoveryAnswer: z.string().trim().min(2).max(120),
     }))
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx.session;
+      enforceRateLimit(ctx.headers, 'chat-register-keys', 5, 15 * 60 * 1000, user.id);
+      const recoveryAnswerHash = await bcrypt.hash(normalizeRecoveryAnswer(input.recoveryAnswer), 10);
       
       if (user.type === 'ngo') {
         await prisma.nGO.update({
@@ -39,6 +75,8 @@ export const chatRouter = createTRPCRouter({
             publicKey: input.publicKey,
             encryptedPrivateKey: input.encryptedPrivateKey,
             keyDerivationSalt: input.keyDerivationSalt,
+            chatRecoveryQuestion: input.recoveryQuestion,
+            chatRecoveryAnswerHash: recoveryAnswerHash,
           }
         });
       } else {
@@ -48,6 +86,8 @@ export const chatRouter = createTRPCRouter({
             publicKey: input.publicKey,
             encryptedPrivateKey: input.encryptedPrivateKey,
             keyDerivationSalt: input.keyDerivationSalt,
+            chatRecoveryQuestion: input.recoveryQuestion,
+            chatRecoveryAnswerHash: recoveryAnswerHash,
           }
         });
       }
@@ -58,16 +98,73 @@ export const chatRouter = createTRPCRouter({
   getMyKeys: protectedProcedure
     .query(async ({ ctx }) => {
       const { user } = ctx.session;
-      let record: { publicKey: string | null; encryptedPrivateKey: string | null; keyDerivationSalt: string | null; } | null = null;
+      let record: {
+        publicKey: string | null;
+        encryptedPrivateKey: string | null;
+        keyDerivationSalt: string | null;
+        chatRecoveryQuestion: string | null;
+      } | null = null;
       
       if (user.type === 'ngo') {
-        record = await prisma.nGO.findUnique({ where: { id: user.id }, select: { publicKey: true, encryptedPrivateKey: true, keyDerivationSalt: true }});
+        record = await prisma.nGO.findUnique({
+          where: { id: user.id },
+          select: { publicKey: true, encryptedPrivateKey: true, keyDerivationSalt: true, chatRecoveryQuestion: true },
+        });
       } else {
-        record = await prisma.user.findUnique({ where: { id: user.id }, select: { publicKey: true, encryptedPrivateKey: true, keyDerivationSalt: true }});
+        record = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { publicKey: true, encryptedPrivateKey: true, keyDerivationSalt: true, chatRecoveryQuestion: true },
+        });
       }
 
       if (!record || !record.publicKey) return null;
       return record;
+    }),
+
+  resetKeysWithRecovery: protectedProcedure
+    .input(z.object({
+      recoveryAnswer: z.string().trim().min(2).max(120),
+      publicKey: z.string(),
+      encryptedPrivateKey: z.string(),
+      keyDerivationSalt: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { user } = ctx.session;
+      enforceRateLimit(ctx.headers, 'chat-reset-keys', 5, 15 * 60 * 1000, user.id);
+      const select = { chatRecoveryAnswerHash: true } as const;
+      const account = user.type === 'ngo'
+        ? await prisma.nGO.findUnique({ where: { id: user.id }, select })
+        : await prisma.user.findUnique({ where: { id: user.id }, select });
+
+      if (!account?.chatRecoveryAnswerHash) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Recovery is not configured for this account. Ask an admin to reset secure chat.',
+        });
+      }
+
+      const matches = await bcrypt.compare(
+        normalizeRecoveryAnswer(input.recoveryAnswer),
+        account.chatRecoveryAnswerHash
+      );
+
+      if (!matches) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Recovery answer is incorrect.' });
+      }
+
+      const data = {
+        publicKey: input.publicKey,
+        encryptedPrivateKey: input.encryptedPrivateKey,
+        keyDerivationSalt: input.keyDerivationSalt,
+      };
+
+      if (user.type === 'ngo') {
+        await prisma.nGO.update({ where: { id: user.id }, data });
+      } else {
+        await prisma.user.update({ where: { id: user.id }, data });
+      }
+
+      return { success: true };
     }),
 
   startConversation: protectedProcedure
@@ -79,6 +176,7 @@ export const chatRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx.session;
+      enforceRateLimit(ctx.headers, 'chat-start', 30, 60 * 1000, user.id);
       const myId = user.id;
       const myType = user.type; // 'user' or 'ngo'
       const targetId = input.targetId;
@@ -167,6 +265,7 @@ export const chatRouter = createTRPCRouter({
             ngo1Id: myType === 'ngo' ? myId : null,
             ngo2Id: targetType === 'ngo' ? targetId : null,
             itemRequestId: input.itemRequestId,
+            initiatorId: myId,
             status: 'PENDING',
           },
           include: {
@@ -224,6 +323,7 @@ export const chatRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx.session;
+      enforceRateLimit(ctx.headers, 'chat-accept', 30, 60 * 1000, user.id);
       
       const conv = await prisma.conversation.findUnique({
         where: { id: input.conversationId }
@@ -231,10 +331,14 @@ export const chatRouter = createTRPCRouter({
 
       if (!conv) throw new TRPCError({ code: 'NOT_FOUND' });
 
-      // Verify the user is the receiver (not the one who started it)
-      // For simplicity, we just check if they are part of it
       const isParticipant = isConversationParticipant(conv, user.id);
       if (!isParticipant) throw new TRPCError({ code: 'FORBIDDEN' });
+      if (conv.initiatorId === user.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'The recipient must accept this chat request.',
+        });
+      }
 
       return await prisma.conversation.update({
         where: { id: input.conversationId },
@@ -302,6 +406,7 @@ export const chatRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const { user } = ctx.session;
+      enforceRateLimit(ctx.headers, 'chat-send', 60, 60 * 1000, user.id);
 
       // Check if conversation is accepted if not a system message
       const conv = await prisma.conversation.findUnique({

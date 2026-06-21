@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import MessageBubble from './MessageBubble';
 import { getOrCreateChatKey, encryptMessage, decryptMessage } from '@/lib/crypto';
+import { useSession } from 'next-auth/react';
 
 type RawMessage = {
   id: string;
@@ -11,6 +11,8 @@ type RawMessage = {
   conversation_id: string;
   encrypted_content: string;
   nonce: string;
+  text?: string;
+  is_system?: boolean;
   created_at: string;
 };
 
@@ -25,11 +27,12 @@ export default function ChatWindow({ conversationId }: Props) {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [key, setKey] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const { data: session, status } = useSession();
+  const userId = session?.user?.id ?? null;
 
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || status !== 'authenticated') return;
     let mounted = true;
 
     let pollInterval: NodeJS.Timeout | null = null;
@@ -38,40 +41,31 @@ export default function ChatWindow({ conversationId }: Props) {
       const k = getOrCreateChatKey();
       setKey(k);
 
-      (async () => {
-        const { data } = await supabase.auth.getUser();
-        const u = data?.user ?? null;
-        if (!mounted) return;
-        setUserId(u?.id ?? null);
+      const fetchMessages = async (replace = false) => {
+        const response = await fetch(`/api/chat/messages?conversation_id=${encodeURIComponent(conversationId)}`, { cache: 'no-store' });
+        const payload = await response.json().catch(() => null) as { messages?: RawMessage[]; error?: string } | null;
 
-        const { data: rows, error } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true });
+        if (!response.ok) {
+          console.error('fetch messages error', payload?.error ?? response.statusText);
+          return;
+        }
 
-        if (error) {
-          console.error('fetch messages error', error);
-        } else if (rows) {
-          const dec = (rows as RawMessage[]).map((m) => {
-            const t = decryptMessage(k, m.encrypted_content, m.nonce) ?? '[unable to decrypt]';
-            return { id: m.id, text: t, sender: m.sender_id, created_at: m.created_at };
-          });
+        if (!mounted || !payload?.messages) return;
+
+        const dec = payload.messages.map((m) => {
+          const text = m.is_system || !m.nonce
+            ? (m.text ?? m.encrypted_content)
+            : decryptMessage(k, m.encrypted_content, m.nonce) ?? '[unable to decrypt]';
+
+          return { id: m.id, text, sender: m.sender_id, created_at: m.created_at };
+        });
+
+        if (replace) {
           setMessages(dec);
           setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'auto' }), 50);
+          return;
         }
-      })();
 
-    // Poll as a fallback in case realtime misses messages or connection drops
-    pollInterval = setInterval(async () => {
-      try {
-        const { data: rows } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true });
-        if (!mounted || !rows) return;
-        const dec = (rows as RawMessage[]).map((m) => ({ id: m.id, text: decryptMessage(k, m.encrypted_content, m.nonce) ?? '[unable to decrypt]', sender: m.sender_id, created_at: m.created_at }));
         setMessages((prev) => {
           const ids = new Set(prev.map((p) => p.id));
           const merged = [...prev];
@@ -81,7 +75,15 @@ export default function ChatWindow({ conversationId }: Props) {
           merged.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
           return merged;
         });
-      } catch (e) {
+      };
+
+      fetchMessages(true);
+
+    // Poll as a fallback in case realtime misses messages or connection drops
+    pollInterval = setInterval(async () => {
+      try {
+        await fetchMessages();
+      } catch {
         // ignore poll errors
       }
     }, 15000);
@@ -89,32 +91,11 @@ export default function ChatWindow({ conversationId }: Props) {
       console.warn('Chat key unavailable (client-only)', e);
     }
 
-    const channel = supabase
-      .channel(`public:messages:${conversationId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
-        (payload) => {
-          const newRow = payload.new as RawMessage;
-          const t = key ? decryptMessage(key, newRow.encrypted_content, newRow.nonce) ?? '[unable to decrypt]' : '[no key]';
-          setMessages((prev) => [...prev, { id: newRow.id, text: t, sender: newRow.sender_id, created_at: newRow.created_at }]);
-          setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }), 50);
-        }
-      )
-      .subscribe();
-
     return () => {
       mounted = false;
       if (pollInterval) clearInterval(pollInterval);
-      try {
-        supabase.removeChannel(channel);
-      } catch {
-        try {
-          channel.unsubscribe();
-        } catch {}
-      }
     };
-  }, [conversationId, key]);
+  }, [conversationId, status]);
 
   const sendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -132,7 +113,7 @@ export default function ChatWindow({ conversationId }: Props) {
       try {
         const profData = await profResp.json();
         if (profData && typeof profData.text === 'string') sanitized = profData.text;
-      } catch (e) {
+      } catch {
         // fallback to original text
       }
 
@@ -151,6 +132,18 @@ export default function ChatWindow({ conversationId }: Props) {
         console.error('send message failed', sendData);
       } else {
         setInput('');
+        const message = sendData?.message as { id: string; senderId: string; createdAt: string } | undefined;
+        if (message) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: message.id,
+              text: sanitized,
+              sender: message.senderId,
+              created_at: message.createdAt,
+            },
+          ]);
+        }
       }
     } finally {
       setSending(false);

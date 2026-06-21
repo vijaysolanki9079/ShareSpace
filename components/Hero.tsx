@@ -56,11 +56,12 @@ const Hero = () => {
     if (window.scrollY > 5) return;
 
     let handled = false;
+    const listenerOptions: AddEventListenerOptions = { passive: false };
 
     const removeListeners = () => {
-      window.removeEventListener('wheel', onWheel as any, { passive: false } as any);
-      window.removeEventListener('touchmove', onTouchMove as any, { passive: false } as any);
-      window.removeEventListener('keydown', onKeyDown as any);
+      window.removeEventListener('wheel', onWheel, listenerOptions);
+      window.removeEventListener('touchmove', onTouchMove, listenerOptions);
+      window.removeEventListener('keydown', onKeyDown);
     };
 
     const doSmoothScroll = () => {
@@ -124,9 +125,9 @@ const Hero = () => {
     };
 
     // Attach non-passive listeners so we can preventDefault()
-    window.addEventListener('wheel', onWheel as any, { passive: false } as any);
-    window.addEventListener('touchmove', onTouchMove as any, { passive: false } as any);
-    window.addEventListener('keydown', onKeyDown as any);
+    window.addEventListener('wheel', onWheel, listenerOptions);
+    window.addEventListener('touchmove', onTouchMove, listenerOptions);
+    window.addEventListener('keydown', onKeyDown);
 
     // Cleanup
     return () => {

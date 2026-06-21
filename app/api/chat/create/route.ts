@@ -1,9 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import getSupabaseAdmin from '@/lib/supabase-server';
+import { prisma } from '@/lib/prisma';
+import { checkRequestRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 type Body = { participants: string[]; title?: string };
+
+async function resolveParticipant(id: string) {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, fullName: true },
+  });
+
+  if (user) {
+    return { id: user.id, type: 'user' as const, name: user.fullName };
+  }
+
+  const ngo = await prisma.nGO.findUnique({
+    where: { id },
+    select: { id: true, organizationName: true },
+  });
+
+  if (ngo) {
+    return { id: ngo.id, type: 'ngo' as const, name: ngo.organizationName };
+  }
+
+  return null;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,37 +37,85 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'participants array required' }, { status: 400 });
     }
 
-    const session = (await getServerSession(authOptions as any)) as any;
-    if (!session?.user?.email) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabaseAdmin = getSupabaseAdmin();
+    const rateLimit = checkRequestRateLimit(request, 'chat-create', 30, 60 * 1000, session.user.id);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
-    // Create conversation with service role (admin) client
-    const { data: conv, error: convErr } = await supabaseAdmin
-      .from('conversations')
-      .insert([{ title: title ?? null }])
-      .select()
-      .single();
+    const target = await resolveParticipant(participants[0]);
+    if (!target) {
+      return NextResponse.json({ error: 'Participant not found' }, { status: 404 });
+    }
 
-    if (convErr) throw convErr;
+    if (target.id === session.user.id) {
+      return NextResponse.json({ error: 'Cannot start a conversation with yourself' }, { status: 400 });
+    }
 
-    const convId = conv.id;
-    // ensure the creator is a member, and add provided participants
-    const rows = participants
-      .filter(Boolean)
-      .map((p) => ({ conversation_id: convId, user_id: p }));
+    const myType = session.user.type;
+    const myId = session.user.id;
 
-    // include creator
-    rows.push({ conversation_id: convId, user_id: (session.user as any).id });
+    let conversation = await prisma.conversation.findFirst({
+      where: {
+        OR: [
+          {
+            user1Id: myType === 'user' ? myId : null,
+            user2Id: target.type === 'user' ? target.id : null,
+            ngo1Id: myType === 'ngo' ? myId : null,
+            ngo2Id: target.type === 'ngo' ? target.id : null,
+          },
+          {
+            user1Id: target.type === 'user' ? target.id : null,
+            user2Id: myType === 'user' ? myId : null,
+            ngo1Id: target.type === 'ngo' ? target.id : null,
+            ngo2Id: myType === 'ngo' ? myId : null,
+          },
+        ],
+      },
+    });
 
-    const { error: insertErr } = await supabaseAdmin.from('conversation_members').insert(rows);
-    if (insertErr) throw insertErr;
+    if (!conversation) {
+      conversation = await prisma.conversation.create({
+        data: {
+          user1Id: myType === 'user' ? myId : target.type === 'user' ? target.id : null,
+          user2Id: myType === 'user' ? (target.type === 'user' ? target.id : null) : null,
+          ngo1Id: myType === 'ngo' ? myId : target.type === 'ngo' ? target.id : null,
+          ngo2Id: myType === 'ngo' ? (target.type === 'ngo' ? target.id : null) : null,
+          initiatorId: myId,
+          status: 'PENDING',
+        },
+      });
+    }
 
-    return NextResponse.json({ success: true, conversation: conv }, { status: 201 });
+    if (title) {
+      const hasMessages = await prisma.message.count({
+        where: { conversationId: conversation.id },
+      });
+
+      if (hasMessages === 0) {
+        await prisma.message.create({
+          data: {
+            conversationId: conversation.id,
+            senderId: myId,
+            senderType: myType,
+            content: `Chat request: ${title}`,
+            isSystem: true,
+          },
+        });
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      conversation: {
+        id: conversation.id,
+        title: title ?? `Chat with ${target.name}`,
+        status: conversation.status,
+      },
+    }, { status: conversation.status === 'PENDING' ? 202 : 200 });
   } catch (err: unknown) {
-    // eslint-disable-next-line no-console
     console.error('create conversation error', err);
     const msg = err instanceof Error ? err.message : 'unknown error';
     return NextResponse.json({ error: msg }, { status: 500 });

@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { Camera, Lock, Mail, User, MapPin, AlignLeft, Shield, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface SettingsProps {
   mode?: 'user' | 'ngo';
@@ -94,7 +95,7 @@ export default function Settings({ mode = 'user' }: SettingsProps) {
     setIsPasswordVerified(false);
     setIsEmailModalOpen(false);
     // Real implementation: API update + force sign in again or update session
-    alert('Email updated successfully!');
+    toast.success('Email updated successfully!');
   };
 
   return (

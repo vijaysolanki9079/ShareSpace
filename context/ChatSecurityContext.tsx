@@ -1,19 +1,31 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import * as encryption from '@/lib/encryption';
 import { trpc } from '@/lib/trpc';
 import { useSession } from 'next-auth/react';
 import { toast } from 'react-hot-toast';
+
+export type ChatRecoveryQuestion =
+  | 'favorite_pen'
+  | 'childhood_location'
+  | 'favorite_teacher'
+  | 'pet_name'
+  | 'first_school';
 
 interface ChatSecurityContextType {
   isUnlocked: boolean;
   setupRequired: boolean;
   sessionPrivateKey: CryptoKey | null;
   publicKey: string | null;
+  recoveryQuestion: string | null;
   isLoading: boolean;
   unlock: (passphrase: string) => Promise<boolean>;
-  setup: (passphrase: string) => Promise<boolean>;
+  setup: (passphrase: string, recoveryQuestion: ChatRecoveryQuestion, recoveryAnswer: string) => Promise<boolean>;
+  resetWithRecovery: (input: {
+    recoveryAnswer: string;
+    newPassphrase: string;
+  }) => Promise<boolean>;
   lock: () => void;
 }
 
@@ -21,10 +33,11 @@ const ChatSecurityContext = createContext<ChatSecurityContextType | undefined>(u
 
 export function ChatSecurityProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
+  const userId = session?.user?.id;
   const [sessionPrivateKey, setSessionPrivateKey] = useState<CryptoKey | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const [setupRequired, setSetupRequired] = useState(false);
-  const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [optimisticPublicKey, setOptimisticPublicKey] = useState<string | null>(null);
+  const [keyOwnerId, setKeyOwnerId] = useState<string | null>(null);
 
   // tRPC queries
   const myKeysQuery = trpc.chat.getMyKeys.useQuery(undefined, {
@@ -33,25 +46,14 @@ export function ChatSecurityProvider({ children }: { children: React.ReactNode }
   });
 
   const registerKeysMutation = trpc.chat.registerKeys.useMutation();
+  const resetKeysMutation = trpc.chat.resetKeysWithRecovery.useMutation();
 
-  useEffect(() => {
-    if (myKeysQuery.isSuccess) {
-      if (!myKeysQuery.data) {
-        setSetupRequired(true);
-        setPublicKey(null);
-      } else {
-        setSetupRequired(false);
-        setPublicKey(myKeysQuery.data.publicKey);
-      }
-    }
-  }, [myKeysQuery.data, myKeysQuery.isSuccess]);
-
-  // Handle logout
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      lock();
-    }
-  }, [status]);
+  const lock = useCallback(() => {
+    setSessionPrivateKey(null);
+    setIsUnlocked(false);
+    setOptimisticPublicKey(null);
+    setKeyOwnerId(null);
+  }, []);
 
   const unlock = async (passphrase: string): Promise<boolean> => {
     if (!myKeysQuery.data) return false;
@@ -61,40 +63,58 @@ export function ChatSecurityProvider({ children }: { children: React.ReactNode }
 
       const kek = await encryption.deriveKEK(passphrase, keyDerivationSalt);
       const [keyBlob, iv] = encryptedPrivateKey.split(':');
+      if (!keyBlob || !iv) return false;
       
       const privKey = await encryption.unwrapPrivateKey(keyBlob, iv, kek);
       setSessionPrivateKey(privKey);
       setIsUnlocked(true);
+      setKeyOwnerId(userId ?? null);
       return true;
-    } catch (e) {
-      console.error('Unlock failed:', e);
+    } catch {
       return false;
     }
   };
 
-  const setup = async (passphrase: string): Promise<boolean> => {
+  async function createWrappedKeyBundle(passphrase: string) {
+    const keyPair = await encryption.generateChatKeyPair();
+    const salt = encryption.generateSalt();
+    const kek = await encryption.deriveKEK(passphrase, salt);
+    const wrapped = await encryption.wrapPrivateKey(keyPair.privateKey, kek);
+    const publicKey = await encryption.exportPublicKey(keyPair.publicKey);
+
+    return {
+      privateKey: keyPair.privateKey,
+      publicKey,
+      encryptedPrivateKey: wrapped.encryptedKeyBase64 + ':' + wrapped.ivBase64,
+      keyDerivationSalt: salt,
+    };
+  }
+
+  const setup = async (passphrase: string, recoveryQuestion: ChatRecoveryQuestion, recoveryAnswer: string): Promise<boolean> => {
     if (passphrase.length < 6) {
       toast.error('Passphrase must be at least 6 characters');
       return false;
     }
+    if (!recoveryQuestion || recoveryAnswer.trim().length < 2) {
+      toast.error('Choose a recovery question and answer');
+      return false;
+    }
 
     try {
-      const keyPair = await encryption.generateChatKeyPair();
-      const salt = encryption.generateSalt();
-      const kek = await encryption.deriveKEK(passphrase, salt);
-      const wrapped = await encryption.wrapPrivateKey(keyPair.privateKey, kek);
-      const pubKeyBase64 = await encryption.exportPublicKey(keyPair.publicKey);
+      const bundle = await createWrappedKeyBundle(passphrase);
 
       await registerKeysMutation.mutateAsync({
-        publicKey: pubKeyBase64,
-        encryptedPrivateKey: wrapped.encryptedKeyBase64 + ':' + wrapped.ivBase64,
-        keyDerivationSalt: salt,
+        publicKey: bundle.publicKey,
+        encryptedPrivateKey: bundle.encryptedPrivateKey,
+        keyDerivationSalt: bundle.keyDerivationSalt,
+        recoveryQuestion,
+        recoveryAnswer,
       });
 
-      setSessionPrivateKey(keyPair.privateKey);
+      setSessionPrivateKey(bundle.privateKey);
       setIsUnlocked(true);
-      setSetupRequired(false);
-      setPublicKey(pubKeyBase64);
+      setOptimisticPublicKey(bundle.publicKey);
+      setKeyOwnerId(userId ?? null);
       myKeysQuery.refetch();
       
       toast.success('Secure chat activated!');
@@ -106,21 +126,64 @@ export function ChatSecurityProvider({ children }: { children: React.ReactNode }
     }
   };
 
-  const lock = () => {
-    setSessionPrivateKey(null);
-    setIsUnlocked(false);
+  const resetWithRecovery: ChatSecurityContextType['resetWithRecovery'] = async ({
+    recoveryAnswer,
+    newPassphrase,
+  }) => {
+    if (newPassphrase.length < 6) {
+      toast.error('New passphrase must be at least 6 characters');
+      return false;
+    }
+
+    try {
+      const bundle = await createWrappedKeyBundle(newPassphrase);
+
+      await resetKeysMutation.mutateAsync({
+        recoveryAnswer,
+        publicKey: bundle.publicKey,
+        encryptedPrivateKey: bundle.encryptedPrivateKey,
+        keyDerivationSalt: bundle.keyDerivationSalt,
+      });
+
+      setSessionPrivateKey(bundle.privateKey);
+      setIsUnlocked(true);
+      setOptimisticPublicKey(bundle.publicKey);
+      setKeyOwnerId(userId ?? null);
+      await myKeysQuery.refetch();
+      toast.success('Secure chat reset. New passphrase is active.');
+      return true;
+    } catch (e) {
+      console.error('Reset failed:', e);
+      toast.error('Recovery answer did not match');
+      return false;
+    }
   };
+
+  const hasCurrentUserKeyState = Boolean(userId && keyOwnerId === userId);
+  const effectivePublicKey =
+    status === 'authenticated'
+      ? (hasCurrentUserKeyState ? optimisticPublicKey : null) ?? myKeysQuery.data?.publicKey ?? null
+      : null;
+  const effectiveIsUnlocked = status === 'authenticated' && isUnlocked && hasCurrentUserKeyState;
+  const effectivePrivateKey = effectiveIsUnlocked ? sessionPrivateKey : null;
+  const setupRequired =
+    status === 'authenticated' &&
+    myKeysQuery.isSuccess &&
+    !myKeysQuery.data &&
+    !(hasCurrentUserKeyState && optimisticPublicKey);
 
   return (
     <ChatSecurityContext.Provider
       value={{
-        isUnlocked,
+        isUnlocked: effectiveIsUnlocked,
         setupRequired,
-        sessionPrivateKey,
-        publicKey,
+        sessionPrivateKey: effectivePrivateKey,
+        publicKey: effectivePublicKey,
+        recoveryQuestion: myKeysQuery.data?.chatRecoveryQuestion ?? null,
         isLoading: myKeysQuery.isLoading || status === 'loading',
         unlock,
         setup,
+        resetWithRecovery,
         lock,
       }}
     >

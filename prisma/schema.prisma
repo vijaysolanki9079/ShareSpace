@@ -24,6 +24,8 @@ model User {
   publicKey String?
   encryptedPrivateKey String?
   keyDerivationSalt String?
+  chatRecoveryQuestion String?
+  chatRecoveryAnswerHash String?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
@@ -77,6 +79,8 @@ model NGO {
   publicKey             String?
   encryptedPrivateKey   String?
   keyDerivationSalt     String?
+  chatRecoveryQuestion  String?
+  chatRecoveryAnswerHash String?
 
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
@@ -345,6 +349,7 @@ model Conversation {
   
   messages  Message[]
   
+  initiatorId String?
   status    String   @default("PENDING") // 'PENDING', 'ACCEPTED', 'REJECTED'
   
   createdAt DateTime @default(now())

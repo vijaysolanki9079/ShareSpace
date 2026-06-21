@@ -13,6 +13,7 @@ export interface LocationResult {
   lat: number;
   lon: number;
   type: 'city' | 'area' | 'street' | 'other';
+  countryCode?: string;
 }
 
 interface LocationAutocompleteProps {
@@ -70,7 +71,7 @@ export default function LocationAutocomplete({
     }
   };
 
-  const handleSelectLocation = (location: any) => {
+  const handleSelectLocation = (location: LocationResult) => {
     // Check if location is in India
     if (location.countryCode && location.countryCode.toLowerCase() !== 'in') {
       setShowIndiaAlert(true);

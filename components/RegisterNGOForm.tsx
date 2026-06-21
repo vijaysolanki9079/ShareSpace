@@ -106,6 +106,15 @@ export default function RegisterNGOForm() {
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [documentErrors, setDocumentErrors] = useState<Record<string, string>>({});
 
+  const goBackToSource = useCallback(() => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push('/');
+  }, [router]);
+
   // Form validation
   const validateForm = useCallback((): boolean => {
     const newErrors: FormErrors = {};
@@ -342,7 +351,7 @@ export default function RegisterNGOForm() {
                   setStep('form');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 } else {
-                  router.push('/');
+                  goBackToSource();
                 }
               }}
               className="mb-4 flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"

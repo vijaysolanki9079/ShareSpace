@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { ShoppingBag, CheckCircle2, Clock, XCircle, MapPin, User, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
+import NoImageFallback from '../NoImageFallback';
 
 interface MyRequestsProps {
   mode?: 'user' | 'ngo';
@@ -89,14 +90,18 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
             return (
               <article
                 key={request.id}
-                className="group overflow-hidden rounded-xl border border-white/10 bg-slate-900/40 backdrop-blur-md shadow-sm transition-all duration-300 hover:border-white/20 hover:shadow-md"
+                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/55 backdrop-blur-md shadow-sm transition-all duration-300 hover:border-emerald-400/30 hover:shadow-lg hover:shadow-emerald-500/10"
               >
                 <div className="relative aspect-[2/1] overflow-hidden bg-slate-800">
-                  <img
-                    src={request.image}
-                    alt={request.title}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                  />
+                  {request.image ? (
+                    <img
+                      src={request.image}
+                      alt={request.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                  ) : (
+                    <NoImageFallback />
+                  )}
                 <div className="absolute inset-0 bg-slate-950/40 pointer-events-none transition-opacity duration-500 group-hover:bg-slate-950/20" />
                   <div className="absolute right-3 top-3">
                     <div
@@ -115,8 +120,8 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
                   </div>
                 </div>
 
-                <div className="p-3">
-                  <h3 className="text-sm font-semibold text-slate-100 transition-colors group-hover:text-emerald-400">
+                <div className="flex flex-1 flex-col p-4">
+                  <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-5 text-slate-100 transition-colors group-hover:text-emerald-400">
                     {request.title}
                   </h3>
                   <p className="mt-1.5 flex items-center gap-2 text-[13px] text-slate-400">
@@ -124,7 +129,7 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
                     {request.condition}
                   </p>
 
-                  <div className="mt-2 space-y-1.5 border-t border-white/10 pt-2">
+                  <div className="mt-3 space-y-1.5 border-t border-white/10 pt-3">
                     <div className="flex items-center gap-2 text-[13px] text-zinc-400">
                       <User className="h-3.5 w-3.5" />
                       <span className="font-medium text-slate-200">{request.donor}</span>
@@ -139,31 +144,41 @@ const MyRequests = ({ mode = 'user' }: MyRequestsProps) => {
                     </div>
                   </div>
 
-                  {request.status === 'open' && (
-                    <div className="mt-3 flex gap-2">
+                  <div className="mt-auto pt-4">
+                    {request.status === 'open' && (
+                    <div className="grid grid-cols-[1fr_auto] gap-2">
                       <Link
                         href={`/requests/${request.id}`}
-                        className="flex-1 rounded-lg bg-emerald-500/20 py-1.5 text-[13px] font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/30 ring-1 ring-emerald-500/30"
+                        className="inline-flex h-10 items-center justify-center rounded-xl bg-emerald-500/20 px-4 text-center text-[13px] font-semibold text-emerald-300 ring-1 ring-emerald-500/30 transition-colors hover:bg-emerald-500/30"
                       >
                         {mode === 'ngo' ? 'Open request' : 'View details'}
                       </Link>
                       <button
                         type="button"
-                        className="rounded-lg border border-white/10 px-3 py-2 text-zinc-400 transition-colors hover:border-emerald-400/50 hover:bg-emerald-500/10 hover:text-emerald-300"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-zinc-400 transition-colors hover:border-emerald-400/50 hover:bg-emerald-500/10 hover:text-emerald-300"
                         aria-label="Message"
                       >
                         <MessageCircle className="h-4 w-4" />
                       </button>
                     </div>
-                  )}
-                  {request.status === 'fulfilled' && (
+                    )}
+                    {request.status === 'fulfilled' && (
                     <Link
                       href={`/requests/${request.id}`}
-                      className="mt-3 w-full rounded-lg bg-emerald-600/20 py-1.5 text-[13px] font-semibold text-emerald-300 ring-1 ring-emerald-500/40 transition-colors hover:bg-emerald-500/30"
+                      className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-emerald-600/20 px-4 text-center text-[13px] font-semibold text-emerald-300 ring-1 ring-emerald-500/40 transition-colors hover:bg-emerald-500/30"
                     >
                       View fulfilled request
                     </Link>
-                  )}
+                    )}
+                    {request.status === 'closed' && (
+                      <Link
+                        href={`/requests/${request.id}`}
+                        className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-white/10 px-4 text-center text-[13px] font-semibold text-slate-300 transition-colors hover:bg-white/10"
+                      >
+                        View closed request
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </article>
             );

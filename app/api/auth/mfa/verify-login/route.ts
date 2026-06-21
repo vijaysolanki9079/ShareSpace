@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { decryptMfaSecret, verifyTotpToken } from '@/lib/mfa';
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRequestRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 /**
  * POST /api/auth/mfa/verify-login
@@ -31,6 +32,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const rateLimit = checkRequestRateLimit(request, 'mfa-verify-login', 8, 15 * 60 * 1000, ngoId);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
     // ✅ Validation: Code must be 6-12 characters
     if (!code || code.length < 6 || code.length > 12) {

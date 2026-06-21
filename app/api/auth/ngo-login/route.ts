@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRequestRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 type DemoAccount = {
   email: string;
@@ -87,6 +88,15 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const rateLimit = checkRequestRateLimit(
+      request,
+      'ngo-login',
+      10,
+      15 * 60 * 1000,
+      normalizedEmail
+    );
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+
     console.log('[ngo-login] Attempting login for:', normalizedEmail);
 
     let ngo = await prisma.nGO.findUnique({

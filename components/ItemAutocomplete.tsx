@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, X, CheckCircle2 } from 'lucide-react';
 
@@ -42,23 +42,19 @@ export default function ItemAutocomplete({
 }: ItemAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [filteredSuggestions, setFilteredSuggestions] = useState(ITEM_SUGGESTIONS);
+  const filteredSuggestions = useMemo(() => {
+    if (value.trim() === '') {
+      return ITEM_SUGGESTIONS;
+    }
+
+    const lowerValue = value.toLowerCase();
+    return ITEM_SUGGESTIONS.filter((item) =>
+      item.name.toLowerCase().includes(lowerValue) || item.category.toLowerCase().includes(lowerValue)
+    );
+  }, [value]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (value.trim() === '') {
-      setFilteredSuggestions(ITEM_SUGGESTIONS);
-    } else {
-      const lowerValue = value.toLowerCase();
-      setFilteredSuggestions(
-        ITEM_SUGGESTIONS.filter((item) =>
-          item.name.toLowerCase().includes(lowerValue) || item.category.toLowerCase().includes(lowerValue)
-        )
-      );
-    }
-  }, [value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;

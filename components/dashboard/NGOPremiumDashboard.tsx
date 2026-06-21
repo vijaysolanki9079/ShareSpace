@@ -270,13 +270,10 @@ function Sidebar({
 
 function TopBar({
   payload,
-  setActive,
 }: {
   payload: NGODashboardPayload | null;
-  setActive: (id: SectionId) => void;
 }) {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const badgeText = payload?.ngo.complianceBadges.length
     ? payload.ngo.complianceBadges.join(' • ')
@@ -344,10 +341,7 @@ function TopBar({
           <div className="relative">
             <button
               type="button"
-              onClick={() => {
-                setShowNotifications(!showNotifications);
-                setShowProfileMenu(false);
-              }}
+              onClick={() => setShowNotifications(!showNotifications)}
               className="relative flex h-10 w-10 items-center justify-center rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white"
               aria-label="Notifications"
             >
@@ -379,13 +373,8 @@ function TopBar({
           </div>
 
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                setShowProfileMenu(!showProfileMenu);
-                setShowNotifications(false);
-              }}
-              className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-emerald-500/25 bg-black/40 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/50 hover:shadow-[0_0_16px_rgba(52,211,153,0.25)]"
+            <div
+              className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-emerald-500/25 bg-black/40 shadow-sm backdrop-blur-md"
               aria-label="Profile"
             >
               <img
@@ -397,46 +386,7 @@ function TopBar({
                 className="h-full w-full object-cover"
                 referrerPolicy="no-referrer"
               />
-            </button>
-
-            <AnimatePresence>
-              {showProfileMenu && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 top-12 mt-2 w-64 overflow-hidden rounded-2xl border border-emerald-500/20 bg-black/90 shadow-2xl backdrop-blur-xl"
-                >
-                  <div className="border-b border-white/10 p-4">
-                    <p className="truncate text-sm font-medium text-white">
-                      {payload?.ngo.organizationName || 'NGO account'}
-                    </p>
-                    <p className="truncate text-xs text-zinc-400">
-                      {payload?.ngo.email || 'ngo@example.com'}
-                    </p>
-                  </div>
-                  <div className="p-2">
-                    <button
-                      type="button"
-                      onClick={() => setActive('settings')}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
-                    >
-                      <Settings className="h-4 w-4" />
-                      Organization settings
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => signOut({ callbackUrl: '/' })}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-red-500/10"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Sign out
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
@@ -857,6 +807,10 @@ export default function NGOPremiumDashboard() {
     return [...baseBadges, ...(payload?.ngo.complianceBadges ?? [])];
   }, [payload]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [active]);
+
   const refreshDashboard = async () => {
     const res = await fetch('/api/ngo/dashboard', { cache: 'no-store' });
     const data = await res.json();
@@ -878,7 +832,7 @@ export default function NGOPremiumDashboard() {
         badges={complianceBadges}
         securityReady={Boolean(payload?.ngo.mfaSetupComplete)}
       />
-      <TopBar payload={payload} setActive={setActive} />
+      <TopBar payload={payload} />
 
       <main className="ml-72 max-w-[1680px] px-4 pb-12 pt-[5.75rem] sm:ml-80 sm:px-8">
         {isLoading ? (

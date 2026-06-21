@@ -2,6 +2,7 @@ import { buildOtpAuthUrl, generateBackupCodes, generateBase32Secret } from '@/li
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import QRCode from 'qrcode';
+import { checkRequestRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 /**
  * POST /api/auth/mfa/generate-secret
@@ -25,6 +26,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const rateLimit = checkRequestRateLimit(request, 'mfa-generate', 5, 15 * 60 * 1000, ngoId);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
 
     // Verify NGO exists
     const ngo = await prisma.nGO.findUnique({ where: { id: ngoId } });

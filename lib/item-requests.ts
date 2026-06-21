@@ -5,6 +5,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { query } from '@/lib/server-db';
 
 export interface NearbyRequest {
   id: string;
@@ -206,6 +207,11 @@ export async function createItemRequest(
         },
       },
     });
+
+    await query(
+      'UPDATE "ItemRequest" SET "location_geom" = ST_SetSRID(ST_MakePoint($1, $2), 4326) WHERE id = $3',
+      [data.longitude, data.latitude, request.id]
+    );
 
     return request;
   } catch (error) {

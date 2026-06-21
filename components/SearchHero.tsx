@@ -12,19 +12,18 @@ import { showIndiaOnlyToast } from '@/lib/toast-utils';
 interface SearchHeroProps {
   onSearch: (query: { ngoName: string; location: LocationResult | null }) => void;
   isSearching?: boolean;
-  /** Live autocomplete suggestions from the parent tRPC query */
   autocompleteSuggestions?: NGOSuggestion[];
-  /** Called on every keystroke so parent can debounce-fetch suggestions */
-  onNgoNameChange?: (value: string) => void;
+  searchValue: string;
+  onSearchValueChange: (value: string) => void;
 }
 
 export default function SearchHero({
   onSearch,
   isSearching = false,
   autocompleteSuggestions = [],
-  onNgoNameChange,
+  searchValue,
+  onSearchValueChange,
 }: SearchHeroProps) {
-  const [ngoSearchQuery, setNgoSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -34,6 +33,7 @@ export default function SearchHero({
       toast.error('Geolocation is not supported by your browser');
       return;
     }
+
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -43,6 +43,7 @@ export default function SearchHero({
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`,
             { headers: { 'User-Agent': 'ShareNest-Donation-Platform' } }
           );
+
           if (response.ok) {
             const data = await response.json();
             const countryCode = data.address?.country_code;
@@ -54,23 +55,20 @@ export default function SearchHero({
             }
 
             const locationName = data.address?.city || data.address?.town || data.address?.village || 'Current Location';
-            const locationResult: any = { 
-              name: locationName, 
-              displayName: locationName, 
-              lat: latitude, 
-              lon: longitude, 
+            const locationResult: LocationResult = {
+              name: locationName,
+              displayName: locationName,
+              lat: latitude,
+              lon: longitude,
               type: 'city',
-              countryCode: countryCode
+              countryCode: countryCode,
             };
+
             setSelectedLocation(locationResult);
             setLocationQuery(locationName);
             toast.success('Location found successfully!');
 
-            // Trigger search automatically
-            onSearch({
-              ngoName: ngoSearchQuery,
-              location: locationResult
-            });
+            onSearch({ ngoName: searchValue, location: locationResult });
           }
         } catch (error) {
           console.error('Reverse geocoding failed:', error);
@@ -87,7 +85,7 @@ export default function SearchHero({
   };
 
   const handleSearch = () => {
-    onSearch({ ngoName: ngoSearchQuery, location: selectedLocation });
+    onSearch({ ngoName: searchValue, location: selectedLocation });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -103,10 +101,13 @@ export default function SearchHero({
 
       <div className="container mx-auto max-w-7xl relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left Column: Content & NGO Link */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 tracking-tight leading-tight">Find Organizations <span className="text-emerald-300">Near You</span></h1>
-            <p className="text-emerald-100/80 mb-10 text-lg md:text-xl max-w-lg">Connect with verified NGOs and support causes that matter to you. Search or share your location to discover local giving opportunities.</p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 tracking-tight leading-tight">
+              Find Organizations <span className="text-emerald-300">Near You</span>
+            </h1>
+            <p className="text-emerald-100/80 mb-10 text-lg md:text-xl max-w-lg">
+              Connect with verified NGOs and support causes that matter to you. Search or share your location to discover local giving opportunities.
+            </p>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }} className="flex items-center gap-4 relative z-10">
               <span className="text-sm font-medium text-emerald-200/60 uppercase tracking-widest hidden sm:inline">Are you an NGO?</span>
@@ -117,29 +118,23 @@ export default function SearchHero({
             </motion.div>
           </motion.div>
 
-          {/* Right Column: Search Interface */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="relative z-50">
             <div className="bg-white p-4 md:p-6 rounded-[2rem] shadow-2xl flex flex-col gap-4 max-w-xl mx-auto lg:ml-auto w-full border border-emerald-500/10">
-              
               <div className="w-full">
                 <NGONameAutocomplete
-                  value={ngoSearchQuery}
-                  onChange={v => {
-                    setNgoSearchQuery(v);
-                    onNgoNameChange?.(v);
-                  }}
+                  value={searchValue}
+                  onChange={(value) => onSearchValueChange(value)}
                   suggestions={autocompleteSuggestions}
                   onNGOSelect={(id, name, lat, lng) => {
-                    setNgoSearchQuery(name);
-                    // If the suggestion includes coordinates, use them to immediately fly the map
+                    onSearchValueChange(name);
                     if (lat != null && lng != null) {
-                      const locationResult: any = {
+                      const locationResult: LocationResult = {
                         name: name,
                         displayName: name,
                         lat: lat,
                         lon: lng,
                         type: 'city',
-                        countryCode: 'IN'
+                        countryCode: 'IN',
                       };
                       onSearch({ ngoName: name, location: locationResult });
                     } else {
@@ -152,15 +147,15 @@ export default function SearchHero({
               </div>
 
               <div className="w-full">
-                <LocationAutocomplete 
-                  value={locationQuery} 
-                  onChange={setLocationQuery} 
+                <LocationAutocomplete
+                  value={locationQuery}
+                  onChange={setLocationQuery}
                   onLocationSelect={(loc) => {
                     setSelectedLocation(loc);
-                    onSearch({ ngoName: ngoSearchQuery, location: loc });
+                    onSearch({ ngoName: searchValue, location: loc });
                   }}
-                  placeholder="Search area..." 
-                  onKeyDown={handleKeyDown} 
+                  placeholder="Search area..."
+                  onKeyDown={handleKeyDown}
                 />
               </div>
 
@@ -175,7 +170,6 @@ export default function SearchHero({
                   <span>Search</span>
                 </button>
               </div>
-
             </div>
           </motion.div>
         </div>

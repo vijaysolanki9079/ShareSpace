@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
@@ -10,7 +10,6 @@ import {
   Gift,
   ShoppingBag,
   MessageCircle,
-  MapPin,
   Calendar,
   Settings,
   LogOut,
@@ -24,6 +23,7 @@ import {
 import MyDonations from './MyDonations';
 import MyRequests from './MyRequests';
 import MessagesInbox from './Messages';
+import { trpc } from '@/lib/trpc';
 
 import EventsDrives from './EventsDrives';
 import SettingsView from './Settings';
@@ -36,6 +36,24 @@ const easeOut = [0.22, 1, 0.36, 1] as const;
 const tPage = { duration: 0.3, ease: easeOut };
 
 type SectionId = 'dashboard' | 'donations' | 'requests' | 'messages' | 'events' | 'settings';
+
+function formatRelativeTime(value: string) {
+  const date = new Date(value);
+  const diffMs = Date.now() - date.getTime();
+  const minutes = Math.max(0, Math.floor(diffMs / 60000));
+
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days}d ago`;
+
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 
 function Blob({
   delay = 0,
@@ -192,7 +210,6 @@ function TopBar() {
   const user = session?.user;
 
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   return (
     <header className="fixed left-72 right-0 top-0 z-40 h-[6rem] overflow-hidden sm:left-80">
@@ -273,10 +290,7 @@ function TopBar() {
           <div className="relative">
             <button
               type="button"
-              onClick={() => {
-                setShowNotifications(!showNotifications);
-                setShowProfileMenu(false);
-              }}
+              onClick={() => setShowNotifications(!showNotifications)}
               className="relative flex h-10 w-10 items-center justify-center rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white"
               aria-label="Notifications"
             >
@@ -303,13 +317,8 @@ function TopBar() {
           </div>
 
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                setShowProfileMenu(!showProfileMenu);
-                setShowNotifications(false);
-              }}
-              className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-emerald-500/25 bg-black/40 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/50 hover:shadow-[0_0_16px_rgba(52,211,153,0.25)]"
+            <div
+              className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-emerald-500/25 bg-black/40 shadow-sm backdrop-blur-md"
               aria-label="Profile"
             >
               <img
@@ -318,42 +327,7 @@ function TopBar() {
                 className="h-full w-full object-cover"
                 referrerPolicy="no-referrer"
               />
-            </button>
-
-            <AnimatePresence>
-              {showProfileMenu && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 top-12 mt-2 w-56 overflow-hidden rounded-2xl border border-emerald-500/20 bg-black/90 shadow-2xl backdrop-blur-xl"
-                >
-                  <div className="border-b border-white/10 p-4">
-                    <p className="truncate text-sm font-medium text-white">{user?.name || 'ShareSpace User'}</p>
-                    <p className="truncate text-xs text-zinc-400">{user?.email || 'user@example.com'}</p>
-                  </div>
-                  <div className="p-2">
-                    <button
-                      type="button"
-                      onClick={() => alert('Profile editing coming soon!')}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
-                    >
-                      <Settings className="h-4 w-4" />
-                      Account Settings
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => signOut({ callbackUrl: '/' })}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-red-500/10"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Sign out
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
@@ -436,12 +410,17 @@ function TopBar() {
 }
 
 function DashboardHome() {
+  const dashboardStats = trpc.item.getDashboardStats.useQuery(undefined, {
+    refetchOnWindowFocus: true,
+  });
+  const data = dashboardStats.data;
   const stats = [
-    { label: 'Items donated', value: '42', icon: Gift, bar: 'bg-emerald-500' },
-    { label: 'Requests fulfilled', value: '28', icon: CheckCircle2, bar: 'bg-zinc-800' },
-    { label: 'People helped', value: '156', icon: Users, bar: 'bg-emerald-600' },
-    { label: 'Reliability', value: '4.9', icon: Star, bar: 'bg-zinc-600' },
+    { label: 'Items donated', value: data?.itemsDonated ?? '--', icon: Gift, bar: 'bg-emerald-500' },
+    { label: 'Requests fulfilled', value: data?.requestsFulfilled ?? '--', icon: CheckCircle2, bar: 'bg-zinc-800' },
+    { label: 'Connections', value: data?.connections ?? '--', icon: Users, bar: 'bg-emerald-600' },
+    { label: 'Messages', value: data?.messages ?? '--', icon: Star, bar: 'bg-zinc-600' },
   ];
+  const recentActivity = data?.recentActivity ?? [];
 
   return (
     <motion.div
@@ -449,7 +428,7 @@ function DashboardHome() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={tPage}
-      className="space-y-8 mt-10"
+      className="space-y-6 mt-8"
     >
       <div
         className={`relative overflow-hidden rounded-2xl border border-white/15 ${glassDark} bg-black/30`}
@@ -463,15 +442,17 @@ function DashboardHome() {
           className="pointer-events-none absolute inset-0 rounded-2xl bg-[linear-gradient(to_left,rgba(16,185,129,0.11)_0%,rgba(5,150,105,0.045)_28%,transparent_56%)]"
           aria-hidden
         />
-        <div className="relative z-10 p-8 sm:p-10">
+        <div className="relative z-10 flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400/90">Overview</p>
-          <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <h3 className="mt-1 text-xl font-semibold tracking-tight text-white sm:text-2xl">
             Impact this month
           </h3>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-300/95 sm:text-base">
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-zinc-300/95">
             You are building trust in your community. Keep sharing what you can — small acts add up.
           </p>
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-950/25 px-4 py-2 text-sm font-medium text-zinc-100 backdrop-blur-sm">
+          </div>
+          <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-950/25 px-3 py-1.5 text-xs font-medium text-zinc-100 backdrop-blur-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.6)]" />
             On track with last month
           </div>
@@ -502,14 +483,16 @@ function DashboardHome() {
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-300/10 to-blue-400/10 p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-[24px] sm:p-8">
         <h4 className="text-base font-semibold text-white">Recent activity</h4>
         <ul className="mt-4 divide-y divide-white/5">
-          {[
-            { t: 'Winter jackets marked as received', d: '2h ago' },
-            { t: 'Request approved — book bundle', d: 'Yesterday' },
-            { t: 'Message from Annapoorna Food Relief', d: '2d ago' },
-          ].map((row) => (
-            <li key={row.t} className="flex items-center justify-between gap-4 py-4 first:pt-0">
-              <span className="text-sm text-zinc-300">{row.t}</span>
-              <span className="shrink-0 text-xs text-zinc-400">{row.d}</span>
+          {dashboardStats.isLoading && (
+            <li className="py-4 text-sm text-zinc-400">Loading your latest activity...</li>
+          )}
+          {!dashboardStats.isLoading && recentActivity.length === 0 && (
+            <li className="py-4 text-sm text-zinc-400">No activity yet. Start by posting a request or offering help.</li>
+          )}
+          {recentActivity.map((row) => (
+            <li key={row.id} className="flex items-center justify-between gap-4 py-4 first:pt-0">
+              <span className="text-sm text-zinc-300">{row.text}</span>
+              <span className="shrink-0 text-xs text-zinc-400">{formatRelativeTime(row.at)}</span>
             </li>
           ))}
         </ul>
@@ -535,20 +518,15 @@ function SectionFrame({ children }: { children: React.ReactNode }) {
 
 export default function PremiumDashboard() {
   const searchParams = useSearchParams();
-  const [active, setActive] = useState<SectionId>('dashboard');
-  const [initialChatId, setInitialChatId] = useState<string | null>(null);
+  const [active, setActive] = useState<SectionId>(() => {
+    const section = searchParams.get('section') as SectionId | null;
+    return section ?? 'dashboard';
+  });
+  const [initialChatId] = useState<string | null>(() => searchParams.get('chatId'));
 
   useEffect(() => {
-    const section = searchParams.get('section') as SectionId;
-    const chatId = searchParams.get('chatId');
-    
-    if (section) {
-      setActive(section);
-    }
-    if (chatId) {
-      setInitialChatId(chatId);
-    }
-  }, [searchParams]);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [active]);
 
   return (
     <div className={pageBg}>

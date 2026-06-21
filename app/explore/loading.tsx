@@ -10,10 +10,10 @@ export default function ExploreLoading() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[...Array(6)].map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+          {Array.from({ length: 16 }).map((_, i) => (
             <div key={`card-${i}`} className="bg-white rounded-2xl border border-[#00000014] overflow-hidden animate-pulse">
-              <div className="h-56 bg-gray-200 w-full"></div>
+              <div className="h-48 bg-gray-200 w-full"></div>
               <div className="p-6 space-y-4">
                 <div className="w-3/4 h-6 bg-gray-200 rounded"></div>
                 <div className="w-full h-4 bg-gray-100 rounded"></div>

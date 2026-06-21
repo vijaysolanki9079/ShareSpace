@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 interface NGOInfo {
   id: string;
@@ -23,6 +23,7 @@ interface Props {
 export default function DonateModal({ isOpen, onClose, ngo }: Props) {
   const router = useRouter();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const { data: session, status } = useSession();
 
   if (!isOpen || !ngo) return null;
 
@@ -32,9 +33,7 @@ export default function DonateModal({ isOpen, onClose, ngo }: Props) {
   };
 
   const handleChat = async () => {
-    const { data } = await supabase.auth.getUser();
-    const user = data?.user ?? null;
-    if (!user) {
+    if (status !== 'authenticated' || !session?.user?.id) {
       setShowLoginPrompt(true);
       return;
     }
@@ -49,10 +48,10 @@ export default function DonateModal({ isOpen, onClose, ngo }: Props) {
       if (!resp.ok) {
         console.error('create conversation failed', payload);
         // fallback to deterministic conversation id for UX continuity
-        const conversationId = [user.id, ngo.id].sort().join('_');
+        const conversationId = [session.user.id, ngo.id].sort().join('_');
         router.push(`/dashboard/messages?conversation=${conversationId}&ngo=${ngo.id}`);
       } else {
-        const convId = payload?.conversation?.id ?? ([user.id, ngo.id].sort().join('_'));
+        const convId = payload?.conversation?.id ?? ([session.user.id, ngo.id].sort().join('_'));
         router.push(`/dashboard/messages?conversation=${convId}&ngo=${ngo.id}`);
       }
       onClose();

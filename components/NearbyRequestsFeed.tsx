@@ -1,11 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Loader, AlertCircle, Check } from 'lucide-react';
+import { AlertCircle, Check } from 'lucide-react';
 import Image from 'next/image';
 import FilterBar from './FilterBar';
 import DonationDetailModal from './DonationDetailModal';
+import { useSession } from 'next-auth/react';
+import NoImageFallback from './NoImageFallback';
+import { trpc } from '@/lib/trpc';
+import { getRenderableImages, isRenderableImageSrc } from '@/lib/image-src';
+import { formatShortDate, getRandomDate, getRandomInt } from '@/lib/random-display';
 
 interface ItemRequest {
   id: string;
@@ -20,7 +25,7 @@ interface ItemRequest {
   longitude: number;
   locationName: string | null;
   radius: number;
-  distance: number;
+  distance?: number;
   requester: {
     id: string;
     fullName: string;
@@ -41,11 +46,76 @@ interface ItemCategory {
   name: string;
 }
 
+const GRID_PAGE_SIZE = 16;
+const SEED_FIXTURE_START = Date.parse('2026-05-01T07:52:19.000Z');
+const SEED_FIXTURE_END = Date.parse('2026-05-01T07:52:20.000Z');
+const REQUEST_DISPLAY_START = new Date('2026-06-21T00:00:00');
+const REQUEST_DISPLAY_END = new Date('2026-07-30T23:59:59');
+const REQUEST_AREAS = [
+  'Downtown',
+  'Westside',
+  'North Hills',
+  'Green Park',
+  'Central Market',
+  'Model Town',
+  'Civil Lines',
+  'South Extension',
+  'Lake View',
+  'Old City',
+  'Urban Estate',
+  'Sector 62',
+];
+
+function isSeedFixtureRequest(request: ItemRequest) {
+  const createdAt = new Date(request.createdAt).getTime();
+  return createdAt >= SEED_FIXTURE_START && createdAt < SEED_FIXTURE_END;
+}
+
+function getRequestDisplayData(request: ItemRequest) {
+  const seed = request.id || `${request.title}:${request.requester?.id}`;
+  const radiusKm = getRandomInt(1, 8, `${seed}:radius`);
+
+  return {
+    area: REQUEST_AREAS[getRandomInt(0, REQUEST_AREAS.length - 1, `${seed}:area`)],
+    radiusKm,
+    date: getRandomDate(REQUEST_DISPLAY_START, REQUEST_DISPLAY_END, `${seed}:date`),
+  };
+}
+
+function requestMatchesQuery(request: ItemRequest, rawQuery: string) {
+  const query = rawQuery.trim().toLowerCase();
+  if (!query) return true;
+
+  const haystack = [
+    request.id,
+    request.title,
+    request.description,
+    request.category?.name,
+    request.locationName,
+    request.requester?.fullName,
+    request.ngo?.organizationName,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (haystack.includes(query)) return true;
+
+  const tokens = query
+    .split(/[\s,()/_-]+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3 && !/^\d+$/.test(token));
+
+  return tokens.some((token) => haystack.includes(token));
+}
+
 interface NearbyRequestsFeedProps {
   initialLat?: number;
   initialLng?: number;
   radiusKm?: number;
   category?: string;
+  initialSearchQuery?: string;
+  highlightQuery?: string;
 }
 
 export default function NearbyRequestsFeed({
@@ -53,45 +123,50 @@ export default function NearbyRequestsFeed({
   initialLng,
   radiusKm: initialRadius = 5,
   category: initialCategory = '',
+  initialSearchQuery = '',
+  highlightQuery = '',
   refreshTrigger = 0,
 }: NearbyRequestsFeedProps & { refreshTrigger?: number }) {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
+  const {
+    data: myRequestData,
+    isLoading: myRequestsLoading,
+    refetch: refetchMyRequests,
+  } = trpc.item.getMyRequestFeed.useQuery(undefined, {
+    enabled: !!currentUserId,
+  });
   const [requests, setRequests] = useState<ItemRequest[]>([]);
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userLocation, setUserLocation] = useState({
-    lat: initialLat || 28.6139,
-    lng: initialLng || 77.209,
-  });
+  const [userLocation] = useState(
+    initialLat !== undefined && initialLng !== undefined
+      ? { lat: initialLat, lng: initialLng }
+      : null
+  );
 
   // Filter states
   const [radiusKm, setRadiusKm] = useState(initialRadius);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [postedBy, setPostedBy] = useState<'all' | 'user' | 'ngo'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+  const [visibleMyCount, setVisibleMyCount] = useState(GRID_PAGE_SIZE);
+  const [visibleCommunityCount, setVisibleCommunityCount] = useState(GRID_PAGE_SIZE);
 
   // Modal state
   const [selectedRequest, setSelectedRequest] = useState<ItemRequest | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Get user location
+  const resetVisibleCounts = () => {
+    setVisibleMyCount(GRID_PAGE_SIZE);
+    setVisibleCommunityCount(GRID_PAGE_SIZE);
+  };
+
   useEffect(() => {
-    if (!initialLat || !initialLng) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setUserLocation({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            });
-          },
-          () => {
-            console.log('Using default location');
-          }
-        );
-      }
-    }
-  }, [initialLat, initialLng]);
+    setSearchQuery(initialSearchQuery);
+    resetVisibleCounts();
+  }, [initialSearchQuery]);
 
   // Fetch categories
   useEffect(() => {
@@ -110,35 +185,44 @@ export default function NearbyRequestsFeed({
     fetchCategories();
   }, []);
 
-  // Fetch nearby requests
   useEffect(() => {
-    fetchNearbyRequests();
-  }, [userLocation, radiusKm, selectedCategory, postedBy, refreshTrigger]);
+    if (currentUserId) {
+      refetchMyRequests();
+    }
+  }, [refreshTrigger, currentUserId, refetchMyRequests]);
 
-  const fetchNearbyRequests = async () => {
+  const fetchNearbyRequests = useCallback(async (signal?: AbortSignal) => {
     try {
       setLoading(true);
       setError(null);
 
       const params = new URLSearchParams({
-        latitude: userLocation.lat.toString(),
-        longitude: userLocation.lng.toString(),
-        radius_km: radiusKm.toString(),
         limit: '100',
       });
+
+      if (userLocation) {
+        params.set('latitude', userLocation.lat.toString());
+        params.set('longitude', userLocation.lng.toString());
+        params.set('radius_km', radiusKm.toString());
+      }
 
       if (selectedCategory) {
         params.append('category', selectedCategory);
       }
 
-      let response = await fetch(`/api/requests/nearby?${params}`);
+      const response = await fetch(`/api/requests/nearby?${params}`, { signal });
 
       if (!response.ok) {
         throw new Error('Failed to fetch nearby requests');
       }
 
-      let data = await response.json();
-      let filteredRequests = data.requests || [];
+      const data = await response.json();
+      let filteredRequests = ((data.requests || []) as ItemRequest[])
+        .filter((req) => !isSeedFixtureRequest(req))
+        .map((req) => ({
+          ...req,
+          images: getRenderableImages(req.images),
+        }));
 
       // Apply posted by filter
       if (postedBy !== 'all') {
@@ -151,38 +235,229 @@ export default function NearbyRequestsFeed({
 
       // Apply search filter
       if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        filteredRequests = filteredRequests.filter((req: ItemRequest) =>
-          req.title.toLowerCase().includes(query) ||
-          req.description.toLowerCase().includes(query)
-        );
+        filteredRequests = filteredRequests.filter((req: ItemRequest) => requestMatchesQuery(req, searchQuery));
       }
 
-      setRequests(filteredRequests);
+      setRequests(
+        filteredRequests.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error fetching requests:', err);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
-  };
+  }, [postedBy, radiusKm, searchQuery, selectedCategory, userLocation]);
 
-  const formatDistance = (meters: number) => {
+  // Fetch requests. Without coordinates this returns all open requests.
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchNearbyRequests(controller.signal);
+    return () => controller.abort();
+  }, [fetchNearbyRequests, refreshTrigger]);
+
+  const formatDistance = (meters?: number) => {
+    if (meters === undefined) {
+      return 'Latest';
+    }
+
     if (meters < 1000) {
       return `${Math.round(meters)}m`;
     }
     return `${(meters / 1000).toFixed(1)}km`;
   };
 
-  if (loading && requests.length === 0) {
+  const filterRequestList = (items: ItemRequest[]) => {
+    let filtered = items;
+
+    if (selectedCategory) {
+      filtered = filtered.filter((request) => request.category.id === selectedCategory);
+    }
+
+    if (postedBy !== 'all') {
+      filtered = filtered.filter((request) => {
+        if (postedBy === 'ngo') return !!request.ngo;
+        if (postedBy === 'user') return !request.ngo;
+        return true;
+      });
+    }
+
+    if (searchQuery) {
+      filtered = filtered.filter((request) => requestMatchesQuery(request, searchQuery));
+    }
+
+    return filtered.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  };
+
+  const ownRequestsFromFeed = currentUserId
+    ? requests.filter((request) => request.requester.id === currentUserId)
+    : [];
+  const myRequests = currentUserId
+    ? filterRequestList(
+        Array.from(
+          new Map(
+            ([...((myRequestData || []) as ItemRequest[]), ...ownRequestsFromFeed]).map((request) => [
+              request.id,
+              request,
+            ])
+          ).values()
+        )
+          .filter((request) => !isSeedFixtureRequest(request))
+          .map((request) => ({
+            ...request,
+            images: getRenderableImages(request.images),
+          }))
+      )
+    : [];
+  const communityRequests = currentUserId
+    ? requests.filter((request) => request.requester.id !== currentUserId)
+    : requests;
+  const totalVisibleRequests = myRequests.length + communityRequests.length;
+  const showInitialSkeleton = loading && totalVisibleRequests === 0 && (!currentUserId || myRequestsLoading);
+  const showEmptyState = !loading && !myRequestsLoading && totalVisibleRequests === 0;
+  const activeHighlightQuery = highlightQuery || initialSearchQuery;
+
+  useEffect(() => {
+    if (!activeHighlightQuery || totalVisibleRequests === 0) return;
+
+    const scrollTimer = window.setTimeout(() => {
+      document
+        .querySelector('[data-request-highlight="true"]')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 250);
+
+    return () => window.clearTimeout(scrollTimer);
+  }, [activeHighlightQuery, totalVisibleRequests]);
+
+  const RequestGrid = ({ items }: { items: ItemRequest[] }) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+      {items.map((request, idx) => {
+        const requestImages = getRenderableImages(request.images);
+        const displayData = getRequestDisplayData(request);
+        const displayRequest = {
+          ...request,
+          locationName: displayData.area,
+          radius: displayData.radiusKm * 1000,
+          createdAt: displayData.date.toISOString(),
+        };
+        const isHighlighted = Boolean(activeHighlightQuery && requestMatchesQuery(request, activeHighlightQuery));
+
+        return (
+          <motion.div
+            key={request.id}
+            data-request-highlight={isHighlighted ? 'true' : undefined}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.04, duration: 0.5 }}
+            onClick={() => {
+              setSelectedRequest(displayRequest);
+              setModalOpen(true);
+            }}
+            className={`group bg-white rounded-[1.75rem] p-2.5 shadow-[0_8px_28px_-18px_rgba(15,23,42,0.25)] hover:shadow-[0_16px_36px_-22px_rgba(16,185,129,0.32)] overflow-hidden transition-all duration-300 cursor-pointer border hover:border-emerald-200 ${
+              isHighlighted
+                ? 'border-emerald-300 ring-4 ring-emerald-300/35 shadow-[0_20px_46px_-24px_rgba(16,185,129,0.6)]'
+                : 'border-gray-100'
+            }`}
+          >
+            <div className="relative w-full h-40 rounded-[1.35rem] overflow-hidden mb-3 bg-emerald-50">
+              {requestImages.length > 0 ? (
+                <img
+                  src={requestImages[0]}
+                  alt={request.title}
+                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                />
+              ) : (
+                <NoImageFallback />
+              )}
+
+              <div className="absolute inset-0 p-4 flex flex-col justify-between pointer-events-none">
+                <div className="flex justify-between items-start">
+                  <div className="px-3 py-1.5 bg-black/40 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest rounded-full border border-white/20">
+                    {formatDistance(request.distance)}
+                  </div>
+                  <div className="px-3 py-1.5 bg-emerald-500/90 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-400/50 shadow-lg">
+                    {request.status === 'open' ? 'Open' : 'Claimed'}
+                  </div>
+                </div>
+
+                <div className="mt-auto">
+                  <div className="inline-flex px-3 py-1.5 bg-white/90 backdrop-blur-md text-emerald-800 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/50 shadow-sm">
+                    {request.category.name}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-3 pb-3 space-y-3">
+              <div className="space-y-2">
+                <h3 className="text-base font-black text-gray-900 line-clamp-1 group-hover:text-emerald-600 transition-colors">
+                  {request.title}
+                </h3>
+                <p className="text-xs text-gray-500 font-medium line-clamp-2 leading-relaxed">
+                  {request.description}
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-[10px] font-bold uppercase tracking-wide text-gray-500">
+                  <span className="truncate rounded-lg bg-gray-50 px-2 py-1">{formatShortDate(displayData.date)}</span>
+                  <span className="truncate rounded-lg bg-gray-50 px-2 py-1">{displayData.area}</span>
+                  <span className="truncate rounded-lg bg-gray-50 px-2 py-1">Within {displayData.radiusKm} km</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-3 border-t border-gray-50">
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-2xl overflow-hidden bg-emerald-50 border border-emerald-100 relative">
+                    {isRenderableImageSrc(request.requester?.image) ? (
+                      <Image
+                        src={request.requester.image}
+                        alt={request.requester.fullName || 'User'}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-emerald-600 font-black text-sm">
+                        {request.requester?.fullName?.charAt(0) || 'U'}
+                      </div>
+                    )}
+                  </div>
+                  {request.ngo && (
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-lg border-2 border-white flex items-center justify-center">
+                      <Check size={10} className="text-white" strokeWidth={4} />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-gray-900 truncate tracking-tight leading-none mb-1">
+                    {request.requester.fullName}
+                  </p>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                    {request.ngo ? 'Verified NGO' : 'Individual'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+
+  if (showInitialSkeleton) {
     return (
       <div className="space-y-6">
         <div className="h-12 w-full bg-white/50 animate-pulse rounded-2xl border border-gray-100" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <div key={i} className="bg-white rounded-[2.5rem] p-3 shadow-sm border border-gray-100 h-[400px] animate-pulse">
-               <div className="w-full h-56 rounded-[2rem] bg-gray-100 mb-4" />
-               <div className="px-3 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+          {Array.from({ length: GRID_PAGE_SIZE }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 h-[360px] animate-pulse overflow-hidden">
+               <div className="w-full h-48 bg-gray-100 mb-4" />
+               <div className="px-5 space-y-3">
                   <div className="h-6 w-3/4 bg-gray-100 rounded-lg" />
                   <div className="h-4 w-full bg-gray-50 rounded-lg" />
                   <div className="h-4 w-2/3 bg-gray-50 rounded-lg" />
@@ -216,120 +491,94 @@ export default function NearbyRequestsFeed({
       <FilterBar
         categories={categories}
         selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        onCategoryChange={(categoryId) => {
+          setSelectedCategory(categoryId);
+          resetVisibleCounts();
+        }}
         radiusKm={radiusKm}
-        onRadiusChange={setRadiusKm}
+        onRadiusChange={(radius) => {
+          setRadiusKm(radius);
+          resetVisibleCounts();
+        }}
         postedBy={postedBy}
-        onPostedByChange={setPostedBy}
+        onPostedByChange={(value) => {
+          setPostedBy(value);
+          resetVisibleCounts();
+        }}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={(query) => {
+          setSearchQuery(query);
+          resetVisibleCounts();
+        }}
       />
 
       {/* Results Count */}
-      {requests.length > 0 && (
+      {totalVisibleRequests > 0 && (
         <div className="text-sm text-gray-600">
-          Found <strong>{requests.length}</strong> donation requests nearby
+          Showing <strong>{totalVisibleRequests}</strong> matching donation {totalVisibleRequests === 1 ? 'request' : 'requests'}
+          {loading && <span className="ml-2 text-gray-400">Refreshing...</span>}
         </div>
       )}
 
       {/* Empty State */}
-      {requests.length === 0 && (
+      {showEmptyState && (
         <div className="text-center py-12 bg-white rounded-lg">
           <p className="text-gray-600 mb-4">No donation requests found.</p>
           <p className="text-sm text-gray-500">Try adjusting your filters or check back later!</p>
         </div>
       )}
 
-      {/* Request Grid - 3-4 columns */}
-      {requests.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {requests.map((request, idx) => (
-            <motion.div
-              key={request.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.04, duration: 0.5 }}
-              onClick={() => {
-                setSelectedRequest(request);
-                setModalOpen(true);
-              }}
-              className="group bg-white rounded-[2.5rem] p-3 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.08)] hover:shadow-[0_20px_50px_-12px_rgba(16,185,129,0.15)] overflow-hidden transition-all duration-500 cursor-pointer border border-gray-100 hover:border-emerald-200"
-            >
-              <div className="relative w-full h-56 rounded-[2rem] overflow-hidden mb-4 bg-emerald-50">
-                <Image
-                  src={request.images && request.images.length > 0 ? request.images[0] : 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb8?q=80&w=2070&auto=format&fit=crop'}
-                  alt={request.title}
-                  fill
-                  className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-
-                {/* Glass Badges */}
-                <div className="absolute inset-0 p-4 flex flex-col justify-between pointer-events-none">
-                  <div className="flex justify-between items-start">
-                    <div className="px-3 py-1.5 bg-black/40 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest rounded-full border border-white/20">
-                      {formatDistance(request.distance)}
-                    </div>
-                    <div className="px-3 py-1.5 bg-emerald-500/90 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-400/50 shadow-lg">
-                      {request.status === 'open' ? 'Open' : 'Claimed'}
-                    </div>
-                  </div>
-                  
-                  <div className="mt-auto">
-                    <div className="inline-flex px-3 py-1.5 bg-white/90 backdrop-blur-md text-emerald-800 text-[10px] font-black uppercase tracking-widest rounded-xl border border-white/50 shadow-sm">
-                      {request.category.name}
-                    </div>
-                  </div>
-                </div>
+      {totalVisibleRequests > 0 && (
+        <div className="space-y-10">
+          {currentUserId && (
+            <section className="space-y-4">
+              <div>
+                <h2 className="text-2xl font-black tracking-tight text-gray-950">Requests You Posted</h2>
+                <p className="mt-1 text-sm font-medium text-gray-500">Track your own needs and see who is ready to help.</p>
               </div>
-
-              {/* Content Area */}
-              <div className="px-3 pb-4 space-y-4">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-black text-gray-900 line-clamp-1 group-hover:text-emerald-600 transition-colors">
-                    {request.title}
-                  </h3>
-                  <p className="text-xs text-gray-500 font-medium line-clamp-2 leading-relaxed">
-                    {request.description}
-                  </p>
+              {myRequests.length > 0 ? (
+                <RequestGrid items={myRequests.slice(0, visibleMyCount)} />
+              ) : (
+                <div className="rounded-3xl border border-dashed border-emerald-200 bg-white/80 p-8 text-center text-sm font-medium text-gray-500">
+                  You have not posted any matching requests yet.
                 </div>
-
-                {/* Profile Link */}
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
-                  <div className="relative">
-                    <div className="w-10 h-10 rounded-2xl overflow-hidden bg-emerald-50 border border-emerald-100 relative">
-                      {request.requester?.image ? (
-                        <Image
-                          src={request.requester.image}
-                          alt={request.requester.fullName || 'User'}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-emerald-600 font-black text-sm">
-                          {request.requester?.fullName?.charAt(0) || 'U'}
-                        </div>
-                      )}
-                    </div>
-                    {request.ngo && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-lg border-2 border-white flex items-center justify-center">
-                        <Check size={10} className="text-white" strokeWidth={4} />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-black text-gray-900 truncate tracking-tight leading-none mb-1">
-                      {request.requester.fullName}
-                    </p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                      {request.ngo ? 'Verified NGO' : 'Individual'}
-                    </p>
-                  </div>
+              )}
+              {myRequests.length > visibleMyCount && (
+                <div className="text-center">
+                  <button
+                    onClick={() => setVisibleMyCount((prev) => prev + GRID_PAGE_SIZE)}
+                    className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-3 px-8 rounded-xl transition-all hover:px-10 shadow-sm"
+                  >
+                    Load More Requests
+                  </button>
                 </div>
+              )}
+            </section>
+          )}
+
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-gray-950">Requests From Neighbors</h2>
+              <p className="mt-1 text-sm font-medium text-gray-500">Browse nearby requests from other people and organizations.</p>
+            </div>
+            {communityRequests.length > 0 ? (
+              <RequestGrid items={communityRequests.slice(0, visibleCommunityCount)} />
+            ) : (
+              <div className="rounded-3xl border border-dashed border-gray-200 bg-white/80 p-8 text-center text-sm font-medium text-gray-500">
+                No matching requests from others right now.
               </div>
-            </motion.div>
-          ))}
+            )}
+            {communityRequests.length > visibleCommunityCount && (
+              <div className="text-center">
+                <button
+                  onClick={() => setVisibleCommunityCount((prev) => prev + GRID_PAGE_SIZE)}
+                  className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-3 px-8 rounded-xl transition-all hover:px-10 shadow-sm"
+                >
+                  Load More Requests
+                </button>
+              </div>
+            )}
+          </section>
         </div>
       )}
 

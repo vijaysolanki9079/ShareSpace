@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { SignUpSchema } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
+import { checkRequestRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 interface RequestBody {
   email: string;
@@ -11,6 +12,9 @@ interface RequestBody {
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimit = checkRequestRateLimit(request, "signup", 5, 15 * 60 * 1000);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+
     const body: RequestBody = await request.json();
 
     // Validate input
@@ -58,9 +62,8 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: unknown) {
     console.error("Signup error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Internal server error", details: message },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

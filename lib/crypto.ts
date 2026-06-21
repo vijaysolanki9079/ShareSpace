@@ -6,7 +6,9 @@ function uint8ArrayToBase64(u8: Uint8Array) {
   const chunkSize = 0x8000;
   for (let i = 0; i < u8.length; i += chunkSize) {
     const sub = u8.subarray(i, i + chunkSize);
-    binary += String.fromCharCode.apply(null, Array.from(sub) as any);
+    for (const byte of sub) {
+      binary += String.fromCharCode(byte);
+    }
   }
   return typeof btoa === 'function' ? btoa(binary) : Buffer.from(binary, 'binary').toString('base64');
 }
@@ -29,7 +31,7 @@ export function getOrCreateChatKey(): string {
   const b64 = uint8ArrayToBase64(key);
   try {
     localStorage.setItem('sharespace_chat_key', b64);
-  } catch (err) {
+  } catch {
     // ignore storage errors
   }
   return b64;

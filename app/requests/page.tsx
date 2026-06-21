@@ -7,16 +7,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
-export default function RequestsPage() {
+function RequestsPageContent() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [radiusKm, setRadiusKm] = useState(5);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const radiusKm = 5;
+  const selectedCategory = '';
   const [refreshKey, setRefreshKey] = useState(0);
+  const incomingRequestQuery = (
+    searchParams.get('search') ||
+    searchParams.get('itemId') ||
+    ''
+  ).trim();
 
   const handlePostRequest = () => {
     if (!isAuthenticated) {
@@ -31,10 +37,10 @@ export default function RequestsPage() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-gray-50/50"
+      className="min-h-screen overflow-x-hidden bg-slate-950"
     >
         {/* Cinematic Header */}
-        <div className="relative bg-[#022c22] py-20 overflow-hidden">
+        <div className="relative bg-[#022c22] pt-16 pb-20 overflow-hidden">
           {/* Decorative background elements */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-0 w-full h-full bg-[url('/images/navbar-grid.png')] bg-repeat" />
@@ -79,15 +85,23 @@ export default function RequestsPage() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20 pb-20">
+        <div className="relative z-20 bg-gray-50 px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
           <div className="space-y-8">
             <Suspense fallback={
               <div className="flex items-center justify-center py-20">
                 <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
               </div>
             }>
-              <NearbyRequestsFeed radiusKm={radiusKm} category={selectedCategory} refreshTrigger={refreshKey} />
+              <NearbyRequestsFeed
+                radiusKm={radiusKm}
+                category={selectedCategory}
+                refreshTrigger={refreshKey}
+                initialSearchQuery={incomingRequestQuery}
+                highlightQuery={incomingRequestQuery}
+              />
             </Suspense>
+          </div>
           </div>
         </div>
 
@@ -141,5 +155,17 @@ export default function RequestsPage() {
           )}
         </AnimatePresence>
       </motion.div>
+  );
+}
+
+export default function RequestsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-emerald-500/20 border-t-emerald-500" />
+      </div>
+    }>
+      <RequestsPageContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Package, Truck, Clock, MapPin, ArrowUpRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 const RecentDonations = () => {
   const donations = [
@@ -143,9 +144,12 @@ const RecentDonations = () => {
                     </button>
                   </div>
 
-                  <button className="w-full mt-6 py-4 bg-slate-50 hover:bg-emerald-600 hover:text-white text-slate-600 font-bold rounded-2xl transition-all duration-300 border border-slate-100 group-hover:border-emerald-600">
+                  <Link
+                    href={`/requests?search=${encodeURIComponent(donation.item)}`}
+                    className="block w-full mt-6 py-4 bg-slate-50 hover:bg-emerald-600 hover:text-white text-center text-slate-600 font-bold rounded-2xl transition-all duration-300 border border-slate-100 group-hover:border-emerald-600"
+                  >
                     Request Item
-                  </button>
+                  </Link>
                 </div>
               </div>
             );
