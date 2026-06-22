@@ -53,11 +53,14 @@ export const useImageSequence = ({
 
     imagesRef.current = [];
 
+    const isImageReady = (img: HTMLImageElement | undefined) =>
+      Boolean(img?.complete && img.naturalWidth > 0);
+
     const createImage = (index: number, priority: "high" | "auto" = "auto") => {
       const indexStr = index.toString().padStart(3, "0");
       const img = new Image();
       img.decoding = "async";
-      img.loading = priority === "high" ? "eager" : "lazy";
+      img.loading = "eager";
       img.setAttribute("fetchpriority", priority);
       img.src = `${imagePrefix}${indexStr}${imageSuffix}`;
       imagesRef.current[index] = img;
@@ -84,13 +87,7 @@ export const useImageSequence = ({
     const loadRemainingImages = () => {
       const eagerEnd = Math.min(frameCount, Math.max(startIndex + 1, eagerFrameCount));
       loadFrameRange(0, eagerEnd, "high");
-
-      const loadRest = () => loadFrameRange(eagerEnd, frameCount);
-      if ("requestIdleCallback" in window) {
-        window.requestIdleCallback(loadRest, { timeout: 1200 });
-      } else {
-        setTimeout(loadRest, 350);
-      }
+      setTimeout(() => loadFrameRange(eagerEnd, frameCount), 100);
     };
 
     let lastTime = 0;
@@ -114,19 +111,19 @@ export const useImageSequence = ({
 
       if (time - lastTime > interval) {
         const frameIndex = frameIndexRef.current;
-        const img = imagesRef.current[frameIndex];
+        const img = imagesRef.current[frameIndex] ?? createImage(frameIndex, frameIndex < eagerFrameCount ? "high" : "auto");
 
-        if (img?.complete && img.naturalWidth > 0) {
+        if (isImageReady(img)) {
           drawCover(ctx, canvas, img);
-        }
 
-        if (frameIndex < frameCount - 1) {
-          frameIndexRef.current = frameIndex + 1;
-        } else if (loop) {
-          frameIndexRef.current = 0;
-        }
+          if (frameIndex < frameCount - 1) {
+            frameIndexRef.current = frameIndex + 1;
+          } else if (loop) {
+            frameIndexRef.current = 0;
+          }
 
-        lastTime = time;
+          lastTime = time;
+        }
       }
 
       if (!loop && frameIndexRef.current === frameCount - 1 && time - lastTime > interval) {
@@ -151,7 +148,7 @@ export const useImageSequence = ({
       if (stopped) return;
 
       syncCanvasSize();
-      if (firstFrame.complete && firstFrame.naturalWidth > 0) {
+      if (isImageReady(firstFrame)) {
         drawCover(ctx, canvas, firstFrame);
       }
 
