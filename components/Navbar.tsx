@@ -270,6 +270,7 @@ const Navbar = ({
   const { user, isAuthenticated } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navRootRef = useRef<HTMLDivElement>(null);
   const navItems = getNavItems(pathname);
 
   const handleLogout = async () => {
@@ -278,9 +279,29 @@ const Navbar = ({
 
   const dashboardHref = user?.type === 'ngo' ? '/ngo-dashboard' : '/dashboard';
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!navRootRef.current?.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [mobileMenuOpen]);
+
+  const isNavItemActive = (href: string) => {
+    const activePath = href.startsWith('#') ? '/' : href.split('#')[0];
+    if (!activePath) return pathname === '/';
+    if (activePath === '/') return pathname === '/';
+    return pathname === activePath || pathname.startsWith(`${activePath}/`);
+  };
+
   return (
     <nav className={`${className} ${background}`}>
-      <div className="container relative mx-auto flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-5">
+      <div ref={navRootRef} className="container relative mx-auto flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-5">
         <Link href="/" className="group flex shrink-0 items-center gap-3">
           <div className="flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
             <Image
@@ -338,18 +359,28 @@ const Navbar = ({
             }`}
           >
             <div className="grid gap-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
-                    isDarkBg || isLight ? 'hover:bg-white/10' : 'hover:bg-slate-100'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map((item) => {
+                const active = isNavItemActive(item.href);
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+                      active
+                        ? isDarkBg || isLight
+                          ? 'bg-white/[0.12] text-emerald-100 ring-1 ring-emerald-300/30'
+                          : 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100'
+                        : isDarkBg || isLight
+                          ? 'text-white/80 hover:bg-white/10 hover:text-white'
+                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </div>
 
             <div className={`my-2 h-px ${isDarkBg || isLight ? 'bg-white/10' : 'bg-slate-200'}`} />

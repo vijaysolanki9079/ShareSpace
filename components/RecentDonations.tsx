@@ -146,7 +146,7 @@ const RecentDonations = () => {
 
                   <Link
                     href={`/requests?search=${encodeURIComponent(donation.item)}`}
-                    className="mt-5 block w-full rounded-2xl border border-slate-100 bg-slate-50 py-3.5 text-center text-sm font-bold text-slate-600 transition-all duration-300 hover:bg-emerald-600 hover:text-white group-hover:border-emerald-600 sm:mt-6 sm:py-4 sm:text-base"
+                    className="mt-5 block w-full rounded-2xl border border-emerald-100 bg-emerald-50 py-3.5 text-center text-sm font-bold text-emerald-700 shadow-sm shadow-emerald-100/50 transition-all duration-300 hover:border-emerald-200 hover:bg-emerald-100 hover:text-emerald-900 hover:shadow-md hover:shadow-emerald-200/60 group-hover:border-emerald-200 sm:mt-6 sm:py-4 sm:text-base"
                   >
                     Request Item
                   </Link>

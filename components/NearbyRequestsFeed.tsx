@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertCircle, Check } from 'lucide-react';
 import Image from 'next/image';
@@ -153,6 +153,8 @@ export default function NearbyRequestsFeed({
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [visibleMyCount, setVisibleMyCount] = useState(GRID_PAGE_SIZE);
   const [visibleCommunityCount, setVisibleCommunityCount] = useState(GRID_PAGE_SIZE);
+  const [pendingScrollRequestId, setPendingScrollRequestId] = useState<string | null>(null);
+  const requestCardRefs = useRef(new Map<string, HTMLDivElement>());
 
   // Modal state
   const [selectedRequest, setSelectedRequest] = useState<ItemRequest | null>(null);
@@ -217,29 +219,15 @@ export default function NearbyRequestsFeed({
       }
 
       const data = await response.json();
-      let filteredRequests = ((data.requests || []) as ItemRequest[])
+      const fetchedRequests = ((data.requests || []) as ItemRequest[])
         .filter((req) => !isSeedFixtureRequest(req))
         .map((req) => ({
           ...req,
           images: getRenderableImages(req.images),
         }));
 
-      // Apply posted by filter
-      if (postedBy !== 'all') {
-        filteredRequests = filteredRequests.filter((req: ItemRequest) => {
-          if (postedBy === 'ngo') return !!req.ngo;
-          if (postedBy === 'user') return !req.ngo;
-          return true;
-        });
-      }
-
-      // Apply search filter
-      if (searchQuery) {
-        filteredRequests = filteredRequests.filter((req: ItemRequest) => requestMatchesQuery(req, searchQuery));
-      }
-
       setRequests(
-        filteredRequests.sort(
+        fetchedRequests.sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )
       );
@@ -252,7 +240,7 @@ export default function NearbyRequestsFeed({
         setLoading(false);
       }
     }
-  }, [postedBy, radiusKm, searchQuery, selectedCategory, userLocation]);
+  }, [radiusKm, selectedCategory, userLocation]);
 
   // Fetch requests. Without coordinates this returns all open requests.
   useEffect(() => {
@@ -272,7 +260,7 @@ export default function NearbyRequestsFeed({
     return `${(meters / 1000).toFixed(1)}km`;
   };
 
-  const filterRequestList = (items: ItemRequest[]) => {
+  const filterRequestList = useCallback((items: ItemRequest[]) => {
     let filtered = items;
 
     if (selectedCategory) {
@@ -294,38 +282,53 @@ export default function NearbyRequestsFeed({
     return filtered.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-  };
+  }, [postedBy, searchQuery, selectedCategory]);
 
-  const ownRequestsFromFeed = currentUserId
-    ? requests.filter((request) => request.requester.id === currentUserId)
-    : [];
-  const myRequests = currentUserId
-    ? filterRequestList(
-        Array.from(
-          new Map(
-            ([...((myRequestData || []) as ItemRequest[]), ...ownRequestsFromFeed]).map((request) => [
-              request.id,
-              request,
-            ])
-          ).values()
-        )
-          .filter((request) => !isSeedFixtureRequest(request))
-          .map((request) => ({
-            ...request,
-            images: getRenderableImages(request.images),
-          }))
-      )
-    : [];
-  const communityRequests = currentUserId
-    ? requests.filter((request) => request.requester.id !== currentUserId)
-    : requests;
-  const totalVisibleRequests = myRequests.length + communityRequests.length;
-  const showInitialSkeleton = loading && totalVisibleRequests === 0 && (!currentUserId || myRequestsLoading);
-  const showEmptyState = !loading && !myRequestsLoading && totalVisibleRequests === 0;
+  const { myRequests, communityRequests } = useMemo(() => {
+    const filteredCommunitySource = filterRequestList(
+      currentUserId
+        ? requests.filter((request) => request.requester.id !== currentUserId)
+        : requests
+    );
+
+    if (!currentUserId) {
+      return {
+        myRequests: [] as ItemRequest[],
+        communityRequests: filteredCommunitySource,
+      };
+    }
+
+    const ownRequestsFromFeed = requests.filter((request) => request.requester.id === currentUserId);
+    const mergedMyRequests = Array.from(
+      new Map(
+        ([...((myRequestData || []) as ItemRequest[]), ...ownRequestsFromFeed]).map((request) => [
+          request.id,
+          request,
+        ])
+      ).values()
+    )
+      .filter((request) => !isSeedFixtureRequest(request))
+      .map((request) => ({
+        ...request,
+        images: getRenderableImages(request.images),
+      }));
+
+    return {
+      myRequests: filterRequestList(mergedMyRequests),
+      communityRequests: filteredCommunitySource,
+    };
+  }, [currentUserId, filterRequestList, myRequestData, requests]);
+
+  const visibleMyRequests = myRequests.slice(0, visibleMyCount);
+  const visibleCommunityRequests = communityRequests.slice(0, visibleCommunityCount);
+  const totalMatchingRequests = myRequests.length + communityRequests.length;
+  const totalVisibleRequests = visibleMyRequests.length + visibleCommunityRequests.length;
+  const showInitialSkeleton = loading && totalMatchingRequests === 0 && (!currentUserId || myRequestsLoading);
+  const showEmptyState = !loading && !myRequestsLoading && totalMatchingRequests === 0;
   const activeHighlightQuery = highlightQuery || initialSearchQuery;
 
   useEffect(() => {
-    if (!activeHighlightQuery || totalVisibleRequests === 0) return;
+    if (!activeHighlightQuery || totalMatchingRequests === 0) return;
 
     const scrollTimer = window.setTimeout(() => {
       document
@@ -334,7 +337,32 @@ export default function NearbyRequestsFeed({
     }, 250);
 
     return () => window.clearTimeout(scrollTimer);
-  }, [activeHighlightQuery, totalVisibleRequests]);
+  }, [activeHighlightQuery, totalMatchingRequests]);
+
+  useEffect(() => {
+    if (!pendingScrollRequestId) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      requestCardRefs.current
+        .get(pendingScrollRequestId)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setPendingScrollRequestId(null);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [pendingScrollRequestId, totalVisibleRequests]);
+
+  const handleLoadMoreRequests = (
+    items: ItemRequest[],
+    visibleCount: number,
+    setVisibleCount: React.Dispatch<React.SetStateAction<number>>
+  ) => {
+    const nextRequest = items[visibleCount];
+    if (nextRequest) {
+      setPendingScrollRequestId(nextRequest.id);
+    }
+    setVisibleCount((prev) => Math.min(prev + GRID_PAGE_SIZE, items.length));
+  };
 
   const RequestGrid = ({ items }: { items: ItemRequest[] }) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
@@ -352,6 +380,13 @@ export default function NearbyRequestsFeed({
         return (
           <motion.div
             key={request.id}
+            ref={(node) => {
+              if (node) {
+                requestCardRefs.current.set(request.id, node);
+              } else {
+                requestCardRefs.current.delete(request.id);
+              }
+            }}
             data-request-highlight={isHighlighted ? 'true' : undefined}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -513,9 +548,9 @@ export default function NearbyRequestsFeed({
       />
 
       {/* Results Count */}
-      {totalVisibleRequests > 0 && (
+      {totalMatchingRequests > 0 && (
         <div className="text-sm text-gray-600">
-          Showing <strong>{totalVisibleRequests}</strong> matching donation {totalVisibleRequests === 1 ? 'request' : 'requests'}
+          Showing <strong>{totalVisibleRequests}</strong> of <strong>{totalMatchingRequests}</strong> matching donation {totalMatchingRequests === 1 ? 'request' : 'requests'}
           {loading && <span className="ml-2 text-gray-400">Refreshing...</span>}
         </div>
       )}
@@ -528,7 +563,7 @@ export default function NearbyRequestsFeed({
         </div>
       )}
 
-      {totalVisibleRequests > 0 && (
+      {totalMatchingRequests > 0 && (
         <div className="space-y-10">
           {currentUserId && (
             <section className="space-y-4">
@@ -537,7 +572,7 @@ export default function NearbyRequestsFeed({
                 <p className="mt-1 text-sm font-medium text-gray-500">Track your own needs and see who is ready to help.</p>
               </div>
               {myRequests.length > 0 ? (
-                <RequestGrid items={myRequests.slice(0, visibleMyCount)} />
+                <RequestGrid items={visibleMyRequests} />
               ) : (
                 <div className="rounded-3xl border border-dashed border-emerald-200 bg-white/80 p-8 text-center text-sm font-medium text-gray-500">
                   You have not posted any matching requests yet.
@@ -546,7 +581,7 @@ export default function NearbyRequestsFeed({
               {myRequests.length > visibleMyCount && (
                 <div className="text-center">
                   <button
-                    onClick={() => setVisibleMyCount((prev) => prev + GRID_PAGE_SIZE)}
+                    onClick={() => handleLoadMoreRequests(myRequests, visibleMyCount, setVisibleMyCount)}
                     className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-3 px-8 rounded-xl transition-all hover:px-10 shadow-sm"
                   >
                     Load More Requests
@@ -562,7 +597,7 @@ export default function NearbyRequestsFeed({
               <p className="mt-1 text-sm font-medium text-gray-500">Browse nearby requests from other people and organizations.</p>
             </div>
             {communityRequests.length > 0 ? (
-              <RequestGrid items={communityRequests.slice(0, visibleCommunityCount)} />
+              <RequestGrid items={visibleCommunityRequests} />
             ) : (
               <div className="rounded-3xl border border-dashed border-gray-200 bg-white/80 p-8 text-center text-sm font-medium text-gray-500">
                 No matching requests from others right now.
@@ -571,7 +606,7 @@ export default function NearbyRequestsFeed({
             {communityRequests.length > visibleCommunityCount && (
               <div className="text-center">
                 <button
-                  onClick={() => setVisibleCommunityCount((prev) => prev + GRID_PAGE_SIZE)}
+                  onClick={() => handleLoadMoreRequests(communityRequests, visibleCommunityCount, setVisibleCommunityCount)}
                   className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 font-semibold py-3 px-8 rounded-xl transition-all hover:px-10 shadow-sm"
                 >
                   Load More Requests

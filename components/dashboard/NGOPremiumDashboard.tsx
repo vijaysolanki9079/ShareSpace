@@ -30,7 +30,6 @@ import MessagesInbox from './Messages';
 
 import EventsDrives from './EventsDrives';
 import SettingsView from './Settings';
-import MobileBackToTopButton from '@/components/MobileBackToTopButton';
 
 const pageBg =
   'relative min-h-screen overflow-x-hidden bg-gradient-to-br from-zinc-950 via-neutral-950 to-black';
@@ -913,7 +912,6 @@ export default function NGOPremiumDashboard() {
         )}
       </main>
       <MobileDashboardNav active={active} setActive={setActive} />
-      <MobileBackToTopButton bottomClassName="bottom-24" />
 
       <MFABootstrapModal
         open={showMFAModal}

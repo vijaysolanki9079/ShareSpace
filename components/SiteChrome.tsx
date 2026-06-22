@@ -93,6 +93,7 @@ export default function SiteChrome({
     pathname?.startsWith("/ngo-dashboard");
 
   const hideFooter = pathname?.startsWith("/register-ngo");
+  const hideBackToTop = pathname?.startsWith("/register-ngo");
 
   if (hideChrome) {
     return (
@@ -106,7 +107,7 @@ export default function SiteChrome({
     <div className="flex min-h-screen flex-1 flex-col">
       <Navbar {...nav} />
       <main className="w-full flex-1">{children}</main>
-      <MobileBackToTopButton />
+      {!hideBackToTop && <MobileBackToTopButton />}
       {!hideFooter && <Footer />}
     </div>
   );

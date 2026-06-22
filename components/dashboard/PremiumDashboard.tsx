@@ -26,7 +26,6 @@ import { trpc } from '@/lib/trpc';
 
 import EventsDrives from './EventsDrives';
 import SettingsView from './Settings';
-import MobileBackToTopButton from '@/components/MobileBackToTopButton';
 /** Dark canvas + black glass (blur) panels; emerald accents */
 const pageBg =
   'relative min-h-screen overflow-x-hidden bg-gradient-to-br from-zinc-950 via-neutral-950 to-black';
@@ -600,7 +599,6 @@ export default function PremiumDashboard() {
         </AnimatePresence>
       </main>
       <MobileDashboardNav active={active} setActive={setActive} />
-      <MobileBackToTopButton bottomClassName="bottom-24" />
     </div>
   );
 }
