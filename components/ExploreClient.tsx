@@ -27,6 +27,36 @@ const MapComponent = dynamic(() => import('@/components/MapComponent'), {
 });
 
 const GRID_PAGE_SIZE = 16;
+const localNgoImages: Record<string, string> = {
+    'anna charity bhopal': '/assets/Anna Charity Bhopal.png',
+    'bhojan mission': '/assets/Bhojan Mission.png',
+    'roti bank': '/assets/Roti Bank.png',
+    'green foundation': '/assets/green Foundation.png',
+    'naya foundation': '/assets/naya-foundation.png',
+};
+
+function getLocalNgoImage(organizationName: string) {
+    const normalizedName = organizationName.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (localNgoImages[normalizedName]) return localNgoImages[normalizedName];
+
+    if (normalizedName.includes('anna') && normalizedName.includes('bhopal')) {
+        return localNgoImages['anna charity bhopal'];
+    }
+    if (normalizedName.includes('bhojan')) {
+        return localNgoImages['bhojan mission'];
+    }
+    if (normalizedName.includes('roti')) {
+        return localNgoImages['roti bank'];
+    }
+    if (normalizedName.includes('green') && normalizedName.includes('foundation')) {
+        return localNgoImages['green foundation'];
+    }
+    if (normalizedName.includes('naya') && normalizedName.includes('foundation')) {
+        return localNgoImages['naya foundation'];
+    }
+
+    return null;
+}
 
 export default function ExploreClient() {
     const [activeCategory, setActiveCategory] = useState('All Causes');
@@ -126,7 +156,7 @@ export default function ExploreClient() {
                 lat:           ngo.latitude,
                 lng:           ngo.longitude,
                 verified:      ngo.isVerified,
-                image:         ngo.image ?? 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=400',
+                image:         getLocalNgoImage(ngo.organizationName) ?? ngo.image ?? 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=400',
                 rating:        getRandomFloat(3.5, 5, 1, `${seed}:stars`).toFixed(1),
                 impactScore:   getRandomInt(60, 98, `${seed}:impact`),
                 drivesDone:    getRandomInt(5, 150, `${seed}:drives`),

@@ -3,13 +3,19 @@ import { Package, Truck, Clock, MapPin, ArrowUpRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
+const recentDonationImages = {
+  oldWinterCoats: '/assets/old-winter-coats.png',
+  dellXps13: '/assets/dell-x[s-13.png',
+  cannedFoodBoxes: '/assets/canned-food-2-boxes.png',
+} as const;
+
 const RecentDonations = () => {
   const donations = [
     {
       id: 1,
       item: 'Old Winter Coats (3x)',
       category: 'Clothes',
-      image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&q=80', 
+      image: recentDonationImages.oldWinterCoats,
       ngo: 'Green Earth Initiative',
       status: 'Delivered',
       statusColor: 'text-emerald-500',
@@ -20,7 +26,7 @@ const RecentDonations = () => {
       id: 2,
       item: 'Dell XPS 13 Laptop',
       category: 'Electronics',
-      image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800&q=80',
+      image: recentDonationImages.dellXps13,
       ngo: 'Tech for Kids',
       status: 'Picked Up',
       statusColor: 'text-sky-500',
@@ -31,7 +37,7 @@ const RecentDonations = () => {
       id: 3,
       item: 'Canned Goods - 2 Boxes',
       category: 'Food',
-      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
+      image: recentDonationImages.cannedFoodBoxes,
       ngo: 'Food Rescue Network',
       status: 'Pending',
       statusColor: 'text-amber-500',

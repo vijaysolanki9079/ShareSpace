@@ -49,6 +49,26 @@ interface RequestDetail {
   }>;
 }
 
+function getRequestImageOverride(request: RequestDetail) {
+  const text = `${request.title} ${request.description} ${request.category?.name ?? ''}`.toLowerCase();
+
+  if (text.includes('winter') && (text.includes('jacket') || text.includes('children'))) {
+    return '/assets/winter jackets for children copy.png';
+  }
+
+  if (text.includes('shelter')) {
+    return '/assets/sheltered-co-breathable.png';
+  }
+
+  return null;
+}
+
+function getRequestImages(request: RequestDetail) {
+  const override = getRequestImageOverride(request);
+  if (override) return [override];
+  return getRenderableImages(request.images);
+}
+
 export default function RequestDetailPage() {
   const params = useParams();
   const requestId = params.id as string;
@@ -138,7 +158,7 @@ export default function RequestDetailPage() {
   }
 
   const isOwnRequest = request.requester.id === session?.user?.id;
-  const requestImages = getRenderableImages(request.images);
+  const requestImages = getRequestImages(request);
 
   return (
     <motion.div

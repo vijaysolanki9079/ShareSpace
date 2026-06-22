@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Calendar, CheckCircle2, Clock, MapPin, Package, X } from 'lucide-react';
+import Link from 'next/link';
 
 interface MyDonationsProps {
   mode?: 'user' | 'ngo';
@@ -41,28 +42,29 @@ const MyDonations = ({ mode = 'user' }: MyDonationsProps) => {
       ? 'Donations currently assigned to your organization'
       : 'Items you have shared with your community';
   const buttonLabel = mode === 'ngo' ? '+ Review queue' : '+ New donation';
+  const buttonHref = mode === 'ngo' ? '/requests' : '/donations';
 
   return (
-    <div className="space-y-8 pt-3">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="bg-gradient-to-r from-sky-300 via-cyan-300 to-emerald-300 bg-clip-text text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
+          <h2 className="bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-2xl font-semibold tracking-tight text-transparent sm:text-3xl">
             {title}
           </h2>
           <p className="mt-1 text-sm text-slate-300">{subtitle}</p>
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-xl bg-sky-500 px-4 py-2 text-[13px] font-semibold text-slate-950 transition-colors hover:bg-sky-400"
+        <Link
+          href={buttonHref}
+          className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:w-auto"
         >
           {buttonLabel}
-        </button>
+        </Link>
       </div>
 
       {isLoading ? (
-        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-[200px] rounded-xl bg-white/5 animate-pulse border border-white/10" />
+            <div key={i} className="h-[300px] rounded-xl bg-white/5 animate-pulse border border-white/10" />
           ))}
         </div>
       ) : (
@@ -70,68 +72,110 @@ const MyDonations = ({ mode = 'user' }: MyDonationsProps) => {
           {(donations as DonationItem[]).map((item) => (
             <article
               key={item.id}
-              className="group overflow-hidden rounded-xl border border-sky-400/10 bg-slate-900/35 backdrop-blur-md transition-all duration-300 hover:border-sky-300/25 hover:bg-slate-900/55"
+              className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/55 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-emerald-400/30 hover:shadow-lg hover:shadow-emerald-500/10"
             >
               <div className="relative aspect-[2/1] overflow-hidden bg-slate-800">
                 {item.img ? (
                   <img
                     src={item.img}
-                    alt=""
+                    alt={item.title}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                 ) : (
                   <NoImageFallback />
                 )}
                 <div className="pointer-events-none absolute inset-0 bg-slate-950/40 transition-opacity duration-500 group-hover:bg-slate-950/20" />
-                <span className="absolute left-3 top-3 z-10 rounded-full border border-white/10 bg-slate-950/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-200 backdrop-blur-md">
-                  {item.category}
-                </span>
-              </div>
-              <div className="p-3">
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-100">{item.title}</h3>
-                    <p className="mt-1 text-[13px] text-slate-400">{item.date}</p>
-                  </div>
+                <div className="absolute right-3 top-3">
                   <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-all ${
+                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
                       item.status === 'completed'
-                        ? 'border-sky-400/30 bg-sky-400/10 text-sky-300'
-                        : 'border-violet-400/30 bg-violet-400/10 text-violet-300'
+                        ? 'bg-emerald-50 text-emerald-800'
+                        : 'bg-amber-50 text-amber-800'
                     }`}
-                    title={item.status}
                   >
                     {item.status === 'completed' ? (
-                      <CheckCircle2 className="h-4 w-4" strokeWidth={1.75} />
+                      <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={1.75} />
                     ) : (
-                      <Clock className="h-4 w-4" strokeWidth={1.75} />
+                      <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />
                     )}
+                    {item.status === 'completed' ? 'Completed' : 'Pending'}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedDonation(item)}
-                  className="w-full rounded-lg bg-sky-400/10 py-1.5 text-[13px] font-semibold text-sky-300 ring-1 ring-sky-400/15 transition-colors hover:bg-sky-400/15"
-                >
-                  {mode === 'ngo' ? 'Review allocation' : 'View details'}
-                </button>
+                <span className="absolute bottom-3 left-3 z-10 rounded-lg bg-zinc-950/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-200 backdrop-blur-md">
+                  {item.category}
+                </span>
+                <div className="absolute left-3 top-3 flex max-w-[calc(100%-7rem)] items-center gap-1 rounded-full border border-white/20 bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-sm backdrop-blur-sm">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-emerald-600" strokeWidth={1.75} />
+                  <span className="truncate">{item.location}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-1 flex-col p-4">
+                <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-5 text-slate-100 transition-colors group-hover:text-emerald-400">
+                  {item.title}
+                </h3>
+                <p className="mt-1.5 flex items-center gap-2 text-[13px] text-slate-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  {new Date(item.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </p>
+
+                <div className="mt-3 space-y-1.5 border-t border-white/10 pt-3">
+                  <div className="flex items-center gap-2 text-[13px] text-zinc-400">
+                    <Package className="h-3.5 w-3.5" />
+                    <span className="line-clamp-1 font-medium text-slate-200">{item.description || 'Donation offer recorded'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Clock className="h-3.5 w-3.5" />
+                    Request is <span className="font-medium capitalize text-slate-300">{item.requestStatus}</span>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDonation(item)}
+                    className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-emerald-500/20 px-4 text-center text-[13px] font-semibold text-emerald-300 ring-1 ring-emerald-500/30 transition-colors hover:bg-emerald-500/30"
+                  >
+                    {mode === 'ngo' ? 'Review allocation' : 'View details'}
+                  </button>
+                </div>
               </div>
             </article>
           ))}
         </div>
       )}
 
+      {!isLoading && donations.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.04] px-4 py-14 text-center">
+          <Package className="mx-auto mb-4 h-14 w-14 text-zinc-300" />
+          <h3 className="text-lg font-semibold text-slate-100">No donations found</h3>
+          <p className="mx-auto mt-1 max-w-md text-sm text-slate-300">
+            Start with a community request or browse donation opportunities nearby.
+          </p>
+          <Link
+            href={buttonHref}
+            className="mt-6 inline-flex rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            {buttonLabel}
+          </Link>
+        </div>
+      )}
+
       {selectedDonation && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pb-6 pt-24 md:pt-28">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
           <button
             type="button"
             aria-label="Close donation details"
-            className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
             onClick={() => setSelectedDonation(null)}
           />
 
-          <div className="relative grid max-h-[82vh] w-full max-w-4xl overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl md:grid-cols-[0.9fr_1.1fr]">
-            <div className="relative min-h-[260px] bg-slate-900">
+          <div className="relative grid max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl overflow-hidden rounded-3xl border border-emerald-400/15 bg-zinc-950 shadow-2xl shadow-emerald-950/30 md:max-h-[82vh] md:grid-cols-[0.9fr_1.1fr]">
+            <div className="relative min-h-[220px] bg-slate-900 sm:min-h-[260px]">
               {selectedDonation.img ? (
                 <img
                   src={selectedDonation.img}
@@ -139,7 +183,7 @@ const MyDonations = ({ mode = 'user' }: MyDonationsProps) => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="grid h-full min-h-[320px] place-items-center bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-950">
+                <div className="grid h-full min-h-[260px] place-items-center bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-950">
                   <Package className="h-20 w-20 text-emerald-300/70" strokeWidth={1.5} />
                 </div>
               )}
@@ -149,13 +193,13 @@ const MyDonations = ({ mode = 'user' }: MyDonationsProps) => {
               </span>
             </div>
 
-            <div className="min-h-0 overflow-y-auto p-5 sm:p-6">
+            <div className="min-h-0 overflow-y-auto p-4 sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-300">
                     Donation details
                   </p>
-                  <h3 className="mt-2 text-2xl font-semibold tracking-tight text-white">
+                  <h3 className="mt-2 text-xl font-semibold tracking-tight text-white sm:text-2xl">
                     {selectedDonation.title}
                   </h3>
                 </div>

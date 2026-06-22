@@ -109,6 +109,26 @@ function requestMatchesQuery(request: ItemRequest, rawQuery: string) {
   return tokens.some((token) => haystack.includes(token));
 }
 
+function getRequestImageOverride(request: ItemRequest) {
+  const text = `${request.title} ${request.description} ${request.category?.name ?? ''}`.toLowerCase();
+
+  if (text.includes('winter') && (text.includes('jacket') || text.includes('children'))) {
+    return '/assets/winter jackets for children copy.png';
+  }
+
+  if (text.includes('shelter')) {
+    return '/assets/sheltered-co-breathable.png';
+  }
+
+  return null;
+}
+
+function getRequestImages(request: ItemRequest) {
+  const override = getRequestImageOverride(request);
+  if (override) return [override];
+  return getRenderableImages(request.images);
+}
+
 interface NearbyRequestsFeedProps {
   initialLat?: number;
   initialLng?: number;
@@ -367,10 +387,11 @@ export default function NearbyRequestsFeed({
   const RequestGrid = ({ items }: { items: ItemRequest[] }) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
       {items.map((request, idx) => {
-        const requestImages = getRenderableImages(request.images);
+        const requestImages = getRequestImages(request);
         const displayData = getRequestDisplayData(request);
         const displayRequest = {
           ...request,
+          images: requestImages,
           locationName: displayData.area,
           radius: displayData.radiusKm * 1000,
           createdAt: displayData.date.toISOString(),

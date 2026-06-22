@@ -4,6 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
+const campaignImages = {
+  winterWarmth: '/assets/winter-warmth-drive.png',
+  techForEducation: '/assets/tech-for-education.png',
+  foodBankRestock: '/assets/food-bank-restock.png',
+} as const;
+
 const Campaigns = () => {
   const campaigns = [
     {
@@ -14,7 +20,7 @@ const Campaigns = () => {
       progress: 75,
       goal: '1000 items',
       daysLeft: 12,
-      image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&q=80',
+      image: campaignImages.winterWarmth,
       delay: '0s'
     },
     {
@@ -25,7 +31,7 @@ const Campaigns = () => {
       progress: 40,
       goal: '500 devices',
       daysLeft: 24,
-      image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800&q=80',
+      image: campaignImages.techForEducation,
       delay: '1s'
     },
     {
@@ -36,7 +42,7 @@ const Campaigns = () => {
       progress: 90,
       goal: '2000 kg',
       daysLeft: 3,
-      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80',
+      image: campaignImages.foodBankRestock,
       delay: '2s'
     },
   ];
