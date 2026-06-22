@@ -13,7 +13,6 @@ import {
   Calendar,
   Settings,
   LogOut,
-  Bell,
   CheckCircle2,
   Users,
   Star,
@@ -27,6 +26,7 @@ import { trpc } from '@/lib/trpc';
 
 import EventsDrives from './EventsDrives';
 import SettingsView from './Settings';
+import MobileBackToTopButton from '@/components/MobileBackToTopButton';
 /** Dark canvas + black glass (blur) panels; emerald accents */
 const pageBg =
   'relative min-h-screen overflow-x-hidden bg-gradient-to-br from-zinc-950 via-neutral-950 to-black';
@@ -99,7 +99,7 @@ function Sidebar({
       initial={{ x: -72, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.35, ease: easeOut }}
-      className="fixed left-0 top-0 z-50 h-screen w-72 overflow-hidden border-r border-white/10 sm:w-80"
+      className="fixed left-0 top-0 z-50 hidden h-screen w-72 overflow-hidden border-r border-white/10 lg:block xl:w-80"
     >
       {/* Base + soft green streak (reference aesthetic) */}
       <div className="pointer-events-none absolute inset-0 bg-[#06100b]" aria-hidden />
@@ -209,10 +209,8 @@ function TopBar() {
   const { data: session } = useSession();
   const user = session?.user;
 
-  const [showNotifications, setShowNotifications] = useState(false);
-
   return (
-    <header className="fixed left-72 right-0 top-0 z-40 h-[6rem] overflow-hidden sm:left-80">
+    <header className="fixed left-0 right-0 top-0 z-40 h-[5rem] overflow-hidden lg:left-72 lg:h-[6rem] xl:left-80">
       {/* Synth grid + stars background */}
       <div className="pointer-events-none absolute inset-0 bg-black" aria-hidden />
       <div
@@ -234,23 +232,27 @@ function TopBar() {
         aria-hidden
       />
 
-      <div className="relative z-10 flex h-full items-center justify-between gap-4 px-4 sm:px-8">
+      <div className="relative z-10 flex h-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-semibold tracking-tight text-white drop-shadow-[0_1px_12px_rgba(0,0,0,0.85)] sm:text-xl">
+          <h2 className="truncate text-base font-semibold tracking-tight text-white drop-shadow-[0_1px_12px_rgba(0,0,0,0.85)] sm:text-lg lg:text-xl">
             Welcome to ShareSpace
           </h2>
-          <p className="mt-0.5 truncate text-sm text-emerald-100/70 drop-shadow-[0_1px_8px_rgba(0,0,0,0.8)]">
+          <p className="mt-0.5 hidden truncate text-sm text-emerald-100/70 drop-shadow-[0_1px_8px_rgba(0,0,0,0.8)] sm:block">
             Connect, give locally, and request what you need.
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <Link
             href="/requests"
-            className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-600 px-4 h-10 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-700 hover:scale-105 active:scale-95"
+            title="Post Request"
+            className="group relative flex h-10 items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-600 px-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 hover:bg-emerald-700 active:scale-95 sm:px-4"
           >
             <Plus className="h-4 w-4" strokeWidth={2.5} />
-            Post Request
+            <span className="hidden sm:inline">Post Request</span>
+            <span className="pointer-events-none absolute right-0 top-[calc(100%+0.5rem)] z-[80] whitespace-nowrap rounded-full border border-white/10 bg-black/90 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-xl backdrop-blur-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 sm:hidden">
+              Post Request
+            </span>
           </Link>
           
           <Link
@@ -263,12 +265,16 @@ function TopBar() {
 
           <Link
             href="/explore"
-            className="group flex sm:hidden items-center justify-center h-10 w-10 rounded-full border border-teal-500/20 bg-teal-900/40 text-teal-100/90 shadow-sm backdrop-blur-md transition-all hover:border-teal-400/45 hover:bg-teal-500/20 hover:text-white hover:shadow-lg hover:shadow-teal-500/20"
+            title="Explore NGOs"
+            className="group relative flex h-10 w-10 items-center justify-center rounded-full border border-teal-500/20 bg-teal-900/40 text-teal-100/90 shadow-sm backdrop-blur-md transition-all hover:border-teal-400/45 hover:bg-teal-500/20 hover:text-white hover:shadow-lg hover:shadow-teal-500/20 sm:hidden"
             aria-label="Explore NGOs"
           >
             {/* Glow effect */}
             <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-60 blur-lg bg-teal-500/40 transition-opacity" />
             <Search className="h-[1.15rem] w-[1.15rem] relative z-[1]" strokeWidth={1.75} />
+            <span className="pointer-events-none absolute right-0 top-[calc(100%+0.5rem)] z-[80] whitespace-nowrap rounded-full border border-white/10 bg-black/90 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-xl backdrop-blur-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              Explore NGOs
+            </span>
           </Link>
 
           <Link
@@ -281,42 +287,17 @@ function TopBar() {
           
           <Link
             href="/"
-            className="group flex sm:hidden items-center justify-center h-10 w-10 rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white hover:shadow-lg hover:shadow-emerald-500/20"
+            title="Back Home"
+            className="group relative flex h-10 w-10 items-center justify-center rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white hover:shadow-lg hover:shadow-emerald-500/20 sm:hidden"
             aria-label="Back Home"
           >
             <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-60 blur-lg bg-emerald-500/40 transition-opacity" />
             <Globe className="h-[1.15rem] w-[1.15rem] relative z-[1]" strokeWidth={1.75} />
+            <span className="pointer-events-none absolute right-0 top-[calc(100%+0.5rem)] z-[80] whitespace-nowrap rounded-full border border-white/10 bg-black/90 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-xl backdrop-blur-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              Back Home
+            </span>
           </Link>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-emerald-500/20 bg-black/40 text-emerald-100/90 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400/45 hover:bg-emerald-500/10 hover:text-white"
-              aria-label="Notifications"
-            >
-              <Bell className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.75} />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] ring-2 ring-black/60" />
-            </button>
-
-            <AnimatePresence>
-              {showNotifications && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 top-12 mt-2 w-80 rounded-2xl border border-emerald-500/20 bg-black/90 p-4 shadow-2xl backdrop-blur-xl"
-                >
-                  <h3 className="mb-3 text-sm font-semibold text-white">Notifications</h3>
-                  <div className="flex flex-col gap-2 rounded-xl bg-white/5 p-4 text-center">
-                    <p className="text-sm text-zinc-300">You&apos;re all caught up!</p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="relative">
+          <div className="group relative" title="Profile">
             <div
               className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-emerald-500/25 bg-black/40 shadow-sm backdrop-blur-md"
               aria-label="Profile"
@@ -328,6 +309,9 @@ function TopBar() {
                 referrerPolicy="no-referrer"
               />
             </div>
+            <span className="pointer-events-none absolute right-0 top-[calc(100%+0.5rem)] z-[80] whitespace-nowrap rounded-full border border-white/10 bg-black/90 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-xl backdrop-blur-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+              Profile
+            </span>
           </div>
         </div>
       </div>
@@ -409,6 +393,53 @@ function TopBar() {
   );
 }
 
+function MobileDashboardNav({
+  active,
+  setActive,
+}: {
+  active: SectionId;
+  setActive: (id: SectionId) => void;
+}) {
+  const navItems: { id: SectionId; label: string; icon: typeof Home }[] = [
+    { id: 'dashboard', label: 'Home', icon: Home },
+    { id: 'donations', label: 'Donations', icon: Gift },
+    { id: 'requests', label: 'Requests', icon: ShoppingBag },
+    { id: 'messages', label: 'Messages', icon: MessageCircle },
+    { id: 'events', label: 'Events', icon: Calendar },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+
+  return (
+    <nav className="fixed inset-x-3 bottom-3 z-50 rounded-2xl border border-white/10 bg-black/75 p-2 shadow-2xl shadow-black/50 backdrop-blur-2xl lg:hidden">
+      <div className="grid grid-cols-6 gap-1">
+        {navItems.map((item) => {
+          const isActive = active === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setActive(item.id)}
+              title={item.label}
+              aria-label={item.label}
+              className={`group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 text-[10px] font-semibold transition-colors ${
+                isActive
+                  ? 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/30'
+                  : 'text-zinc-400 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <item.icon className="h-4 w-4" strokeWidth={1.8} />
+              <span className="max-w-full truncate">{item.label}</span>
+              <span className="pointer-events-none absolute bottom-[calc(100%+0.55rem)] left-1/2 z-[80] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/10 bg-black/90 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-xl backdrop-blur-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
 function DashboardHome() {
   const dashboardStats = trpc.item.getDashboardStats.useQuery(undefined, {
     refetchOnWindowFocus: true,
@@ -459,21 +490,21 @@ function DashboardHome() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {stats.map((s, i) => (
           <motion.div
             key={s.label}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05, ...tPage }}
-            className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-300/10 to-blue-400/10 p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-[24px] transition-all hover:from-slate-300/15 hover:to-blue-400/15 hover:border-blue-400/30 group"
+            className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-300/10 to-blue-400/10 p-3.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] backdrop-blur-[24px] transition-all hover:border-blue-400/30 hover:from-slate-300/15 hover:to-blue-400/15 sm:p-6"
           >
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-300/10 border border-blue-300/30 text-blue-200 shadow-md group-hover:shadow-lg group-hover:shadow-blue-500/20 transition-shadow">
-              <s.icon className="h-5 w-5" strokeWidth={1.75} />
+            <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-xl border border-blue-300/30 bg-blue-300/10 text-blue-200 shadow-md transition-shadow group-hover:shadow-lg group-hover:shadow-blue-500/20 sm:mb-4 sm:h-10 sm:w-10">
+              <s.icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.75} />
             </div>
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-300 drop-shadow-md">{s.label}</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-white drop-shadow-lg">{s.value}</p>
-            <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-white/10">
+            <p className="line-clamp-2 min-h-[2rem] text-[10px] font-medium uppercase leading-4 tracking-wide text-zinc-300 drop-shadow-md sm:min-h-0 sm:text-xs">{s.label}</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-white drop-shadow-lg sm:text-2xl">{s.value}</p>
+            <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10 sm:mt-4">
               <div className={`h-full w-3/4 rounded-full ${s.bar}`} />
             </div>
           </motion.div>
@@ -537,7 +568,7 @@ export default function PremiumDashboard() {
       <Sidebar active={active} setActive={setActive} />
       <TopBar />
 
-      <main className="ml-72 max-w-[1680px] px-4 pb-12 pt-[5.75rem] sm:ml-80 sm:px-8">
+      <main className="mx-auto max-w-[1680px] px-4 pb-28 pt-[5rem] sm:px-6 lg:ml-72 lg:px-8 lg:pb-12 lg:pt-[5.75rem] xl:ml-80">
         <AnimatePresence mode="wait">
           {active === 'dashboard' && <DashboardHome key="dashboard" />}
           {active === 'donations' && (
@@ -568,6 +599,8 @@ export default function PremiumDashboard() {
           )}
         </AnimatePresence>
       </main>
+      <MobileDashboardNav active={active} setActive={setActive} />
+      <MobileBackToTopButton bottomClassName="bottom-24" />
     </div>
   );
 }

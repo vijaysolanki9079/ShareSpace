@@ -294,17 +294,17 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
   const selectedOtherName = selectedOther?.organizationName || selectedOther?.fullName || 'Chat';
 
   return (
-    <div className="flex h-[min(720px,calc(100vh-11rem))] min-h-[560px] bg-white rounded-[1.5rem] shadow-xl overflow-hidden border border-gray-100">
+    <div className="flex min-h-[620px] flex-col overflow-hidden rounded-[1.25rem] border border-gray-100 bg-white shadow-xl lg:h-[min(720px,calc(100vh-11rem))] lg:min-h-[560px] lg:flex-row lg:rounded-[1.5rem]">
       {/* Sidebar */}
-      <div className="w-80 border-r border-gray-100 flex flex-col">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-xl font-black text-gray-900 mb-4">Messages</h2>
+      <div className="flex max-h-64 flex-col border-b border-gray-100 lg:max-h-none lg:w-80 lg:border-b-0 lg:border-r">
+        <div className="border-b border-gray-100 p-4 sm:p-6">
+          <h2 className="mb-3 text-lg font-black text-gray-900 sm:mb-4 sm:text-xl">Messages</h2>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input 
               type="text" 
               placeholder="Search chats..."
-              className="w-full bg-gray-50 border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 transition-all"
+              className="w-full rounded-xl border-none bg-gray-50 py-2 pl-10 pr-4 text-sm transition-all focus:ring-2 focus:ring-emerald-500"
             />
           </div>
         </div>
@@ -322,12 +322,12 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
                    setEmojiOpen(false);
                    setUserSelectedChat(conv.id);
                  }}
-                 className={`w-full p-4 flex items-center gap-4 hover:bg-emerald-50 transition-colors ${selectedChat === conv.id ? 'bg-emerald-50' : ''}`}
+                 className={`flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-emerald-50 sm:gap-4 sm:p-4 ${selectedChat === conv.id ? 'bg-emerald-50' : ''}`}
                >
-                 <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 font-bold">
+                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 font-bold text-emerald-600 sm:h-12 sm:w-12">
                    {otherName.charAt(0)}
                  </div>
-                 <div className="flex-1 text-left">
+                 <div className="min-w-0 flex-1">
                    <p className="font-bold text-gray-900 text-sm">{otherName}</p>
                    <p className="text-xs text-gray-400 truncate">
                      {conv.itemRequest?.title || (latestMessage ? 'Latest message available' : 'Tap to see messages')}
@@ -340,7 +340,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-gray-50/30">
+      <div className="flex min-h-[420px] flex-1 flex-col bg-gray-50/30">
         {!isUnlocked ? (
           <div className="flex flex-1 items-center justify-center overflow-y-auto p-6">
             <ChatSecurityShield>
@@ -349,17 +349,17 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
           </div>
         ) : selectedChat ? (
           <>
-            <div className="p-4 bg-white border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-xs font-bold">
+            <div className="flex items-center justify-between border-b border-gray-100 bg-white p-3 sm:p-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-xs font-bold text-white sm:h-10 sm:w-10">
                    {selectedOtherName.charAt(0)}
                 </div>
-                <div>
-                   <p className="font-black text-gray-900 text-sm">
+                <div className="min-w-0">
+                   <p className="truncate text-sm font-black text-gray-900">
                       {selectedOtherName}
                    </p>
                    {selectedConversation?.itemRequest?.title && (
-                     <p className="text-[11px] text-gray-400 font-semibold">
+                     <p className="truncate text-[11px] font-semibold text-gray-400">
                        {selectedConversation.itemRequest.title}
                      </p>
                    )}
@@ -369,7 +369,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
                    </div>
                 </div>
               </div>
-              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+              <button className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600">
                 <MoreVertical size={20} />
               </button>
             </div>
@@ -382,7 +382,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
               
               if (isInitiator) {
                 return (
-                  <div className="bg-amber-50 p-4 border-b border-amber-100 flex items-center justify-between">
+                  <div className="flex items-center justify-between border-b border-amber-100 bg-amber-50 p-3 sm:p-4">
                     <div className="flex items-center gap-3">
                       <Clock className="text-amber-600 animate-pulse" size={20} />
                       <div>
@@ -395,7 +395,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
               }
 
               return (
-                <div className="bg-emerald-50 p-4 border-b border-emerald-100 flex items-center justify-between">
+                <div className="flex flex-col gap-3 border-b border-emerald-100 bg-emerald-50 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
                   <div className="flex items-center gap-3">
                     <ShieldAlert className="text-emerald-600" size={20} />
                     <div>
@@ -403,7 +403,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
                       <p className="text-xs text-gray-500">Accept this request to enable secure end-to-end encryption.</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 sm:shrink-0">
                     <button 
                       onClick={async () => {
                         await acceptConversationMutation.mutateAsync({ conversationId: selectedChat });
@@ -426,7 +426,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
               <div
                 ref={scrollAreaRef}
                 onScroll={handleMessageScroll}
-                className="h-full overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+                className="h-full space-y-3 overflow-y-auto p-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 sm:space-y-4 sm:p-6"
               >
                 {decryptedMessages.map((msg: any) => (
                   <div key={msg.id} className={`flex ${msg.isSystem ? 'justify-center' : msg.senderId === userId ? 'justify-end' : 'justify-start'}`}>
@@ -435,7 +435,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
                         {msg.content}
                       </div>
                     ) : (
-                      <div className={`max-w-[70%] p-4 rounded-[1.5rem] shadow-sm text-sm font-medium ${
+                      <div className={`max-w-[86%] rounded-[1.25rem] p-3 text-sm font-medium shadow-sm sm:max-w-[70%] sm:rounded-[1.5rem] sm:p-4 ${
                         msg.senderId === userId 
                           ? 'bg-emerald-600 text-white rounded-tr-none' 
                           : msg.failed
@@ -464,7 +464,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
                 <button
                   type="button"
                   onClick={() => scrollToLatest()}
-                  className="absolute bottom-4 right-5 flex h-10 items-center gap-2 rounded-full border border-emerald-100 bg-white px-3 text-xs font-black uppercase tracking-wider text-emerald-700 shadow-xl shadow-emerald-900/10 transition-all hover:-translate-y-0.5 hover:bg-emerald-50"
+                  className="absolute bottom-3 right-3 flex h-9 items-center gap-2 rounded-full border border-emerald-100 bg-white px-3 text-xs font-black uppercase tracking-wider text-emerald-700 shadow-xl shadow-emerald-900/10 transition-all hover:-translate-y-0.5 hover:bg-emerald-50 sm:bottom-4 sm:right-5 sm:h-10"
                   aria-label="Jump to latest message"
                 >
                   Latest
@@ -473,7 +473,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
               )}
             </div>
 
-            <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100">
+            <form onSubmit={handleSendMessage} className="border-t border-gray-100 bg-white p-3 sm:p-4">
               <div className="relative">
                 {(() => {
                   const conv = conversationsQuery.data?.find((c: any) => c.id === selectedChat);
@@ -485,7 +485,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
                   return (
                     <>
                       {emojiOpen && !disabled && (
-                        <div className="absolute bottom-[calc(100%+0.6rem)] left-0 z-20 w-full max-w-md rounded-2xl border border-gray-100 bg-white p-3 shadow-2xl shadow-gray-200/70">
+                        <div className="absolute bottom-[calc(100%+0.6rem)] left-0 z-20 w-full rounded-2xl border border-gray-100 bg-white p-3 shadow-2xl shadow-gray-200/70 sm:max-w-md">
                           <div className="mb-2 flex items-center justify-between">
                             <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">Quick emojis</p>
                             <button
@@ -497,7 +497,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
                               <X size={14} />
                             </button>
                           </div>
-                          <div className="grid grid-cols-10 gap-1.5">
+                          <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-10">
                             {PROJECT_EMOJIS.map((emoji) => (
                               <button
                                 key={emoji}
@@ -535,7 +535,7 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
                                 ? 'Unlock secure chat to send...'
                                 : 'Type a secure message...'
                         }
-                        className={`w-full bg-gray-50 border-none rounded-2xl pl-12 pr-12 py-4 text-sm focus:ring-2 focus:ring-emerald-500 transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`w-full rounded-2xl border-none bg-gray-50 py-3.5 pl-12 pr-12 text-sm transition-all focus:ring-2 focus:ring-emerald-500 sm:py-4 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
                       />
                       <button 
                         type="submit"
@@ -551,8 +551,8 @@ const MessagesContent = ({ mode: _mode = 'user', initialSelectedChat }: Messages
             </form>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
-            <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-emerald-600 mb-6 shadow-inner border border-emerald-100">
+          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center sm:p-12">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl border border-emerald-100 bg-emerald-50 text-emerald-600 shadow-inner sm:mb-6 sm:h-20 sm:w-20">
               <MessageSquare size={32} />
             </div>
             <h3 className="text-xl font-black text-gray-900 mb-2">Select a Conversation</h3>

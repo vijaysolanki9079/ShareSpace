@@ -45,8 +45,8 @@ const RecentDonations = () => {
       
       {/* STRONG MESH GRADIENT BG */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-emerald-100/60 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-sky-100/60 rounded-full blur-[120px]" />
+        <div className="absolute right-[-40%] top-[-10%] h-[360px] w-[360px] rounded-full bg-emerald-100/60 blur-[100px] sm:right-[-5%] sm:h-[600px] sm:w-[600px] sm:blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[-40%] h-[360px] w-[360px] rounded-full bg-sky-100/60 blur-[100px] sm:left-[-5%] sm:h-[600px] sm:w-[600px] sm:blur-[120px]" />
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
@@ -73,7 +73,7 @@ const RecentDonations = () => {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="text-4xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight"
+            className="mb-6 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl md:text-6xl"
           >
             Just Donated <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-sky-600">Nearby</span>
           </motion.h2>
@@ -95,7 +95,7 @@ const RecentDonations = () => {
             return (
               <div 
                 key={donation.id}
-                className="group relative bg-white rounded-[2.5rem] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-white hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] transition-all duration-500"
+                className="group relative rounded-3xl border border-white bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_40px_80px_rgba(0,0,0,0.08)] sm:rounded-[2.5rem] sm:p-4"
                 style={{
                   // FIXED: Broken down shorthand to avoid React Conflict Error
                   animationName: 'float-donation',
@@ -106,7 +106,7 @@ const RecentDonations = () => {
                 }}
               >
                 {/* Image Section */}
-                <div className="relative h-64 rounded-[2rem] overflow-hidden shadow-inner bg-slate-100">
+                <div className="relative h-56 overflow-hidden rounded-2xl bg-slate-100 shadow-inner sm:h-64 sm:rounded-[2rem]">
                   <img 
                     src={donation.image} 
                     alt={donation.item}
@@ -116,7 +116,7 @@ const RecentDonations = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
 
                   {/* NGO Glass Badge */}
-                  <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-black text-slate-900 border border-white/40 shadow-sm flex items-center gap-2">
+                  <div className="absolute right-3 top-3 flex max-w-[calc(100%-1.5rem)] items-center gap-1.5 rounded-xl border border-white/40 bg-white/80 px-3 py-2 text-[9px] font-black text-slate-900 shadow-sm backdrop-blur-md sm:right-4 sm:top-4 sm:gap-2 sm:px-4 sm:text-[10px]">
                      <MapPin className="w-3 h-3 text-emerald-600" />
                      TO: {donation.ngo.toUpperCase()}
                   </div>
@@ -128,25 +128,25 @@ const RecentDonations = () => {
                 </div>
 
                 {/* Content Section */}
-                <div className="p-6">
-                  <h3 className="text-2xl font-black text-slate-900 mb-6 group-hover:text-emerald-600 transition-colors">
+                <div className="p-4 sm:p-6">
+                  <h3 className="mb-5 text-xl font-black text-slate-900 transition-colors group-hover:text-emerald-600 sm:mb-6 sm:text-2xl">
                     {donation.item}
                   </h3>
 
-                  <div className="flex items-center justify-between mt-auto pt-2">
+                  <div className="mt-auto flex items-center justify-between gap-3 pt-2">
                     <div className={`flex items-center gap-2 font-bold text-xs ${donation.statusColor} bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100`}>
                       <StatusIcon className="w-4 h-4" />
                       {donation.status}
                     </div>
 
-                    <button className="flex items-center gap-1.5 text-slate-400 font-bold text-xs hover:text-emerald-600 transition-colors uppercase tracking-widest">
+                    <button className="flex shrink-0 items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400 transition-colors hover:text-emerald-600">
                       Details <ArrowUpRight className="w-4 h-4" />
                     </button>
                   </div>
 
                   <Link
                     href={`/requests?search=${encodeURIComponent(donation.item)}`}
-                    className="block w-full mt-6 py-4 bg-slate-50 hover:bg-emerald-600 hover:text-white text-center text-slate-600 font-bold rounded-2xl transition-all duration-300 border border-slate-100 group-hover:border-emerald-600"
+                    className="mt-5 block w-full rounded-2xl border border-slate-100 bg-slate-50 py-3.5 text-center text-sm font-bold text-slate-600 transition-all duration-300 hover:bg-emerald-600 hover:text-white group-hover:border-emerald-600 sm:mt-6 sm:py-4 sm:text-base"
                   >
                     Request Item
                   </Link>

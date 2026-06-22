@@ -43,17 +43,17 @@ const Campaigns = () => {
 
   return (
     // ADJUSTED: pt-12 reduces the gap from the component above
-    <section className="pt-12 pb-12 scroll-mt-20 relative bg-[#F8FAFC] overflow-hidden" id="campaigns">
+    <section className="relative scroll-mt-20 overflow-hidden bg-[#F8FAFC] pb-12 pt-12" id="campaigns">
       
       {/* Background Glows */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-[-10%] w-96 h-96 bg-emerald-200/30 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-20 right-[-5%] w-[500px] h-[500px] bg-sky-200/20 rounded-full blur-[150px]"></div>
+        <div className="absolute left-[-40%] top-20 h-72 w-72 rounded-full bg-emerald-200/30 blur-[100px] sm:left-[-10%] sm:h-96 sm:w-96 sm:blur-[120px]"></div>
+        <div className="absolute bottom-20 right-[-45%] h-80 w-80 rounded-full bg-sky-200/20 blur-[110px] sm:right-[-5%] sm:h-[500px] sm:w-[500px] sm:blur-[150px]"></div>
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+        <div className="mb-12 flex flex-col items-start justify-between gap-6 md:mb-16 md:flex-row md:items-end md:gap-8">
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -75,7 +75,7 @@ const Campaigns = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="text-4xl md:text-6xl font-black text-slate-900 mb-4 tracking-tight"
+              className="mb-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl md:text-6xl"
             >
               Urgent <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-sky-600">Campaigns</span>
             </motion.h2>
@@ -98,7 +98,7 @@ const Campaigns = () => {
           >
             <Link 
               href="/explore"
-              className="group relative px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-3 overflow-hidden"
+              className="group relative flex items-center gap-3 overflow-hidden rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-900 shadow-xl shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl sm:px-8 sm:py-4 sm:text-base"
             >
               <span className="relative z-10">View all campaigns</span>
               <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" strokeWidth={1.75} />
@@ -112,7 +112,7 @@ const Campaigns = () => {
           {campaigns.map((campaign) => (
             <div 
               key={campaign.id}
-              className="relative group bg-white rounded-[2.5rem] border border-white p-3 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] transition-all duration-500"
+              className="group relative rounded-3xl border border-white bg-white p-3 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] transition-all duration-500 sm:rounded-[2.5rem]"
               style={{
                 // FIXED: Individual properties to prevent the "conflicting property" Console Error
                 animationName: 'float-campaign',
@@ -123,7 +123,7 @@ const Campaigns = () => {
               }}
             >
               {/* Image Container */}
-              <div className="relative h-64 w-full rounded-[2rem] overflow-hidden">
+              <div className="relative h-56 w-full overflow-hidden rounded-2xl sm:h-64 sm:rounded-[2rem]">
                 <Image 
                   src={campaign.image} 
                   alt={campaign.title}
@@ -132,20 +132,20 @@ const Campaigns = () => {
                   className="object-cover group-hover:scale-110 transition-transform duration-1000"
                 />
                 
-                <div className="absolute top-4 right-4 bg-white/70 backdrop-blur-md px-4 py-2 rounded-2xl text-[10px] font-black text-slate-900 shadow-lg border border-white/40 flex items-center gap-2">
+                <div className="absolute right-3 top-3 flex items-center gap-2 rounded-2xl border border-white/40 bg-white/70 px-3 py-2 text-[9px] font-black text-slate-900 shadow-lg backdrop-blur-md sm:right-4 sm:top-4 sm:px-4 sm:text-[10px]">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                   {campaign.daysLeft} DAYS LEFT
                 </div>
               </div>
 
               {/* Text Content */}
-              <div className="p-8">
+              <div className="p-5 sm:p-8">
                 <div className="flex items-center gap-2 mb-4">
                   <Users className="w-4 h-4 text-emerald-500" />
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{campaign.ngo}</span>
                 </div>
                 
-                <h3 className="text-2xl font-black text-slate-900 mb-4 group-hover:text-emerald-600 transition-colors">
+                <h3 className="mb-4 text-xl font-black text-slate-900 transition-colors group-hover:text-emerald-600 sm:text-2xl">
                   {campaign.title}
                 </h3>
                 
@@ -154,7 +154,7 @@ const Campaigns = () => {
                 </p>
 
                 {/* Progress Box */}
-                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100/50">
+                <div className="rounded-3xl border border-slate-100/50 bg-slate-50 p-5 sm:p-6">
                   <div className="flex justify-between items-end mb-4">
                     <div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Impact</div>

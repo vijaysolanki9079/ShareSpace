@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 const CTA = () => {
   return (
-    <section className="py-24 bg-gradient-to-br from-emerald-900 to-emerald-800 text-white overflow-hidden">
+    <section className="relative overflow-hidden bg-gradient-to-br from-emerald-900 to-emerald-800 py-20 text-white sm:py-24">
       <div className="container mx-auto px-6 relative z-10">
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
@@ -20,7 +20,7 @@ const CTA = () => {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-4xl md:text-5xl font-bold mb-6"
+            className="mb-6 text-3xl font-bold sm:text-4xl md:text-5xl"
           >
             Ready to Make a <span className="text-emerald-400">Difference?</span>
           </motion.h2>
@@ -43,13 +43,13 @@ const CTA = () => {
           >
             <Link
               href="/signup"
-              className="w-full sm:w-auto px-8 py-3.5 bg-emerald-500 text-white font-medium text-base rounded-full hover:bg-emerald-400 border border-emerald-500 transition-all shadow-lg hover:shadow-emerald-500/30 hover:-translate-y-1 transform duration-300"
+            className="w-full rounded-full border border-emerald-500 bg-emerald-500 px-5 py-3 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-emerald-400 hover:shadow-emerald-500/30 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
             >
               Create Free Account
             </Link>
             <Link
               href="/register-ngo"
-              className="w-full sm:w-auto px-8 py-3.5 bg-transparent border-2 border-white/30 text-white font-medium text-base rounded-full hover:bg-white/10 transition-colors hover:-translate-y-1 transform duration-300"
+              className="w-full rounded-full border-2 border-white/30 bg-transparent px-5 py-3 text-sm font-medium text-white transition-colors duration-300 hover:-translate-y-1 hover:bg-white/10 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
             >
               Register as NGO
             </Link>

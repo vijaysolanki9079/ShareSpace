@@ -176,7 +176,7 @@ const Hero = () => {
   });
 
   return (
-    <section ref={heroRef} className="relative bg-slate-500 min-h-[850px] flex items-center justify-center text-white overflow-hidden">
+    <section ref={heroRef} className="relative flex min-h-[760px] items-center justify-center overflow-hidden bg-slate-500 text-white sm:min-h-[850px]">
 
       {/* Animation Canvas Container */}
       <div
@@ -209,14 +209,14 @@ const Hero = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative z-10 max-w-3xl mx-auto px-6 text-center pt-24 pb-12"
+        className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-10 pt-24 text-center sm:px-6 sm:pb-12"
       >
         {/* Eyebrow */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 0.8, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="uppercase tracking-[0.2em] text-xs font-semibold mb-6 drop-shadow-md"
+          className="mb-5 text-xs font-semibold uppercase tracking-[0.16em] drop-shadow-md sm:mb-6 sm:tracking-[0.2em]"
         >
           Experience
         </motion.div>
@@ -226,10 +226,9 @@ const Hero = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-6xl md:text-7xl font-bold leading-tight mb-6 tracking-[0.15em]"
+          className="mb-5 text-4xl font-bold leading-tight tracking-[0.06em] sm:text-5xl sm:tracking-[0.1em] md:mb-6 md:text-7xl"
           style={{
             textShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-            letterSpacing: '0.1em',
             fontWeight: 700
           }}
         >
@@ -241,7 +240,7 @@ const Hero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 md:p-6 mb-8 max-w-xl mx-auto text-center shadow-2xl overflow-hidden flex flex-col items-center"
+          className="relative mx-auto mb-7 flex max-w-xl flex-col items-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 text-center shadow-2xl backdrop-blur-sm md:mb-8 md:p-6"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
           
@@ -302,12 +301,12 @@ const Hero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="flex flex-wrap gap-4 justify-center items-center"
+          className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap sm:gap-4"
         >
           <Link
             href="/donations"
             onClick={handleDonateClick}
-            className="group relative px-8 py-3.5 font-semibold rounded-xl overflow-hidden min-w-[200px] transition-transform hover:scale-105 active:scale-95 shadow-xl shadow-emerald-900/40"
+            className="group relative w-full max-w-[18rem] overflow-hidden rounded-xl px-5 py-3 text-sm font-semibold shadow-xl shadow-emerald-900/40 transition-transform hover:scale-105 active:scale-95 sm:w-auto sm:min-w-[200px] sm:px-8 sm:py-3.5 sm:text-base"
             style={{ fontWeight: 600 }}
           >
             {/* Background */}
@@ -332,7 +331,7 @@ const Hero = () => {
           <Link
             href="/requests"
             onClick={handleRequestClick}
-            className="group relative px-8 py-3.5 font-semibold rounded-xl overflow-hidden min-w-[200px] transition-transform hover:scale-105 active:scale-95 bg-white/10 backdrop-blur-md border border-white/20 shadow-xl"
+            className="group relative w-full max-w-[18rem] overflow-hidden rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold shadow-xl backdrop-blur-md transition-transform hover:scale-105 active:scale-95 sm:w-auto sm:min-w-[200px] sm:px-8 sm:py-3.5 sm:text-base"
             style={{ fontWeight: 600 }}
           >
             <span className="relative z-10 text-white flex items-center justify-center gap-2">
@@ -352,7 +351,7 @@ const Hero = () => {
         >
           <Link
             href="/register-ngo"
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-900/80 border border-emerald-500/50 text-emerald-400 font-semibold text-sm rounded-full hover:bg-gray-900 hover:border-emerald-400 transition-all"
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-500/50 bg-gray-900/80 px-4 py-2 text-xs font-semibold text-emerald-400 transition-all hover:border-emerald-400 hover:bg-gray-900 sm:px-6 sm:py-2.5 sm:text-sm"
             style={{ fontWeight: 600 }}
           >
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>

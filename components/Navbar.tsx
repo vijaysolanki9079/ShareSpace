@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { signOut } from 'next-auth/react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import LoginDropdown from '@/components/LoginDropdown';
 
 type NavbarProps = {
@@ -16,7 +16,19 @@ type NavbarProps = {
 };
 
 const navPillBase =
-  'hidden md:flex items-center gap-1 rounded-full border px-2 py-1.5 backdrop-blur-md shadow-sm';
+  'hidden lg:flex items-center gap-1 rounded-full border px-2 py-1.5 backdrop-blur-md shadow-sm';
+
+function getNavItems(pathname: string | null) {
+  const howItWorksHref = pathname === '/' ? '#how-it-works' : '/#how-it-works';
+
+  return [
+    { href: '/explore', label: 'Explore NGOs' },
+    { href: '/donations', label: 'Donations' },
+    { href: '/requests', label: 'Requests' },
+    { href: howItWorksHref, label: 'How It Works' },
+    { href: '/about', label: 'About' },
+  ];
+}
 
 function NavLinksGroup({
   isLight,
@@ -28,14 +40,7 @@ function NavLinksGroup({
   isDarkBg?: boolean;
 }) {
   const pathname = usePathname();
-  const howItWorksHref = pathname === '/' ? '#how-it-works' : '/#how-it-works';
-  const navItems = [
-    { href: '/explore', label: 'Explore NGOs' },
-    { href: '/donations', label: 'Donations' },
-    { href: '/requests', label: 'Requests' },
-    { href: howItWorksHref, label: 'How It Works' },
-    { href: '/about', label: 'About' },
-  ];
+  const navItems = getNavItems(pathname);
 
   const isActive = (item: { href: string; activePath?: string }) => {
     const activePath = item.activePath ?? item.href;
@@ -216,14 +221,14 @@ function GuestAuthPills({
   // For dark backgrounds
   if (isDarkBg) {
     const shell =
-      'flex items-center gap-2 rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur-md shadow-sm';
+      'flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur-md shadow-sm sm:gap-2';
 
     return (
       <div className={shell}>
-        <LoginDropdown isDarkBg={true} />
+        <LoginDropdown isDarkBg={true} className="px-3 py-1.5 text-xs sm:px-5 sm:py-2 sm:text-sm" />
         <Link
           href="/signup"
-          className="rounded-full px-5 py-2 text-sm font-medium transition-colors text-white bg-emerald-600 hover:bg-emerald-700"
+          className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700 sm:px-5 sm:py-2 sm:text-sm"
         >
           Register
         </Link>
@@ -234,15 +239,15 @@ function GuestAuthPills({
   // For light backgrounds
   const shell =
     isLight
-      ? 'flex items-center gap-2 rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur-md shadow-sm'
-      : 'flex items-center gap-2 rounded-full border border-slate-900/10 bg-slate-900/[0.04] p-1 backdrop-blur-md shadow-sm';
+      ? 'flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur-md shadow-sm sm:gap-2'
+      : 'flex items-center gap-1.5 rounded-full border border-slate-900/10 bg-slate-900/[0.04] p-1 backdrop-blur-md shadow-sm sm:gap-2';
 
   return (
     <div className={shell}>
-      <LoginDropdown isLight={isLight} />
+      <LoginDropdown isLight={isLight} className="px-3 py-1.5 text-xs sm:px-5 sm:py-2 sm:text-sm" />
       <Link
         href="/signup"
-        className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${signupBtn}`}
+        className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:px-5 sm:py-2 sm:text-sm ${signupBtn}`}
       >
         Register
       </Link>
@@ -263,6 +268,9 @@ const Navbar = ({
   const signupBtn = isDarkBg || isLight ? 'text-white bg-emerald-600 hover:bg-emerald-700' : 'text-white bg-emerald-600 hover:bg-emerald-700';
 
   const { user, isAuthenticated } = useAuth();
+  const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navItems = getNavItems(pathname);
 
   const handleLogout = async () => {
     await signOut({ redirect: true, callbackUrl: '/' });
@@ -272,7 +280,7 @@ const Navbar = ({
 
   return (
     <nav className={`${className} ${background}`}>
-      <div className="container mx-auto flex items-center justify-between px-6 py-5">
+      <div className="container relative mx-auto flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-5">
         <Link href="/" className="group flex shrink-0 items-center gap-3">
           <div className="flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
             <Image
@@ -280,11 +288,11 @@ const Navbar = ({
               alt="ShareSpace Logo"
               width={40}
               height={40}
-              className="w-10 h-10 mb-1.5"
+              className="mb-1 h-8 w-8 sm:mb-1.5 sm:h-10 sm:w-10"
             />
           </div>
           <span
-            className={`text-xl font-extrabold tracking-tight drop-shadow-sm transition-opacity group-hover:opacity-90 ${textColor}`}
+            className={`text-base font-extrabold tracking-tight drop-shadow-sm transition-opacity group-hover:opacity-90 sm:text-xl ${textColor}`}
           >
             ShareSpace
           </span>
@@ -292,7 +300,7 @@ const Navbar = ({
 
         <NavLinksGroup isLight={isLight} secondaryTextColor={secondaryTextColor} isDarkBg={isDarkBg} />
 
-        <div className="flex shrink-0 items-center gap-3 md:min-w-0">
+        <div className="hidden shrink-0 items-center gap-3 lg:flex lg:min-w-0">
           {!isAuthenticated || !user ? (
             <GuestAuthPills isLight={isLight} signupBtn={signupBtn} isDarkBg={isDarkBg} />
           ) : (
@@ -306,6 +314,90 @@ const Navbar = ({
             />
           )}
         </div>
+
+        <button
+          type="button"
+          className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border backdrop-blur-md transition-colors lg:hidden ${
+            isDarkBg || isLight
+              ? 'border-white/20 bg-white/10 text-white hover:bg-white/15'
+              : 'border-slate-900/10 bg-white/80 text-slate-900 hover:bg-white'
+          }`}
+          onClick={() => setMobileMenuOpen((value) => !value)}
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileMenuOpen}
+        >
+          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+
+        {mobileMenuOpen && (
+          <div
+            className={`absolute left-4 right-4 top-[calc(100%+0.5rem)] z-[100] overflow-hidden rounded-2xl border p-2 shadow-2xl backdrop-blur-xl lg:hidden ${
+              isDarkBg || isLight
+                ? 'border-white/20 bg-slate-950/90 text-white'
+                : 'border-slate-200 bg-white/95 text-slate-950'
+            }`}
+          >
+            <div className="grid gap-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+                    isDarkBg || isLight ? 'hover:bg-white/10' : 'hover:bg-slate-100'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+
+            <div className={`my-2 h-px ${isDarkBg || isLight ? 'bg-white/10' : 'bg-slate-200'}`} />
+
+            {!isAuthenticated || !user ? (
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`rounded-xl px-3 py-2.5 text-center text-sm font-semibold ${
+                    isDarkBg || isLight ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-900'
+                  }`}
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-xl bg-emerald-600 px-3 py-2.5 text-center text-sm font-semibold text-white"
+                >
+                  Register
+                </Link>
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                <Link
+                  href={dashboardHref}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-xl bg-emerald-600 px-3 py-2.5 text-center text-sm font-semibold text-white"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  className={`rounded-xl px-3 py-2.5 text-sm font-semibold ${
+                    isDarkBg || isLight ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-900'
+                  }`}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                >
+                  Log out
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </nav>
   );

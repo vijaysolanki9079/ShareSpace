@@ -42,7 +42,7 @@ const About = () => {
       name: "Sarah Chen",
       role: "Co-Founder & CEO",
       bio: "Former environmental scientist passionate about waste reduction.",
-      img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400&auto=format&fit=crop",
+      img: "/images/-logo-main.png",
       accentColor: "emerald",
       glowColor: "emerald-500"
     },
@@ -50,7 +50,7 @@ const About = () => {
       name: "David Okonjo",
       role: "Head of Technology",
       bio: "Building scalable tech for social good. Open source advocate.",
-      img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop",
+      img: "/images/logo-main.png",
       accentColor: "sky",
       glowColor: "sky-500"
     },
@@ -58,7 +58,7 @@ const About = () => {
       name: "Elena Rodriguez",
       role: "Community Lead",
       bio: "Connecting NGOs with corporate partners and local donors.",
-      img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop",
+      img: "/images/logo-main-.png",
       accentColor: "purple",
       glowColor: "purple-500"
     },
@@ -66,7 +66,7 @@ const About = () => {
       name: "Amir Fayed",
       role: "Product Design",
       bio: "Crafting intuitive experiences that encourage generosity.",
-      img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop",
+      img: "/images/-logo-main.png",
       accentColor: "amber",
       glowColor: "amber-500"
     }
@@ -84,8 +84,8 @@ const About = () => {
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0 pointer-events-none">
           <img
-            src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?q=80&w=2074&auto=format&fit=crop"
-            alt="Background"
+            src="/assets/volunteer.png"
+            alt="Volunteer sharing donated items"
             className="w-full h-full object-cover opacity-50 mix-blend-luminosity"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#022c22]/60 via-[#022c22]/80 to-[#022c22]"></div>
@@ -188,8 +188,8 @@ const About = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div className="rounded-2xl overflow-hidden shadow-xl">
                   <img
-                    src="https://images.unsplash.com/photo-1593113598332-cd288d649433?q=80&w=1000&auto=format&fit=crop"
-                    alt="Volunteers"
+                    src="/assets/volunteer.png"
+                    alt="Volunteer sharing donated items"
                     loading="eager"
                     className="w-full h-[360px] md:h-[460px] object-cover hover:scale-[1.02] transition-transform duration-200"
                   />
@@ -208,15 +208,15 @@ const About = () => {
 
                   <div className="flex flex-wrap gap-10 border-t border-slate-200 pt-8">
                     <div>
-                      <h3 className="text-3xl md:text-4xl font-bold text-slate-900">2023</h3>
+                      <h3 className="text-2xl md:text-3xl font-bold text-slate-900">2023</h3>
                       <p className="text-xs md:text-sm text-emerald-600 font-semibold uppercase mt-2">Founded</p>
                     </div>
                     <div>
-                      <h3 className="text-3xl md:text-4xl font-bold text-slate-900">12</h3>
+                      <h3 className="text-2xl md:text-3xl font-bold text-slate-900">12</h3>
                       <p className="text-xs md:text-sm text-emerald-600 font-semibold uppercase mt-2">Cities Active</p>
                     </div>
                     <div>
-                      <h3 className="text-3xl md:text-4xl font-bold text-slate-900">100%</h3>
+                      <h3 className="text-2xl md:text-3xl font-bold text-slate-900">100%</h3>
                       <p className="text-xs md:text-sm text-emerald-600 font-semibold uppercase mt-2">Not-for-profit</p>
                     </div>
                   </div>

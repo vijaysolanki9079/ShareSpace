@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Footer from "@/components/Footer";
+import MobileBackToTopButton from "@/components/MobileBackToTopButton";
 import Navbar from "@/components/Navbar";
 
 function getNavbarConfigForPath(pathname: string | null) {
@@ -105,6 +106,7 @@ export default function SiteChrome({
     <div className="flex min-h-screen flex-1 flex-col">
       <Navbar {...nav} />
       <main className="w-full flex-1">{children}</main>
+      <MobileBackToTopButton />
       {!hideFooter && <Footer />}
     </div>
   );

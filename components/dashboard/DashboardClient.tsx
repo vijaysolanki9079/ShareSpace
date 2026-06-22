@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import {
   Settings,
-  Bell,
   ChevronDown,
   HeartHandshake,
   Gift,
@@ -324,10 +323,6 @@ export default function DashboardComplete() {
                   className="pl-12 pr-4 py-2 bg-gray-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              <motion.button whileHover={{ scale: 1.1 }} className="relative p-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                <Bell className="w-5 h-5 text-gray-700" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-              </motion.button>
               <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <img src="https://storage.googleapis.com/banani-avatars/avatar%2Ffemale%2F25-35%2FSouth%20Asian%2F4" alt="User" className="w-8 h-8 rounded-lg" />
                 <div className="text-sm">
