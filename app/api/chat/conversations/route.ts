@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
+import type { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-function participantName(conversation: {
-  user1: { id: string; fullName: string } | null;
-  user2: { id: string; fullName: string } | null;
-  ngo1: { id: string; organizationName: string } | null;
-  ngo2: { id: string; organizationName: string } | null;
-}, currentUserId: string) {
+type ConversationListItem = Prisma.ConversationGetPayload<{
+  include: {
+    user1: { select: { id: true; fullName: true } };
+    user2: { select: { id: true; fullName: true } };
+    ngo1: { select: { id: true; organizationName: true } };
+    ngo2: { select: { id: true; organizationName: true } };
+  };
+}>;
+
+function participantName(conversation: ConversationListItem, currentUserId: string) {
   const participants = [
     conversation.user1 ? { id: conversation.user1.id, name: conversation.user1.fullName } : null,
     conversation.user2 ? { id: conversation.user2.id, name: conversation.user2.fullName } : null,
@@ -45,7 +50,7 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      conversations: conversations.map((conversation) => ({
+      conversations: conversations.map((conversation: ConversationListItem) => ({
         id: conversation.id,
         title: participantName(conversation, session.user.id),
         status: conversation.status,
