@@ -7,6 +7,11 @@ import bcrypt from "bcryptjs";
 import { checkRateLimitShared } from "./rate-limit";
 
 const isDev = process.env.NODE_ENV === "development";
+const authSecret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+
+function normalizeEmail(email: string) {
+  return email.toLowerCase().trim();
+}
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -96,22 +101,22 @@ export const authOptions: AuthOptions = {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         if (!user?.email) return false;
+        const email = normalizeEmail(user.email);
 
         try {
-          const existingUser = await prisma.user.findUnique({
-            where: { email: user.email },
+          await prisma.user.upsert({
+            where: { email },
+            update: {
+              fullName: user.name || "Google User",
+              image: user.image,
+            },
+            create: {
+              email,
+              fullName: user.name || "Google User",
+              password: "", // Empty for OAuth users
+              image: user.image,
+            },
           });
-
-          if (!existingUser) {
-            await prisma.user.create({
-              data: {
-                email: user.email,
-                fullName: user.name || "Google User",
-                password: "", // Empty for OAuth users
-                image: user.image,
-              },
-            });
-          }
           return true;
         } catch (error) {
           const msg = error instanceof Error ? error.message : String(error);
@@ -133,18 +138,28 @@ export const authOptions: AuthOptions = {
 
       // On initial sign in
       if (account?.provider === "google" && user?.email) {
-        if (isDev) console.log("[jwt] Processing Google sign-in for user:", user.email);
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
+        const email = normalizeEmail(user.email);
+        if (isDev) console.log("[jwt] Processing Google sign-in for user:", email);
+        const dbUser = await prisma.user.upsert({
+          where: { email },
+          update: {
+            fullName: user.name || "Google User",
+            image: user.image,
+          },
+          create: {
+            email,
+            fullName: user.name || "Google User",
+            password: "",
+            image: user.image,
+          },
         });
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.type = "user";
-          token.name = dbUser.fullName;
-          token.picture = dbUser.image;
-          token.bio = dbUser.bio;
-          token.location = dbUser.location;
-        }
+        token.id = dbUser.id;
+        token.email = dbUser.email;
+        token.type = "user";
+        token.name = dbUser.fullName;
+        token.picture = dbUser.image;
+        token.bio = dbUser.bio;
+        token.location = dbUser.location;
       } else if (user) {
         // From Credentials Provider
         token.id = user.id;
@@ -224,5 +239,5 @@ export const authOptions: AuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: authSecret,
 };

@@ -1,6 +1,8 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
+const authSecret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+
 export const proxy = withAuth(
   function middleware(req) {
     // Allow access to protected routes only if authenticated
@@ -15,6 +17,7 @@ export const proxy = withAuth(
     callbacks: {
       authorized: ({ token }) => !!token,
     },
+    secret: authSecret,
   }
 );
 
