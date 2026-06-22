@@ -3,6 +3,15 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+type ChatMessageRow = {
+  id: string;
+  senderId: string;
+  conversationId: string;
+  content: string;
+  isSystem: boolean;
+  createdAt: Date;
+};
+
 function isConversationParticipant(
   conversation: {
     user1Id: string | null;
@@ -71,7 +80,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      messages: messages.map((message) => {
+      messages: messages.map((message: ChatMessageRow) => {
         const encrypted = message.isSystem ? null : parseEncryptedContent(message.content);
 
         return {
