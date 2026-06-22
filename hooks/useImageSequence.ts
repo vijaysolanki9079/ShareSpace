@@ -7,6 +7,7 @@ interface UseImageSequenceProps {
   fps?: number;
   startIndex?: number;
   loop?: boolean;
+  eagerFrameCount?: number;
 }
 
 function drawCover(
@@ -36,6 +37,7 @@ export const useImageSequence = ({
   fps = 30,
   startIndex = 0,
   loop = true,
+  eagerFrameCount = 12,
 }: UseImageSequenceProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number | null>(null);
@@ -51,23 +53,44 @@ export const useImageSequence = ({
 
     imagesRef.current = [];
 
-    const loadImages = async () => {
-      const promises: Promise<void>[] = [];
-      for (let i = 0; i < frameCount; i++) {
-        const indexStr = i.toString().padStart(3, "0");
-        const img = new Image();
-        img.decoding = "async";
-        const src = `${imagePrefix}${indexStr}${imageSuffix}`;
-        img.src = src;
-        imagesRef.current[i] = img;
-        promises.push(
-          new Promise<void>((resolve) => {
-            img.onload = () => resolve();
-            img.onerror = () => resolve();
-          }),
-        );
+    const createImage = (index: number, priority: "high" | "auto" = "auto") => {
+      const indexStr = index.toString().padStart(3, "0");
+      const img = new Image();
+      img.decoding = "async";
+      img.loading = priority === "high" ? "eager" : "lazy";
+      img.setAttribute("fetchpriority", priority);
+      img.src = `${imagePrefix}${indexStr}${imageSuffix}`;
+      imagesRef.current[index] = img;
+      return img;
+    };
+
+    const waitForImage = (img: HTMLImageElement) => {
+      if (img.complete) return Promise.resolve();
+
+      return new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      });
+    };
+
+    const loadFrameRange = (from: number, to: number, priority: "high" | "auto" = "auto") => {
+      for (let i = from; i < to; i++) {
+        if (!imagesRef.current[i]) {
+          createImage(i, priority);
+        }
       }
-      await Promise.all(promises);
+    };
+
+    const loadRemainingImages = () => {
+      const eagerEnd = Math.min(frameCount, Math.max(startIndex + 1, eagerFrameCount));
+      loadFrameRange(0, eagerEnd, "high");
+
+      const loadRest = () => loadFrameRange(eagerEnd, frameCount);
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(loadRest, { timeout: 1200 });
+      } else {
+        setTimeout(loadRest, 350);
+      }
     };
 
     let lastTime = 0;
@@ -122,12 +145,17 @@ export const useImageSequence = ({
       ro?.observe(canvas.parentElement);
     }
 
-    void loadImages().then(() => {
+    const firstFrame = createImage(startIndex, "high");
+
+    void waitForImage(firstFrame).then(() => {
+      if (stopped) return;
+
       syncCanvasSize();
-      const first = imagesRef.current[frameIndexRef.current];
-      if (first?.complete && first.naturalWidth > 0) {
-        drawCover(ctx, canvas, first);
+      if (firstFrame.complete && firstFrame.naturalWidth > 0) {
+        drawCover(ctx, canvas, firstFrame);
       }
+
+      loadRemainingImages();
       requestRef.current = requestAnimationFrame(render);
     });
 
@@ -143,7 +171,7 @@ export const useImageSequence = ({
       }
       window.removeEventListener("resize", onWinResize);
     };
-  }, [frameCount, imagePrefix, imageSuffix, fps, loop, startIndex]);
+  }, [eagerFrameCount, frameCount, imagePrefix, imageSuffix, fps, loop, startIndex]);
 
   return canvasRef;
 };

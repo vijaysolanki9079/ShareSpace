@@ -14,6 +14,8 @@ const CAROUSEL_TEXTS = [
   '"Every donation makes a difference. Whether it\'s clothing, electronics, or furniture, your contribution directly supports those who need it most."'
 ];
 
+const HERO_SCROLL_LOCK_MS = 2200;
+
 const Hero = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { isAuthenticated } = useAuth();
@@ -56,7 +58,12 @@ const Hero = () => {
     if (window.scrollY > 5) return;
 
     let handled = false;
+    let scrollLocked = true;
+    const unlockAt = window.performance.now() + HERO_SCROLL_LOCK_MS;
     const listenerOptions: AddEventListenerOptions = { passive: false };
+    const root = document.documentElement;
+    const previousRootOverflow = root.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
 
     const removeListeners = () => {
       window.removeEventListener('wheel', onWheel, listenerOptions);
@@ -64,9 +71,21 @@ const Hero = () => {
       window.removeEventListener('keydown', onKeyDown);
     };
 
+    const unlockScroll = () => {
+      if (!scrollLocked) return;
+      scrollLocked = false;
+      root.style.overflow = previousRootOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+    };
+
+    root.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    const unlockTimer = window.setTimeout(unlockScroll, HERO_SCROLL_LOCK_MS);
+
     const doSmoothScroll = () => {
       if (handled) return;
       handled = true;
+      unlockScroll();
 
       const heroEl = heroRef.current;
       const target = heroEl ? heroEl.offsetHeight : window.innerHeight;
@@ -81,6 +100,10 @@ const Hero = () => {
     const onWheel = (e: WheelEvent) => {
       if (handled) return;
       if (window.scrollY > 5) return; // don't intercept mid-page
+      if (scrollLocked || window.performance.now() < unlockAt) {
+        e.preventDefault();
+        return;
+      }
       // Don't intercept if the user is interacting with a form control
       const active = document.activeElement as HTMLElement | null;
       if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
@@ -94,6 +117,10 @@ const Hero = () => {
     const onTouchMove = (e: TouchEvent) => {
       if (handled) return;
       if (window.scrollY > 5) return;
+      if (scrollLocked || window.performance.now() < unlockAt) {
+        e.preventDefault();
+        return;
+      }
       // Respect form interaction on touch devices
       const active = document.activeElement as HTMLElement | null;
       if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
@@ -120,6 +147,7 @@ const Hero = () => {
         e.code === 'Space'
       ) {
         e.preventDefault();
+        if (scrollLocked || window.performance.now() < unlockAt) return;
         doSmoothScroll();
       }
     };
@@ -132,6 +160,8 @@ const Hero = () => {
     // Cleanup
     return () => {
       handled = true;
+      window.clearTimeout(unlockTimer);
+      unlockScroll();
       removeListeners();
     };
   }, []);
@@ -142,13 +172,19 @@ const Hero = () => {
     imageSuffix: '.jpg',
     fps: 24, // Reverted to 24fps
     loop: false, // Run only once
+    eagerFrameCount: 18,
   });
 
   return (
     <section ref={heroRef} className="relative bg-slate-500 min-h-[850px] flex items-center justify-center text-white overflow-hidden">
 
       {/* Animation Canvas Container */}
-      <div className="absolute inset-0 z-0">
+      <div
+        className="absolute inset-0 z-0 bg-cover bg-center"
+        style={{
+          backgroundImage: "url('/assets/transitions/Create_a_smooth_202602151314_feos1_000.jpg')",
+        }}
+      >
         <canvas ref={canvasRef} className="w-full h-full block" />
 
         {/* Cinematic Gradient Overlay for Readability */}
