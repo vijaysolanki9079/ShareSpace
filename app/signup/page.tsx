@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 
 const bannerImg = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1974&auto=format&fit=crop';
 const logoImg = '/images/-logo-main.png';
@@ -17,6 +17,12 @@ const Signup = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const { data: session, status } = useSession();
+
+    useEffect(() => {
+        if (status !== 'authenticated') return;
+        router.replace(session?.user?.type === 'ngo' ? '/ngo-dashboard' : '/dashboard');
+    }, [router, session?.user?.type, status]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -165,10 +171,10 @@ const Signup = () => {
                     {/* Social Login */}
                     <button
                         type="button"
-                        onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+                        onClick={() => signIn('google', { callbackUrl: `${window.location.origin}/dashboard` })}
                         className="w-full h-11 bg-white border border-gray-200 text-gray-900 font-semibold text-sm rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 animate-slide-up disabled:opacity-50"
                         style={{ animationDelay: '0.2s' }}
-                        disabled={loading}
+                        disabled={loading || status === 'loading'}
                     >
                         <Globe className="w-5 h-5 text-gray-900" />
                         Sign up with Google
@@ -188,4 +194,3 @@ const Signup = () => {
 };
 
 export default Signup;
-
