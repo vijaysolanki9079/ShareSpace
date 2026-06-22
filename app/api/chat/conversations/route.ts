@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import type { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-type ConversationListItem = Prisma.ConversationGetPayload<{
-  include: {
-    user1: { select: { id: true; fullName: true } };
-    user2: { select: { id: true; fullName: true } };
-    ngo1: { select: { id: true; organizationName: true } };
-    ngo2: { select: { id: true; organizationName: true } };
-  };
-}>;
+type ConversationListItem = {
+  id: string;
+  status: string;
+  updatedAt: Date;
+  user1: { id: string; fullName: string } | null;
+  user2: { id: string; fullName: string } | null;
+  ngo1: { id: string; organizationName: string } | null;
+  ngo2: { id: string; organizationName: string } | null;
+};
 
 function participantName(conversation: ConversationListItem, currentUserId: string) {
   const participants = [
