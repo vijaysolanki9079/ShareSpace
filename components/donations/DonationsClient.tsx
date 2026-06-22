@@ -624,15 +624,15 @@ export default function DonationsClient() {
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3, delay: idx * 0.03 }}
                       key={ngo.id}
-                      className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col group hover:border-emerald-200 hover:scale-[1.015]"
+                      className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:scale-[1.01] hover:border-emerald-200 hover:shadow-lg"
                     >
                       {/* Cover Image Area */}
-                      <div className="relative h-36 bg-gradient-to-br from-emerald-100 to-blue-100 overflow-hidden">
+                      <div className="relative h-40 bg-gradient-to-br from-emerald-100 to-blue-100">
                         {ngo.image ? (
                           <img
                             src={ngo.image}
                             alt={ngo.organizationName}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
@@ -640,66 +640,66 @@ export default function DonationsClient() {
                           </div>
                         )}
                         {ngo.locationName && (
-                          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-emerald-700 shadow-sm flex items-center gap-1">
-                            <MapPin size={12} />
-                            {ngo.locationName}
+                          <div className="absolute right-3 top-3 flex max-w-[calc(100%-1.5rem)] items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm ring-1 ring-emerald-100 backdrop-blur-sm">
+                            <MapPin size={12} className="shrink-0" />
+                            <span className="truncate">{ngo.locationName}</span>
                           </div>
                         )}
                         {/* NGO Avatar overlay */}
-                        <div className="absolute -bottom-7 left-5">
-                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-lg border-4 border-white">
+                        <div className="absolute bottom-3 left-4">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-emerald-400 to-emerald-600 text-xl font-bold text-white shadow-lg">
                             {(ngo.organizationName || 'N').charAt(0)}
                           </div>
                         </div>
                       </div>
 
                       {/* Body */}
-                      <div className="p-4 pt-9 flex-1">
-                        <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 bg-white p-5">
+                        <div className="mb-3 flex items-start justify-between">
                           <div className="min-w-0 flex-1">
-                            <h3 className="font-bold text-gray-900 text-lg truncate">{ngo.organizationName}</h3>
-                            <div className="flex items-center gap-2 mt-1">
+                            <h3 className="line-clamp-2 text-lg font-extrabold leading-snug text-slate-950">{ngo.organizationName}</h3>
+                            <div className="mt-1.5 flex items-center gap-2">
                               {ngo.isVerified && (
-                                <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
                                   ✓ Verified
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 mb-4">
-                          <span className="font-semibold text-gray-800">Focus:</span> {ngo.missionArea}
+                        <p className="mb-4 text-sm leading-relaxed text-slate-700">
+                          <span className="font-bold text-slate-900">Focus:</span> {ngo.missionArea || 'Community support'}
                         </p>
                         {ngo.categories && ngo.categories.length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
                             {ngo.categories.slice(0, 4).map((cat: string, i: number) => (
                               <span
                                 key={i}
-                                className="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-medium"
+                                className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100"
                               >
                                 {CATEGORY_ICONS[cat] || '📋'} {cat}
                               </span>
                             ))}
                             {ngo.categories.length > 4 && (
-                              <span className="text-xs text-gray-400">+{ngo.categories.length - 4} more</span>
+                              <span className="text-xs font-semibold text-slate-500">+{ngo.categories.length - 4} more</span>
                             )}
                           </div>
                         )}
                       </div>
 
                       {/* Footer */}
-                      <div className="px-5 py-3 border-t border-gray-100 bg-gradient-to-r from-emerald-50 to-blue-50 space-y-2">
+                      <div className="space-y-2 border-t border-slate-100 bg-slate-50/80 px-5 py-4">
                         <button
                           type="button"
                           onClick={() => setSelectedContact({ type: 'ngo', ...ngo })}
-                          className="flex w-full items-center justify-between rounded-xl bg-white/80 px-3 py-2 text-sm font-bold text-emerald-700 shadow-sm transition-all hover:bg-white hover:text-emerald-900"
+                          className="flex w-full items-center justify-between rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700"
                         >
                           <span>Contact NGO</span>
                           <MessageCircle size={15} />
                         </button>
                         <Link
                           href={`/ngo/${ngo.id}`}
-                          className="flex items-center justify-between text-sm font-bold text-emerald-700 hover:text-emerald-900 transition-all"
+                          className="flex items-center justify-between rounded-xl bg-white px-3 py-2.5 text-sm font-bold text-slate-800 ring-1 ring-slate-200 transition-all hover:text-emerald-800 hover:ring-emerald-200"
                         >
                           <span>View Profile</span>
                           <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />

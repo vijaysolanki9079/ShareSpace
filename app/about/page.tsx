@@ -42,7 +42,7 @@ const About = () => {
       name: "Sarah Chen",
       role: "Co-Founder & CEO",
       bio: "Former environmental scientist passionate about waste reduction.",
-      img: "/images/-logo-main.png",
+      img: "/chen.png",
       accentColor: "emerald",
       glowColor: "emerald-500"
     },
@@ -50,7 +50,7 @@ const About = () => {
       name: "David Okonjo",
       role: "Head of Technology",
       bio: "Building scalable tech for social good. Open source advocate.",
-      img: "/images/logo-main.png",
+      img: "/david.png",
       accentColor: "sky",
       glowColor: "sky-500"
     },
@@ -58,7 +58,7 @@ const About = () => {
       name: "Elena Rodriguez",
       role: "Community Lead",
       bio: "Connecting NGOs with corporate partners and local donors.",
-      img: "/images/logo-main-.png",
+      img: "/elena.png",
       accentColor: "purple",
       glowColor: "purple-500"
     },
@@ -66,7 +66,7 @@ const About = () => {
       name: "Amir Fayed",
       role: "Product Design",
       bio: "Crafting intuitive experiences that encourage generosity.",
-      img: "/images/-logo-main.png",
+      img: "/amir.png",
       accentColor: "amber",
       glowColor: "amber-500"
     }
